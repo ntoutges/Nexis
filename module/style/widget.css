@@ -1,0 +1,29 @@
+.framework-widget {
+  position: absolute;
+  overflow: hidden;
+  
+  /* default styling */
+  left: 0px;
+  top: 0px;
+
+  transform-origin: top left;
+}
+
+.framework-widget.hidden {
+  visibility: hidden;
+}
+
+.framework-grid-widget:not(.no-cursor):hover {
+  cursor: grab;
+}
+
+.framework-grid-widget.dragging:hover {
+  cursor: grabbing;
+}
+
+
+.framework-block-widget {
+  min-width: 50px;
+  min-height: 50px;
+  background: black;
+}
