@@ -31,11 +31,14 @@ export interface SceneInterface extends CommonFrameworkInterface{
 }
 
 export interface ScrollableInterface {
-  scene: Scene
   viewport: HTMLElement
+  element: HTMLElement,
+  periphery?: HTMLElement[],
   scrollX?: boolean
   scrollY?: boolean
   zoomable?: boolean
+  blockDrag?: boolean
+  blockScroll?: boolean
 }
 
 export type basicListener = () => void;

@@ -16,37 +16,52 @@ export class Draggable {
   private scrollX: boolean;
   private scrollY: boolean;
   private zoomable: boolean;
+  private blockDrag: boolean;
+  private blockScroll: boolean;
 
   readonly listener = new Listener<DraggableEvents, Draggable>();
 
   constructor({
-    scene, // Initiates movement
     viewport, // continues movement
+    element, // Initiates movement
+    periphery = [], // Has event listener, but only to stop propagation
     scrollX = true,
     scrollY = true,
-    zoomable = true
+    zoomable = true,
+    blockDrag = true,
+    blockScroll = true
   }: DraggableInterface) {
+    this.blockDrag = blockDrag;
+    this.blockScroll = blockScroll;
+
     setTimeout(() => { // force this to run after rest of parent object has finished initializing
-      scene.onE("mousedown", this.initDrag.bind(this));
+      element.addEventListener("mousedown", this.initDrag.bind(this));
       viewport.addEventListener("mousemove", this.doDrag.bind(this));
       viewport.addEventListener("mouseup", this.endDrag.bind(this));
-      scene.onE("wheel", this.onScroll.bind(this));
+      element.addEventListener("wheel", this.onScroll.bind(this));
+
+      for (const el of periphery) {
+        if (this.blockDrag) el.addEventListener("mousedown", (e) => { e.stopPropagation(); });
+        if (this.blockScroll) el.addEventListener("wheel", (e) => { e.stopPropagation(); });
+      }
 
       this.updateBounds();
       this.listener.setAutoResponse("init", this);
     }, 1);
-    // viewport.addEventListener("mouseleave", this.endDrag.bind(this));
+    // element.addEventListener("mouseleave", this.endDrag.bind(this));
 
     this.scrollX = scrollX;
     this.scrollY = scrollY;
     this.zoomable = zoomable;
 
-    this.element = scene.element;
+    this.element = element;
 
     this.listener.setPollingOptions("resize", this.updateBounds.bind(this));
   }
 
   protected initDrag(e: MouseEvent) {
+    if (this.blockDrag) e.stopPropagation();
+    e.preventDefault();
     this.isDragging = true;
     this.mouseOffset.x = e.pageX;
     this.mouseOffset.y = e.pageY;
@@ -54,6 +69,7 @@ export class Draggable {
   }
   protected doDrag(e: MouseEvent) {
     if (!this.isDragging) return;
+    if (this.blockDrag) e.stopPropagation();
     
     let didMove = false;
     if (this.scrollX) {
@@ -74,14 +90,16 @@ export class Draggable {
       this.listener.trigger("drag", this);
     }
   }
-  protected endDrag() {
+  protected endDrag(e: MouseEvent) {
     if (!this.isDragging) return;
+    if (this.blockDrag) e.stopPropagation();
     this.isDragging = false;
     this.listener.trigger("dragEnd", this);
   }
 
   protected onScroll(e: WheelEvent) {
     if (!this.zoomable || e.deltaY == 0) return; // don't zoom if not zoomable
+    if (this.blockScroll) e.stopPropagation();
 
     // exact position of cursor actually matters here, rather than just difference in position
     const bounds = this.element.getBoundingClientRect();
@@ -116,6 +134,10 @@ export class Draggable {
     this.pos.x -= Math.round(x);
     this.pos.y -= Math.round(y);
     this.listener.trigger("drag", this);
+  }
+
+  setZoom(z: number) {
+    this.pos.z = z;
   }
 
   // convert x,y in screen to x,y within transformations of scene

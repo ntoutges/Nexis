@@ -20,6 +20,25 @@ export interface BasicWidgetInterface extends CommonWidgetInterface {
   content: HTMLElement
 }
 
+interface headerOption {
+  show?: boolean
+  background?: string
+}
+
+export interface DraggableWidgetInterface extends BasicWidgetInterface {
+  options?: {
+    
+  }
+  header?: {
+    title?: string
+    buttons?: {
+      collapse?: headerOption
+      close?: headerOption
+    }
+  }
+  doCursorDrag?: boolean
+}
+
 export interface GridWidgetInterface extends CommonWidgetInterface {
   options?: {
     grid?: {

@@ -1,6 +1,7 @@
 import { GridWidget } from "./module/widgets/grid.js";
 import { Scene } from "./module/scene.js";
 import { BlockWidget } from "./module/widgets/block.js";
+import { DraggableWidget } from "./module/widgets/draggable-widget.js";
 const $ = document.querySelector.bind(document);
 const scene = new Scene({
     parent: $("#sandbox"),
@@ -50,6 +51,24 @@ const scene = new Scene({
                 width: "55px",
                 height: "55px"
             }
+        }),
+        new DraggableWidget({
+            content: document.createElement("div"),
+            name: "Default",
+            pos: {
+                x: 100,
+                y: 100,
+                xAlign: "middle",
+                yAlign: "middle"
+            },
+            header: {
+                title: "Test of some tex,t"
+            },
+            style: {
+                width: "200px",
+                height: "200px"
+            },
+            doCursorDrag: true
         })
     ]
 });

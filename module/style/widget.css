@@ -7,6 +7,8 @@
   top: 0px;
 
   transform-origin: top left;
+
+  user-select: none; /* set this as the default for widgets */
 }
 
 .framework-widget.hidden {
@@ -26,4 +28,39 @@
   min-width: 50px;
   min-height: 50px;
   background: black;
+}
+
+
+.framework-draggable-widget-containers {
+  padding: 10px;
+  height: calc(100% - 20px);
+  background-color: orange;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.framework-draggable-widget-headers:not(.no-cursor):hover {
+  cursor: grab;
+}
+
+.framework-draggable-widget-headers.dragging:hover {
+  cursor: grabbing;
+}
+
+.framework-draggable-widget-headers {
+  padding: 5px;
+  background-color: grey;
+}
+
+.framework-draggable-widget-titles {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.framework-draggable-widget-bodies {
+  padding: 20px;
+  background-color: green;
+  flex-grow: 1;
 }

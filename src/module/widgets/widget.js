@@ -12,6 +12,7 @@ export class Widget extends FrameworkBase {
     sceneListeners = new Map();
     sceneListenerIds = new Map(); // keep track of sceneListener ids
     transformations = new Map();
+    scene = null;
     positioning;
     layer;
     pos = { x: 0, y: 0 };
@@ -32,6 +33,7 @@ export class Widget extends FrameworkBase {
         this.pos.x = x;
         this.pos.y = y;
     }
+    setZoom(z) { } // placeholder for future functions that may need this
     calculateBounds(scale = 1) {
         return {
             width: this.el.offsetWidth * scale,
@@ -42,6 +44,8 @@ export class Widget extends FrameworkBase {
         this.sceneListeners.set(type, sceneListener);
     }
     attachTo(scene) {
+        this.scene = scene;
+        this.setZoom(scene.draggable.pos.z);
         for (const [type, listener] of this.sceneListeners.entries()) {
             switch (type) {
                 case "init":
@@ -75,6 +79,8 @@ export class Widget extends FrameworkBase {
     detachFrom(scene) {
         if (!this.sceneListenerIds.has(scene.identifier))
             return; // no ids set
+        if (this.scene == scene)
+            this.scene = null;
         for (const listenerId of this.sceneListenerIds.get(scene.identifier)) {
             scene.off(listenerId);
         }

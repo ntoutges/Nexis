@@ -15,8 +15,8 @@ export class Scene extends FrameworkBase {
             style
         });
         this.draggable = new Draggable({
-            scene: this,
-            viewport: parent,
+            viewport: this.element,
+            element: parent,
             scrollX: options?.scrollX ?? true,
             scrollY: options?.scrollY ?? true,
             zoomable: options?.zoomable ?? true
@@ -67,35 +67,44 @@ export class Scene extends FrameworkBase {
             return this.draggable.listener.off(id);
         return false;
     }
-    updateWidgetPosition(d) {
+    updateIndividualWidget(widget) {
+        if (!this.widgets.includes(widget))
+            return; // don't try to update invalid widget
+        this.updateIndividualWidgetPosition(widget);
+    }
+    updateIndividualWidgetPosition(widget) {
+        if (widget.positioning == 0)
+            return; // no point in trying to multiply by 0
+        const [cX, cY] = this.draggable.toScreenSpace(widget.pos.x, widget.pos.y);
+        const bounds = widget.calculateBounds(this.draggable.pos.z);
+        const sX = cX * widget.positioning - widget.align.x * bounds.width;
+        const sY = cY * widget.positioning - widget.align.y * bounds.height;
+        // outside viewable bounds
+        if (sX + bounds.width <= 0
+            || sX >= this.draggable.bounds.width
+            || sY + bounds.height <= 0
+            || sY >= this.draggable.bounds.height) {
+            widget.element.classList.add("hidden"); // hide element to save on processing (I hope)
+            return;
+        }
+        else
+            widget.element.classList.remove("hidden");
+        widget.element.style.left = `${sX}px`;
+        widget.element.style.top = `${sY}px`;
+    }
+    updateWidgetPosition() {
         for (const widget of this.widgets) {
-            if (widget.positioning == 0)
-                continue; // no point in trying to multiply by 0
-            const [cX, cY] = d.toScreenSpace(widget.pos.x, widget.pos.y);
-            const bounds = widget.calculateBounds(d.pos.z);
-            const sX = cX * widget.positioning - widget.align.x * bounds.width;
-            const sY = cY * widget.positioning - widget.align.y * bounds.height;
-            // outside viewable bounds
-            if (sX + bounds.width <= 0
-                || sX >= d.bounds.width
-                || sY + bounds.height <= 0
-                || sY >= d.bounds.height) {
-                widget.element.classList.add("hidden"); // hide element to save on processing (I hope)
-                continue;
-            }
-            else
-                widget.element.classList.remove("hidden");
-            widget.element.style.left = `${sX}px`;
-            widget.element.style.top = `${sY}px`;
+            this.updateIndividualWidgetPosition(widget);
         }
     }
-    updateWidgetPositionAndScale(d) {
-        this.updateWidgetPosition(d);
+    updateWidgetPositionAndScale() {
+        this.updateWidgetPosition();
         for (const widget of this.widgets) {
             if (widget.positioning == 0)
                 continue; // no point in trying to multiply by 0
-            const scale = (d.pos.z * widget.positioning) + 1 * (1 - widget.positioning);
+            const scale = (this.draggable.pos.z * widget.positioning) + 1 * (1 - widget.positioning);
             widget.setTransformation("scale", scale.toString());
+            widget.setZoom(this.draggable.pos.z);
         }
     }
     centerScene(d) {
