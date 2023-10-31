@@ -51,6 +51,7 @@
 .framework-draggable-widget-headers {
   padding: 5px;
   background-color: grey;
+  position: relative;
 }
 
 .framework-draggable-widget-titles {
@@ -62,5 +63,30 @@
 .framework-draggable-widget-bodies {
   padding: 20px;
   background-color: green;
-  flex-grow: 1;
+  /* flex-grow: 1; */
+}
+
+.framework-draggable-widget-button-holder {
+  position: absolute;
+  top: 50%;
+  right: 0px;
+  transform: translateY(-50%);
+}
+
+.framework-draggable-widget-button-holder > .framework-draggable-widget-buttons:hover {
+  filter: brightness(100%) !important;
+  cursor: pointer;
+}
+
+.framework-draggable-widget-buttons {
+  filter: brightness(80%);
+  border-radius: 50%;
+  display: inline-block;
+
+  position: relative;
+}
+
+.draggable-widget-minimize {
+  height: 0px;
+  padding: 0px;
 }

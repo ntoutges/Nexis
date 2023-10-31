@@ -23,6 +23,7 @@ export interface BasicWidgetInterface extends CommonWidgetInterface {
 interface headerOption {
   show?: boolean
   background?: string
+  size?: string
 }
 
 export interface DraggableWidgetInterface extends BasicWidgetInterface {

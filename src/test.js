@@ -62,13 +62,22 @@ const scene = new Scene({
                 yAlign: "middle"
             },
             header: {
-                title: "Test of some tex,t"
+                title: "Test of some text",
+                buttons: {
+                    close: {
+                        background: "red",
+                        show: true
+                    },
+                    collapse: {
+                        show: true
+                    }
+                }
             },
             style: {
                 width: "200px",
-                height: "200px"
+                // height: "200px"
             },
-            doCursorDrag: true
+            doCursorDrag: true,
         })
     ]
 });
