@@ -21,7 +21,7 @@ export class GridWidget extends Widget {
     options = {},
     layer,
     positioning = 0,
-    doCursorDrag = false,
+    doCursorDragIcon = false,
     doIndependentCenter = false
   }: GridWidgetInterface) {
     const canvas = document.createElement("canvas");
@@ -41,7 +41,7 @@ export class GridWidget extends Widget {
     this.megaGridColor = options?.megagrid?.color || "grey";
 
     this.coords = options?.coords ?? false;
-    this.doCursorDrag = doCursorDrag;
+    this.doCursorDrag = doCursorDragIcon;
     this.doInitCenter = doIndependentCenter;
 
     if (!this.doCursorDrag) this.el.classList.add("no-cursor");

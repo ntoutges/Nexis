@@ -23,7 +23,7 @@ const scene = new Scene({
             style: {
                 background: "cornsilk"
             },
-            doCursorDrag: true
+            doCursorDragIcon: false
         }),
         new BlockWidget({
             positioning: 1,
@@ -65,7 +65,6 @@ const scene = new Scene({
                 title: "Test of some text",
                 buttons: {
                     close: {
-                        background: "red",
                         show: true
                     },
                     collapse: {
@@ -77,7 +76,7 @@ const scene = new Scene({
                 width: "200px",
                 // height: "200px"
             },
-            doCursorDrag: true,
+            doCursorDragIcon: true,
         })
     ]
 });

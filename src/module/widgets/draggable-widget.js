@@ -1,4 +1,5 @@
 import { Draggable } from "../draggable.js";
+import { buttonDefaults } from "./defaults.js";
 import { Widget } from "./widget.js";
 export class DraggableWidget extends Widget {
     container;
@@ -6,7 +7,9 @@ export class DraggableWidget extends Widget {
     body;
     draggable = null;
     doCursorDrag;
-    constructor({ id, layer, positioning, pos, style, header = null, doCursorDrag, options, content, name }) {
+    buttonHideTimeout = null;
+    buttonColors = new Map();
+    constructor({ id, layer, positioning, pos, style, header = null, doCursorDragIcon, options, content, name }) {
         const container = document.createElement("div");
         super({
             id, layer, positioning, pos, style,
@@ -24,32 +27,61 @@ export class DraggableWidget extends Widget {
             title.setAttribute("draggable", "false");
             title.innerText = header?.title ?? "Unnamed";
             this.header.append(title);
-            this.doCursorDrag = doCursorDrag;
-            if (!doCursorDrag) {
+            const titleEnd = document.createElement('div');
+            titleEnd.classList.add("framework-draggable-widget-title-ends");
+            this.header.append(titleEnd);
+            this.doCursorDrag = doCursorDragIcon;
+            if (!doCursorDragIcon) {
                 this.container.classList.add("no-cursor"); // don't show dragging indication
             }
             const buttons = document.createElement("div");
             buttons.classList.add("framework-draggable-widget-button-holder");
-            if (header.buttons?.collapse?.show) {
-                const collapse = document.createElement("div");
-                collapse.classList.add("framework-draggable-widget-collapses", "framework-draggable-widget-buttons");
-                collapse.setAttribute("title", "collapse");
-                collapse.style.background = header.buttons.collapse?.background ?? "yellow";
-                collapse.style.width = header.buttons.collapse?.size ?? "15px";
-                collapse.style.height = header.buttons.collapse?.size ?? "15px";
-                buttons.append(collapse);
-                collapse.addEventListener("click", this.minimize.bind(this));
+            for (const type in buttonDefaults) {
+                const options = header.buttons[type];
+                const defOptions = buttonDefaults[type];
+                if (options?.show) {
+                    const button = document.createElement("div");
+                    button.classList.add(`framework-draggable-widget-${type}s`, "framework-draggable-widget-buttons");
+                    button.setAttribute("title", type);
+                    this.buttonColors.set(type, {
+                        dormant: {
+                            fill: options?.dormant?.fill ?? defOptions.dormant.fill,
+                            highlight: options?.dormant?.highlight ?? defOptions.dormant.highlight
+                        },
+                        active: {
+                            fill: options?.active?.fill ?? defOptions.active.fill,
+                            highlight: options?.active?.highlight ?? defOptions.active.highlight
+                        }
+                    });
+                    button.style.width = options?.size ?? defOptions.size;
+                    button.style.height = options?.size ?? defOptions.size;
+                    button.style.padding = options?.padding ?? defOptions.padding;
+                    buttons.append(button);
+                    button.addEventListener("mouseenter", this.updateButtonColor.bind(this, button, type, "active"));
+                    button.addEventListener("mouseleave", this.updateButtonColor.bind(this, button, type, "dormant"));
+                    this.updateButtonColor(button, type, "dormant");
+                    // fetch svg data
+                    const src = `/module/icons/${options?.icon ?? defOptions.icon}`;
+                    fetch(src).then(async (data) => {
+                        const response = (await data.text()).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ""); // replace removes script tags (like that injected by live-server)
+                        const doc = new DOMParser();
+                        const svg = doc.parseFromString(response, "image/svg+xml").querySelector("svg");
+                        button.append(svg);
+                        svg.style.width = options?.size ?? defOptions.size;
+                        svg.style.height = options?.size ?? defOptions.size;
+                    });
+                    switch (type) {
+                        case "close":
+                            break;
+                        case "collapse":
+                            button.addEventListener("click", this.minimize.bind(this));
+                            break;
+                    }
+                }
             }
-            if (header.buttons?.close?.show) {
-                const close = document.createElement("div");
-                close.classList.add("framework-draggable-widget-closes", "framework-draggable-widget-buttons");
-                close.setAttribute("title", "close");
-                close.style.background = header.buttons.close?.background ?? "red";
-                close.style.width = header.buttons.close?.size ?? "15px";
-                close.style.height = header.buttons.close?.size ?? "15px";
-                buttons.append(close);
-            }
-            this.header.append(buttons);
+            title.append(buttons);
+            title.addEventListener("mouseenter", this.showButtons.bind(this));
+            title.addEventListener("mouseleave", this.hideButtons.bind(this));
         }
         this.body = document.createElement("div");
         this.body.classList.add("framework-draggable-widget-bodies");
@@ -91,6 +123,37 @@ export class DraggableWidget extends Widget {
     }
     minimize() {
         this.body.classList.toggle("draggable-widget-minimize");
+    }
+    showButtons() {
+        if (this.buttonHideTimeout != null) { // stop timeout
+            clearTimeout(this.buttonHideTimeout);
+            this.buttonHideTimeout = null;
+        }
+        const title = this.header.querySelector(".framework-draggable-widget-titles");
+        if (title.classList.contains("show-buttons"))
+            return; // already shown
+        title.classList.add("show-buttons");
+        const toPad = title.querySelector(".framework-draggable-widget-button-holder").offsetWidth;
+        const oldPad = +title.style.paddingRight.replace("px", "") || 0;
+        title.style.paddingRight = `${toPad + oldPad + 10}px`;
+    }
+    hideButtons() {
+        if (this.buttonHideTimeout != null) { // already working on hide
+            this.buttonHideTimeout = null;
+            return;
+        }
+        this.buttonHideTimeout = setTimeout(() => {
+            this.buttonHideTimeout = null;
+            if (this.body.classList.contains("draggable-widget-minimize"))
+                return; // minimized, so keep
+            const title = this.header.querySelector(".framework-draggable-widget-titles");
+            title.classList.remove("show-buttons");
+            title.style.paddingRight = ""; // remove bespoke styling
+        }, 500);
+    }
+    updateButtonColor(button, type, set) {
+        button.style.background = this.buttonColors.get(type)[set].highlight;
+        button.style.fill = this.buttonColors.get(type)[set].fill;
     }
 }
 //# sourceMappingURL=draggable-widget.js.map

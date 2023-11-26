@@ -20,11 +20,22 @@ export interface BasicWidgetInterface extends CommonWidgetInterface {
   content: HTMLElement
 }
 
-interface headerOption {
-  show?: boolean
-  background?: string
-  size?: string
+export interface headerOption {
+  show: boolean
+  dormant: {
+    fill: string,
+    highlight: string
+  },
+  active: {
+    fill: string,
+    highlight: string
+  }
+  icon: string
+  size: string
+  padding: string
 }
+
+export type buttonTypes = "collapse" | "close";
 
 export interface DraggableWidgetInterface extends BasicWidgetInterface {
   options?: {
@@ -32,12 +43,9 @@ export interface DraggableWidgetInterface extends BasicWidgetInterface {
   }
   header?: {
     title?: string
-    buttons?: {
-      collapse?: headerOption
-      close?: headerOption
-    }
+    buttons?: Record<buttonTypes, Partial<headerOption>>
   }
-  doCursorDrag?: boolean
+  doCursorDragIcon?: boolean
 }
 
 export interface GridWidgetInterface extends CommonWidgetInterface {
@@ -52,6 +60,6 @@ export interface GridWidgetInterface extends CommonWidgetInterface {
     },
     coords?: boolean
   }
-  doCursorDrag?: boolean
+  doCursorDragIcon?: boolean
   doIndependentCenter?: boolean
 }

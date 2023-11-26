@@ -9,6 +9,8 @@
   transform-origin: top left;
 
   user-select: none; /* set this as the default for widgets */
+
+  filter: drop-shadow(0px 0px 1px black);
 }
 
 .framework-widget.hidden {
@@ -32,61 +34,160 @@
 
 
 .framework-draggable-widget-containers {
-  padding: 10px;
   height: calc(100% - 20px);
-  background-color: orange;
 
   display: flex;
   flex-direction: column;
 }
 
-.framework-draggable-widget-headers:not(.no-cursor):hover {
+.framework-draggable-widget-headers:not(.no-cursor) .framework-draggable-widget-titles:hover {
   cursor: grab;
 }
 
-.framework-draggable-widget-headers.dragging:hover {
-  cursor: grabbing;
+.framework-draggable-widget-headers:not(.no-cursor) .framework-draggable-widget-title-ends:hover {
+  cursor: grab;
 }
 
 .framework-draggable-widget-headers {
-  padding: 5px;
-  background-color: grey;
   position: relative;
+  margin-bottom: -4px;
 }
 
 .framework-draggable-widget-titles {
+  position: relative;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  background-color: grey;
+
+  display: inline-block;
+  padding: 5px;
+  padding-bottom: 6px;
+
+  height: 100%;
+
+  transition: padding-right 100ms, border-radius 200ms;
+  transition-delay: 0ms, 0ms;
+
+  border-radius: 0px;
+}
+
+.framework-draggable-widget-containers:has(.framework-draggable-widget-bodies.draggable-widget-minimize) > .framework-draggable-widget-headers .framework-draggable-widget-titles {
+  border-bottom-right-radius: 15px;
+  border-top-right-radius: 15px;
+  transition-delay: 0ms, 100ms;
+}
+
+.framework-draggable-widget-headers .framework-draggable-widget-title-ends {
+  color: transparent;
+  background-color: grey;
+  display: inline-block;
+  
+  height: calc(100% - 3px);
+  width: 30px;
+  position: absolute;
+  z-index: -1;
+
+  transform: translateX(-1px); /* Fill horrible gap */
+  transform-origin: 0 100%;
+
+  clip-path: polygon(0 0, 2px 0, 100% 100%, 0% 100%);
+  margin-bottom: -4px; /* remove strange gap between bottom of inline-block element and the parent */
+
+  transition: transform 200ms;
+  transition-delay: 100ms;
+}
+
+.framework-draggable-widget-containers:has(.framework-draggable-widget-bodies.draggable-widget-minimize) > .framework-draggable-widget-headers .framework-draggable-widget-title-ends {
+  transform: translateX(-1px) scaleX(0);
+  transition-delay: 0ms;
+}
+
+@keyframes minimize-bodies-forward {
+  0% {
+    transform: unset;
+    visibility: visible;
+  }
+  99% {
+    transform: scaleX(0);
+  }
+  100% {
+    visibility: hidden;
+    transform: scaleY(0);
+  }
+}
+
+@keyframes minimize-bodies-reverse {
+  0% {
+    visibility: visible;
+    transform: scaleY(0.1);
+    width: 0px;
+    transform-origin: 100% 0%;
+  }
+  50% {
+    width: 100%;
+    transform: scaleY(0.1);
+  }
+  100% {
+    transform-origin: 100% 0%;
+    transform: unset;
+  }
 }
 
 .framework-draggable-widget-bodies {
   padding: 20px;
   background-color: green;
-  /* flex-grow: 1; */
+  visibility: visible;
+  transform-origin: 0 0;
+
+  animation: minimize-bodies-reverse 300ms;
+}
+
+.framework-draggable-widget-bodies.draggable-widget-minimize {
+  animation: minimize-bodies-forward 200ms;
 }
 
 .framework-draggable-widget-button-holder {
   position: absolute;
   top: 50%;
   right: 0px;
+  transform: translate(100%, -50%);
+
+  transition: transform 100ms, right 100ms;
+
+  display: flex;
+  gap: 2px;
+}
+
+.framework-draggable-widget-titles.show-buttons > .framework-draggable-widget-button-holder,
+.framework-draggable-widget-containers:has(.framework-draggable-widget-bodies.draggable-widget-minimize) > .framework-draggable-widget-headers .framework-draggable-widget-button-holder {
   transform: translateY(-50%);
+  right: 5px;
 }
 
 .framework-draggable-widget-button-holder > .framework-draggable-widget-buttons:hover {
-  filter: brightness(100%) !important;
+  /* filter: brightness(100%) !important; */
   cursor: pointer;
 }
 
 .framework-draggable-widget-buttons {
-  filter: brightness(80%);
+  /* filter: brightness(80%); */
   border-radius: 50%;
   display: inline-block;
 
   position: relative;
+  vertical-align: middle;
+}
+
+.framework-draggable-widget-buttons > svg {
+  /*width: 100%;
+  height: 100%;*/
+
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .draggable-widget-minimize {
-  height: 0px;
-  padding: 0px;
+  visibility: hidden;
 }

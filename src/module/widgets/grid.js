@@ -10,7 +10,7 @@ export class GridWidget extends Widget {
     doCursorDrag;
     doInitCenter;
     offset = { x: 0, y: 0 };
-    constructor({ id, style, options = {}, layer, positioning = 0, doCursorDrag = false, doIndependentCenter = false }) {
+    constructor({ id, style, options = {}, layer, positioning = 0, doCursorDragIcon = false, doIndependentCenter = false }) {
         const canvas = document.createElement("canvas");
         super({
             name: "grid",
@@ -24,7 +24,7 @@ export class GridWidget extends Widget {
         this.megaStep = Math.max(options?.megagrid?.size, 2) || 3;
         this.megaGridColor = options?.megagrid?.color || "grey";
         this.coords = options?.coords ?? false;
-        this.doCursorDrag = doCursorDrag;
+        this.doCursorDrag = doCursorDragIcon;
         this.doInitCenter = doIndependentCenter;
         if (!this.doCursorDrag)
             this.el.classList.add("no-cursor");
