@@ -14,15 +14,16 @@
 }
 
 .framework-widget.hidden {
-  visibility: hidden;
+  visibility: none; /* for some reason: this doesn't work on its own... */
+  opacity: 0;
 }
 
-.framework-grid-widget:not(.no-cursor):hover {
+/* .framework-grid-widget:not(.no-cursor):hover {
   cursor: grab;
-}
+} */
 
 .framework-grid-widget.dragging:hover {
-  cursor: grabbing;
+  cursor: move;
 }
 
 
@@ -40,12 +41,14 @@
   flex-direction: column;
 }
 
-.framework-draggable-widget-headers:not(.no-cursor) .framework-draggable-widget-titles:hover {
+.framework-draggable-widget-containers:not(.no-cursor) .framework-draggable-widget-titles:hover,
+.framework-draggable-widget-containers:not(.no-cursor) .framework-draggable-widget-title-ends:hover {
   cursor: grab;
 }
 
-.framework-draggable-widget-headers:not(.no-cursor) .framework-draggable-widget-title-ends:hover {
-  cursor: grab;
+.framework-draggable-widget-containers:not(.no-cursor) .framework-draggable-widget-headers.dragging .framework-draggable-widget-titles:hover,
+.framework-draggable-widget-containers:not(.no-cursor) .framework-draggable-widget-headers.dragging .framework-draggable-widget-title-ends:hover {
+  cursor: grabbing;
 }
 
 .framework-draggable-widget-headers {
@@ -83,10 +86,9 @@
   background-color: grey;
   display: inline-block;
   
-  height: calc(100% - 3px);
+  height: calc(100% - 4px);
   width: 30px;
   position: absolute;
-  z-index: -1;
 
   transform: translateX(-1px); /* Fill horrible gap */
   transform-origin: 0 100%;
@@ -106,14 +108,18 @@
 @keyframes minimize-bodies-forward {
   0% {
     transform: unset;
-    visibility: visible;
+    display: block;
   }
-  99% {
-    transform: scaleX(0);
+  50% {
+    transform: scaleX(0.1);
+    display: block;
+  }
+  95% {
+    transform: scale(0.1);
+    display: block;
   }
   100% {
-    visibility: hidden;
-    transform: scaleY(0);
+    transform: scale(0);
   }
 }
 
@@ -143,8 +149,12 @@
   animation: minimize-bodies-reverse 300ms;
 }
 
+.framework-draggable-widget-bodies:has(> :empty) {
+  padding: 20px;
+}
+
 .framework-draggable-widget-bodies.draggable-widget-minimize {
-  animation: minimize-bodies-forward 200ms;
+  animation: minimize-bodies-forward 300ms;
 }
 
 .framework-draggable-widget-button-holder {
@@ -165,13 +175,16 @@
   right: 5px;
 }
 
+.framework-widget:has(.framework-draggable-widget-containers .framework-draggable-widget-bodies.draggable-widget-minimize) {
+  width: unset !important;
+  padding-right: 30px; /* allow closing animation of header */
+}
+
 .framework-draggable-widget-button-holder > .framework-draggable-widget-buttons:hover {
-  /* filter: brightness(100%) !important; */
   cursor: pointer;
 }
 
 .framework-draggable-widget-buttons {
-  /* filter: brightness(80%); */
   border-radius: 50%;
   display: inline-block;
 
@@ -189,5 +202,5 @@
 }
 
 .draggable-widget-minimize {
-  visibility: hidden;
+  display: none;
 }

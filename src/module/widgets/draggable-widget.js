@@ -9,7 +9,7 @@ export class DraggableWidget extends Widget {
     doCursorDrag;
     buttonHideTimeout = null;
     buttonColors = new Map();
-    constructor({ id, layer, positioning, pos, style, header = null, doCursorDragIcon, options, content, name }) {
+    constructor({ id, layer, positioning, pos, style, header = null, doCursorDragIcon = true, options, content, name }) {
         const container = document.createElement("div");
         super({
             id, layer, positioning, pos, style,
@@ -34,12 +34,15 @@ export class DraggableWidget extends Widget {
             if (!doCursorDragIcon) {
                 this.container.classList.add("no-cursor"); // don't show dragging indication
             }
+            title.style.background = header.background ?? "#999999";
+            titleEnd.style.background = header.background ?? "#999999";
+            this.header.style.color = header.color ?? "black";
             const buttons = document.createElement("div");
             buttons.classList.add("framework-draggable-widget-button-holder");
             for (const type in buttonDefaults) {
-                const options = header.buttons[type];
+                const options = ("buttons" in header ? header.buttons[type] : {});
                 const defOptions = buttonDefaults[type];
-                if (options?.show) {
+                if (options?.show ?? defOptions.show) {
                     const button = document.createElement("div");
                     button.classList.add(`framework-draggable-widget-${type}s`, "framework-draggable-widget-buttons");
                     button.setAttribute("title", type);
@@ -60,6 +63,10 @@ export class DraggableWidget extends Widget {
                     button.addEventListener("mouseenter", this.updateButtonColor.bind(this, button, type, "active"));
                     button.addEventListener("mouseleave", this.updateButtonColor.bind(this, button, type, "dormant"));
                     this.updateButtonColor(button, type, "dormant");
+                    button.addEventListener("mousedown", (e) => {
+                        e.stopPropagation(); // prevent dragging from button
+                        this.scene.layers.moveToTop(this); // still do select
+                    });
                     // fetch svg data
                     const src = `/module/icons/${options?.icon ?? defOptions.icon}`;
                     fetch(src).then(async (data) => {
@@ -72,6 +79,7 @@ export class DraggableWidget extends Widget {
                     });
                     switch (type) {
                         case "close":
+                            button.addEventListener("click", this.close.bind(this));
                             break;
                         case "collapse":
                             button.addEventListener("click", this.minimize.bind(this));
@@ -82,6 +90,8 @@ export class DraggableWidget extends Widget {
             title.append(buttons);
             title.addEventListener("mouseenter", this.showButtons.bind(this));
             title.addEventListener("mouseleave", this.hideButtons.bind(this));
+            titleEnd.addEventListener("mouseenter", this.showButtons.bind(this));
+            titleEnd.addEventListener("mouseleave", this.hideButtons.bind(this));
         }
         this.body = document.createElement("div");
         this.body.classList.add("framework-draggable-widget-bodies");
@@ -97,7 +107,10 @@ export class DraggableWidget extends Widget {
         if (this.header) {
             this.draggable = new Draggable({
                 viewport: scene.element,
-                element: this.header,
+                element: [
+                    this.header.querySelector(".framework-draggable-widget-titles"),
+                    this.header.querySelector(".framework-draggable-widget-title-ends")
+                ],
                 periphery: [this.container],
                 zoomable: false,
                 blockScroll: false
@@ -106,6 +119,7 @@ export class DraggableWidget extends Widget {
             this.draggable.listener.on("dragInit", this.dragInit.bind(this));
             this.draggable.listener.on("drag", this.drag.bind(this));
             this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
+            this.draggable.listener.on("selected", () => { this.scene.layers.moveToTop(this); });
         }
     }
     dragInit() {
@@ -123,6 +137,9 @@ export class DraggableWidget extends Widget {
     }
     minimize() {
         this.body.classList.toggle("draggable-widget-minimize");
+    }
+    close() {
+        this.detachFrom(this.scene);
     }
     showButtons() {
         if (this.buttonHideTimeout != null) { // stop timeout

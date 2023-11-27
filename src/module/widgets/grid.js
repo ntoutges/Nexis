@@ -10,7 +10,8 @@ export class GridWidget extends Widget {
     doCursorDrag;
     doInitCenter;
     offset = { x: 0, y: 0 };
-    constructor({ id, style, options = {}, layer, positioning = 0, doCursorDragIcon = false, doIndependentCenter = false }) {
+    constructor({ id, style, options = {}, layer = -1, // default: behind everything
+    positioning = 0, doCursorDragIcon = false, doIndependentCenter = false }) {
         const canvas = document.createElement("canvas");
         super({
             name: "grid",

@@ -2,7 +2,7 @@
 import { Listener } from "./listener.js";
 export class Draggable {
     isDragging = false;
-    element;
+    elements;
     // measured in px
     mouseOffset = { x: 0, y: 0 };
     pos = { x: 0, y: 0, z: 1 }; // z represents (z)oom
@@ -21,13 +21,26 @@ export class Draggable {
         this.blockDrag = blockDrag;
         this.blockScroll = blockScroll;
         setTimeout(() => {
-            element.addEventListener("mousedown", this.initDrag.bind(this));
             viewport.addEventListener("mousemove", this.doDrag.bind(this));
             viewport.addEventListener("mouseup", this.endDrag.bind(this));
-            element.addEventListener("wheel", this.onScroll.bind(this));
+            if (Array.isArray(element)) {
+                if (element.length == 0)
+                    throw new Error("Draggable must have at least one [element] (got 0)");
+                for (const el of element) {
+                    el.addEventListener("mousedown", this.initDrag.bind(this));
+                    el.addEventListener("wheel", this.onScroll.bind(this));
+                }
+            }
+            else {
+                element.addEventListener("mousedown", this.initDrag.bind(this));
+                element.addEventListener("wheel", this.onScroll.bind(this));
+            }
             for (const el of periphery) {
                 if (this.blockDrag)
-                    el.addEventListener("mousedown", (e) => { e.stopPropagation(); });
+                    el.addEventListener("mousedown", (e) => {
+                        e.stopPropagation();
+                        this.listener.trigger("selected", this);
+                    });
                 if (this.blockScroll)
                     el.addEventListener("wheel", (e) => { e.stopPropagation(); });
             }
@@ -38,7 +51,7 @@ export class Draggable {
         this.scrollX = scrollX;
         this.scrollY = scrollY;
         this.zoomable = zoomable;
-        this.element = element;
+        this.elements = Array.isArray(element) ? element : [element];
         this.listener.setPollingOptions("resize", this.updateBounds.bind(this));
     }
     initDrag(e) {
@@ -49,6 +62,7 @@ export class Draggable {
         this.mouseOffset.x = e.pageX;
         this.mouseOffset.y = e.pageY;
         this.listener.trigger("dragInit", this);
+        this.listener.trigger("selected", this);
     }
     doDrag(e) {
         if (!this.isDragging)
@@ -89,7 +103,7 @@ export class Draggable {
         if (this.blockScroll)
             e.stopPropagation();
         // exact position of cursor actually matters here, rather than just difference in position
-        const bounds = this.element.getBoundingClientRect();
+        const bounds = this.getBoundingClientRect();
         const localX = e.pageX - bounds.left;
         const localY = e.pageY - bounds.top;
         const dir = (e.deltaY > 0) ? 1 : -1;
@@ -101,13 +115,38 @@ export class Draggable {
         this.listener.trigger("scroll", this);
     }
     updateBounds() {
-        const width = this.element.offsetWidth;
-        const height = this.element.offsetHeight;
+        const { width, height } = this.getBoundingClientRect();
+        // console.log(width,height)
         if (width == this.bounds.width && height == this.bounds.height)
             return null; // no difference
         this.bounds.width = width;
         this.bounds.height = height;
         return this; // truthy/there *was* a difference
+    }
+    getBoundingClientRect() {
+        let minX = null;
+        let maxX = null;
+        let minY = null;
+        let maxY = null;
+        let minRight = null;
+        let minBottom = null;
+        for (const el of this.elements) {
+            const bounds = el.getBoundingClientRect();
+            minX = Math.min(minX, bounds.left);
+            maxX = Math.max(maxX, bounds.left + bounds.width);
+            minY = Math.min(minY, bounds.top);
+            maxY = Math.max(maxY, bounds.top + bounds.height);
+            minRight = Math.min(minRight, bounds.right);
+            minBottom = Math.min(minBottom, bounds.bottom);
+        }
+        return {
+            top: minY,
+            bottom: minBottom,
+            left: minX,
+            right: minRight,
+            width: maxX - minX,
+            height: maxY - minY,
+        };
     }
     offsetBy(x, y) {
         this.pos.x -= Math.round(x);

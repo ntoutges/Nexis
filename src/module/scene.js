@@ -2,12 +2,14 @@
 import { FrameworkBase } from "./framework.js";
 import { Draggable } from "./draggable.js";
 import { Listener } from "./listener.js";
+import { Layers } from "./widgets/layers.js";
 var sceneIdentifiers = 0;
 export class Scene extends FrameworkBase {
     draggable;
     identifier = sceneIdentifiers++;
     elListener = new Listener();
     widgets = [];
+    layers = new Layers();
     constructor({ id = null, parent = null, options = {}, style, widgets = [], doStartCentered = false }) {
         super({
             name: "scene",
@@ -21,9 +23,9 @@ export class Scene extends FrameworkBase {
             scrollY: options?.scrollY ?? true,
             zoomable: options?.zoomable ?? true
         });
+        this.layers.onMove((type, zIndex) => { type.setZIndex(zIndex); });
         for (const widget of widgets) {
-            widget.attachTo(this);
-            this.widgets.push(widget);
+            this.addWidget(widget);
         }
         this.onD("drag", this.updateWidgetPosition.bind(this));
         this.onD("scroll", this.updateWidgetPositionAndScale.bind(this));
@@ -33,13 +35,15 @@ export class Scene extends FrameworkBase {
     addWidget(widget) {
         widget.attachTo(this);
         this.widgets.push(widget);
+        this.layers.add(widget);
     }
     removeWidget(widget) {
-        widget.detachFrom(this);
         const index = this.widgets.indexOf(widget);
         if (index == -1)
             return; // widget doesn't exist in the scene
         this.widgets.splice(index, 1); // remove widget from list
+        this.layers.remove(widget);
+        widget.detachFrom(this);
     }
     /**
      * On (E)lement event

@@ -4,6 +4,7 @@ import { FrameworkBaseInterface } from "./interfaces.js";
 
 export class FrameworkBase {
   protected el: HTMLDivElement = document.createElement("div");
+  readonly name: string;
 
   constructor({
     name,
@@ -12,6 +13,8 @@ export class FrameworkBase {
     children = [],
     style
   }: FrameworkBaseInterface) {
+    this.name = name;
+
     this.el.classList.add("frameworks");
     const names = name.split(" ");
     for (const partialName of names) {

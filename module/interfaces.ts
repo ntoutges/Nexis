@@ -32,8 +32,8 @@ export interface SceneInterface extends CommonFrameworkInterface{
 
 export interface ScrollableInterface {
   viewport: HTMLElement
-  element: HTMLElement,
-  periphery?: HTMLElement[],
+  element: HTMLElement | HTMLElement[]
+  periphery?: HTMLElement[]
   scrollX?: boolean
   scrollY?: boolean
   zoomable?: boolean
@@ -43,4 +43,4 @@ export interface ScrollableInterface {
 
 export type basicListener = () => void;
 export type draggableListener = (draggable: Draggable) => void;
-export type DraggableEvents = "init" | "dragInit" | "dragEnd" | "drag" | "scroll" | "resize";
+export type DraggableEvents = "init" | "dragInit" | "dragEnd" | "drag" | "selected" | "scroll" | "resize";

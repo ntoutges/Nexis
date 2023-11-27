@@ -13,8 +13,8 @@ export class Widget extends FrameworkBase {
     sceneListenerIds = new Map(); // keep track of sceneListener ids
     transformations = new Map();
     scene = null;
+    layer; // used to store layer until attached to a scene
     positioning;
-    layer;
     pos = { x: 0, y: 0 };
     align = { x: 0, y: 0 };
     constructor({ id, name, style, content, positioning = 1, layer = 0, pos = {} }) {
@@ -24,7 +24,7 @@ export class Widget extends FrameworkBase {
             style, id
         });
         this.positioning = positioning;
-        this.setLayer(layer);
+        this.layer = layer;
         this.align.x = alignmentMap[pos?.xAlign ?? "left"];
         this.align.y = alignmentMap[pos?.yAlign ?? "top"];
         this.setPos(pos?.x ?? 0, pos?.y ?? 0);
@@ -44,6 +44,8 @@ export class Widget extends FrameworkBase {
         this.sceneListeners.set(type, sceneListener);
     }
     attachTo(scene) {
+        if (this.scene)
+            this.detachFrom(this.scene);
         this.scene = scene;
         this.setZoom(scene.draggable.pos.z);
         for (const [type, listener] of this.sceneListeners.entries()) {
@@ -74,28 +76,25 @@ export class Widget extends FrameworkBase {
                     console.log(`Invalid SceneListenerType ${type}`);
             }
         }
+        scene.layers.setLayer(this, this.layer);
         scene.element.append(this.el);
     }
     detachFrom(scene) {
-        if (!this.sceneListenerIds.has(scene.identifier))
-            return; // no ids set
-        if (this.scene == scene)
-            this.scene = null;
-        for (const listenerId of this.sceneListenerIds.get(scene.identifier)) {
-            scene.off(listenerId);
+        if (this.scene != scene)
+            return; // scenes don't match
+        this.scene = null;
+        if (this.sceneListenerIds.has(scene.identifier)) {
+            for (const listenerId of this.sceneListenerIds.get(scene.identifier)) {
+                scene.off(listenerId);
+            }
         }
+        this.el.remove();
+        scene.removeWidget(this);
     }
     saveId(sceneIdentifier, callbackId) {
         if (!this.sceneListenerIds.has(sceneIdentifier))
             this.sceneListenerIds.set(sceneIdentifier, []);
         this.sceneListenerIds.get(sceneIdentifier).push(callbackId);
-    }
-    setLayer(layer) {
-        this.layer = layer;
-        this.el.style.zIndex = this.layer.toString();
-        if (this.layer > maxLayer) {
-            maxLayer = this.layer;
-        }
     }
     setTransformation(property, value = "") {
         if (value.length == 0)
@@ -111,8 +110,8 @@ export class Widget extends FrameworkBase {
         }
         this.el.style.transform = transformations.join(",");
     }
-    bringToTop() {
-        this.setLayer(maxLayer + 1);
+    setZIndex(zIndex) {
+        this.el.style.zIndex = zIndex.toString();
     }
 }
 //# sourceMappingURL=widget.js.map

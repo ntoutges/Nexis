@@ -19,13 +19,13 @@ export class GridWidget extends Widget {
   constructor({
     id,style,
     options = {},
-    layer,
+    layer=-1, // default: behind everything
     positioning = 0,
     doCursorDragIcon = false,
     doIndependentCenter = false
   }: GridWidgetInterface) {
     const canvas = document.createElement("canvas");
-
+    
     super({
       name: "grid",
       content: canvas,

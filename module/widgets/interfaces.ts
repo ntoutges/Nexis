@@ -12,7 +12,7 @@ export interface CommonWidgetInterface extends CommonFrameworkInterface {
     y?: number,
     xAlign?: "left" | "middle" | "right",
     yAlign?: "top" | "middle" | "bottom"
-  }
+  },
 }
 
 export interface BasicWidgetInterface extends CommonWidgetInterface {
@@ -43,7 +43,9 @@ export interface DraggableWidgetInterface extends BasicWidgetInterface {
   }
   header?: {
     title?: string
-    buttons?: Record<buttonTypes, Partial<headerOption>>
+    buttons?: Record<buttonTypes, Partial<headerOption>>,
+    background?: string,
+    color?: string
   }
   doCursorDragIcon?: boolean
 }

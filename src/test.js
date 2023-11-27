@@ -23,7 +23,8 @@ const scene = new Scene({
             style: {
                 background: "cornsilk"
             },
-            doCursorDragIcon: false
+            doCursorDragIcon: true,
+            layer: -1
         }),
         new BlockWidget({
             positioning: 1,
@@ -54,30 +55,35 @@ const scene = new Scene({
         }),
         new DraggableWidget({
             content: document.createElement("div"),
-            name: "Default",
-            pos: {
-                x: 100,
-                y: 100,
-                xAlign: "middle",
-                yAlign: "middle"
-            },
+            name: "Bottom1",
             header: {
-                title: "Test of some text",
-                buttons: {
-                    close: {
-                        show: true
-                    },
-                    collapse: {
-                        show: true
-                    }
-                }
+                title: "Bottom1",
             },
             style: {
-                width: "200px",
-                // height: "200px"
+                width: "150px"
+            }
+        }),
+        new DraggableWidget({
+            content: document.createElement("div"),
+            name: "Bottom2",
+            header: {
+                title: "Bottom2",
             },
-            doCursorDragIcon: true,
-        })
-    ]
+            style: {
+                width: "150px"
+            }
+        }),
+        new DraggableWidget({
+            content: document.createElement("div"),
+            name: "Top",
+            header: {
+                title: "Top",
+            },
+            style: {
+                width: "200px"
+            },
+            positioning: 1 // TODO: make this NOT affect dragging
+        }),
+    ],
 });
 //# sourceMappingURL=test.js.map

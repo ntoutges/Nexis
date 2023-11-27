@@ -5,6 +5,7 @@ import { DraggableEvents, SceneInterface, draggableListener } from "./interfaces
 import { Draggable } from "./draggable.js";
 import { Listener } from "./listener.js";
 import { Widget } from "./widgets/widget.js";
+import { Layers } from "./widgets/layers.js";
 
 var sceneIdentifiers = 0;
 
@@ -14,6 +15,8 @@ export class Scene extends FrameworkBase {
 
   private readonly elListener = new Listener<string, Event>();
   private readonly widgets: Widget[] = [];
+
+  readonly layers = new Layers<Widget>();
 
   constructor({
     id = null,
@@ -37,9 +40,9 @@ export class Scene extends FrameworkBase {
       zoomable: options?.zoomable ?? true
     });
 
+    this.layers.onMove((type, zIndex) => { type.setZIndex(zIndex); });
     for (const widget of widgets) {
-      widget.attachTo(this);
-      this.widgets.push(widget);
+      this.addWidget(widget);
     }
 
     this.onD("drag", this.updateWidgetPosition.bind(this));
@@ -50,13 +53,15 @@ export class Scene extends FrameworkBase {
   addWidget(widget: Widget) {
     widget.attachTo(this);
     this.widgets.push(widget);
+    this.layers.add(widget);
   }
 
   removeWidget(widget: Widget) {
-    widget.detachFrom(this);
     const index = this.widgets.indexOf(widget);
     if (index == -1) return; // widget doesn't exist in the scene
     this.widgets.splice(index,1); // remove widget from list
+    this.layers.remove(widget);
+    widget.detachFrom(this);
   }
 
   /**
