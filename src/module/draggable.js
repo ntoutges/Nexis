@@ -132,12 +132,18 @@ export class Draggable {
         let minBottom = null;
         for (const el of this.elements) {
             const bounds = el.getBoundingClientRect();
-            minX = Math.min(minX, bounds.left);
-            maxX = Math.max(maxX, bounds.left + bounds.width);
-            minY = Math.min(minY, bounds.top);
-            maxY = Math.max(maxY, bounds.top + bounds.height);
-            minRight = Math.min(minRight, bounds.right);
-            minBottom = Math.min(minBottom, bounds.bottom);
+            if (minX == null || bounds.left < minX)
+                minX = bounds.left;
+            if (maxX == null || bounds.left + bounds.width > maxX)
+                maxX = bounds.left + bounds.width;
+            if (minY == null || bounds.top < minY)
+                minY = bounds.top;
+            if (maxY == null || bounds.top + bounds.height > maxY)
+                maxY = bounds.top + bounds.height;
+            if (minRight == null || bounds.right < minRight)
+                minRight = bounds.right;
+            if (minBottom == null || bounds.bottom < minBottom)
+                minBottom = bounds.bottom;
         }
         return {
             top: minY,

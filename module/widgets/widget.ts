@@ -27,11 +27,13 @@ export class Widget extends FrameworkBase {
   readonly pos = { x:0, y:0 };
   readonly align = { x:0, y:0 };
 
+  readonly name: string;
+
   constructor({
     id,name,style,
     content,
     positioning = 1,
-    layer = 0,
+    layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
     pos = {}
   }: BasicWidgetInterface) {
     super({
@@ -39,6 +41,8 @@ export class Widget extends FrameworkBase {
       children: [content],
       style,id
     });
+
+    this.name = name;
 
     this.positioning = positioning;
     this.layer = layer;

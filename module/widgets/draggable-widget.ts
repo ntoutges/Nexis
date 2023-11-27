@@ -12,6 +12,7 @@ export class DraggableWidget extends Widget {
   private draggable: Draggable = null;
   private doCursorDrag: boolean;
   private buttonHideTimeout: number = null;
+  private minimizeTimeout: number = null;
 
   private readonly buttonColors = new Map<buttonTypes, {
     dormant: { fill: string, highlight: string }
@@ -178,6 +179,20 @@ export class DraggableWidget extends Widget {
 
   protected minimize() {
     this.body.classList.toggle("draggable-widget-minimize");
+    if (this.body.classList.contains("draggable-widget-minimize")) {
+      if (this.minimizeTimeout != null) return; // timeout already in progress
+      this.minimizeTimeout = setTimeout(() => {
+        this.el.classList.add("is-minimized");
+        this.minimizeTimeout = null;
+      }, 300);
+    }
+    else {
+      if (this.minimizeTimeout != null) { // timeout in progress
+        clearTimeout(this.minimizeTimeout);
+        this.minimizeTimeout = null;
+      }
+      this.el.classList.remove("is-minimized");
+    }
   }
 
   protected close() {

@@ -77,12 +77,15 @@ export class Scene extends FrameworkBase {
         this.updateIndividualWidgetPosition(widget);
     }
     updateIndividualWidgetPosition(widget) {
-        if (widget.positioning == 0)
-            return; // no point in trying to multiply by 0
-        const [cX, cY] = this.draggable.toScreenSpace(widget.pos.x, widget.pos.y);
+        const [cX1, cY1] = this.draggable.toScreenSpace(widget.pos.x, widget.pos.y);
+        const cX = widget.pos.x * (1 - widget.positioning) + cX1 * widget.positioning;
+        const cY = widget.pos.y * (1 - widget.positioning) + cY1 * widget.positioning;
+        const [x, y] = this.draggable.toScreenSpace(0, 0);
+        const offX = cX - x * widget.positioning;
+        const offY = cY - y * widget.positioning;
         const bounds = widget.calculateBounds(this.draggable.pos.z);
-        const sX = cX * widget.positioning - widget.align.x * bounds.width;
-        const sY = cY * widget.positioning - widget.align.y * bounds.height;
+        const sX = x * widget.positioning + offX - widget.align.x * bounds.width;
+        const sY = y * widget.positioning + offY - widget.align.y * bounds.height;
         // outside viewable bounds
         if (sX + bounds.width <= 0
             || sX >= this.draggable.bounds.width

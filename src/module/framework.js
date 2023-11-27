@@ -1,9 +1,7 @@
 // basis for everything in the module
 export class FrameworkBase {
     el = document.createElement("div");
-    name;
     constructor({ name, parent = null, id = null, children = [], style }) {
-        this.name = name;
         this.el.classList.add("frameworks");
         const names = name.split(" ");
         for (const partialName of names) {

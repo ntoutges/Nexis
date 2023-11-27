@@ -6,3 +6,9 @@ body {
   background-color: cornsilk;
   overflow: hidden;
 }
+
+#sandbox {
+  width: 100vw;
+  height: 100vh;
+  
+}

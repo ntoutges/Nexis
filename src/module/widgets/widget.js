@@ -17,12 +17,15 @@ export class Widget extends FrameworkBase {
     positioning;
     pos = { x: 0, y: 0 };
     align = { x: 0, y: 0 };
-    constructor({ id, name, style, content, positioning = 1, layer = 0, pos = {} }) {
+    name;
+    constructor({ id, name, style, content, positioning = 1, layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
+    pos = {} }) {
         super({
             name: `${name}-widget widget`,
             children: [content],
             style, id
         });
+        this.name = name;
         this.positioning = positioning;
         this.layer = layer;
         this.align.x = alignmentMap[pos?.xAlign ?? "left"];

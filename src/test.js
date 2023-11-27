@@ -1,13 +1,13 @@
 import { GridWidget } from "./module/widgets/grid.js";
 import { Scene } from "./module/scene.js";
-import { BlockWidget } from "./module/widgets/block.js";
 import { DraggableWidget } from "./module/widgets/draggable-widget.js";
 const $ = document.querySelector.bind(document);
+const sceneHolder = document.createElement("div");
 const scene = new Scene({
     parent: $("#sandbox"),
     style: {
-        width: "100vw",
-        height: "100vh",
+        // width: "100vw",
+        // height: "100vh",
         background: "white"
     },
     doStartCentered: true,
@@ -26,64 +26,52 @@ const scene = new Scene({
             doCursorDragIcon: true,
             layer: -1
         }),
-        new BlockWidget({
-            positioning: 1,
-            pos: {
-                x: 0,
-                y: 0,
-                xAlign: "middle",
-                yAlign: "middle"
-            },
-            style: {
-                background: "grey"
-            }
-        }),
-        new BlockWidget({
-            positioning: 1,
-            pos: {
-                x: 0,
-                y: 0,
-                xAlign: "middle",
-                yAlign: "middle"
-            },
-            style: {
-                border: "black solid",
-                background: "transparent",
-                width: "55px",
-                height: "55px"
-            }
-        }),
+        // new DraggableWidget({
+        //   content: document.createElement("div"),
+        //   name: "Bottom1",
+        //   header: {
+        //     title: "Bottom1",
+        //   },
+        //   style: {
+        //     width: "150px",
+        //     height: "50%"
+        //   }
+        // }),
         new DraggableWidget({
-            content: document.createElement("div"),
-            name: "Bottom1",
-            header: {
-                title: "Bottom1",
-            },
-            style: {
-                width: "150px"
-            }
-        }),
-        new DraggableWidget({
-            content: document.createElement("div"),
+            content: sceneHolder,
             name: "Bottom2",
             header: {
                 title: "Bottom2",
             },
             style: {
-                width: "150px"
-            }
-        }),
-        new DraggableWidget({
-            content: document.createElement("div"),
-            name: "Top",
-            header: {
-                title: "Top",
+                width: "50%",
+                height: "50%"
             },
-            style: {
-                width: "200px"
-            },
-            positioning: 1 // TODO: make this NOT affect dragging
+            positioning: 1
         }),
+        // new DraggableWidget({
+        //   content: document.createElement("div"),
+        //   name: "Top",
+        //   header: {
+        //     title: "Top",
+        //   },
+        //   style: {
+        //     width: "200px"
+        //   },
+        //   positioning: 0
+        // }),
     ],
+});
+sceneHolder.style.width = "100%";
+sceneHolder.style.height = "100%";
+// TODO: fix problem in "gridception" where zooming confuses the inner grid
+const scene2 = new Scene({
+    parent: sceneHolder,
+    widgets: [
+        new GridWidget({
+            doCursorDragIcon: true
+        })
+    ],
+    doStartCentered: true
 });
 //# sourceMappingURL=test.js.map
