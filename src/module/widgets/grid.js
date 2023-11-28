@@ -9,9 +9,10 @@ export class GridWidget extends Widget {
     coords;
     doCursorDrag;
     doInitCenter;
+    gridChangeScaleFactor;
     offset = { x: 0, y: 0 };
     constructor({ id, style, options = {}, layer = -1, // default: behind everything
-    positioning = 0, doCursorDragIcon = false, doIndependentCenter = false }) {
+    positioning = 0, doCursorDragIcon = false, doIndependentCenter = false, gridChangeScaleFactor = 0.4 }) {
         const canvas = document.createElement("canvas");
         super({
             name: "grid",
@@ -22,11 +23,12 @@ export class GridWidget extends Widget {
         });
         this.step = Math.max(options?.grid?.size, 10) || 50;
         this.gridColor = options?.grid?.color || "lightgrey";
-        this.megaStep = Math.max(options?.megagrid?.size, 2) || 3;
+        this.megaStep = Math.max(options?.megagrid?.size, 2) || 5;
         this.megaGridColor = options?.megagrid?.color || "grey";
         this.coords = options?.coords ?? false;
         this.doCursorDrag = doCursorDragIcon;
         this.doInitCenter = doIndependentCenter;
+        this.gridChangeScaleFactor = gridChangeScaleFactor;
         if (!this.doCursorDrag)
             this.el.classList.add("no-cursor");
         this.canvas = canvas;
@@ -41,15 +43,27 @@ export class GridWidget extends Widget {
         this.drawGrid(d.pos.x, d.pos.y, d.bounds.width, d.bounds.height, d.pos.z);
     }
     resize(d) {
-        this.canvas.setAttribute("width", `${d.bounds.width}px`);
-        this.canvas.setAttribute("height", `${d.bounds.height}px`);
+        // align with real pixels
+        this.canvas.setAttribute("width", `${d.bounds.sWidth}px`);
+        this.canvas.setAttribute("height", `${d.bounds.sHeight}px`);
+        // set width based on DOM
+        this.canvas.style.width = `${d.bounds.width}px`;
+        this.canvas.style.height = `${d.bounds.height}px`;
+        if (d.bounds.width != 0 && d.bounds.height != 0) { // only resize if non-NaN scale-factor
+            // const scaleX = d.bounds.sWidth / d.bounds.width;
+            const scaleY = d.bounds.sHeight / d.bounds.height;
+            // set canvas scale (now, 1px on canvs doesn't exactly correspond to 1px on screen)
+            this.ctx.setTransform(1, 0, 0, 1, 0, 0); // reset scaling (apparently?)
+            this.ctx.scale(d.scale, scaleY);
+        }
         this.drawGrid(d.pos.x, d.pos.y, d.bounds.width, d.bounds.height, d.pos.z);
     }
     drawGrid(xOff, yOff, width, height, zoom) {
         this.ctx.clearRect(0, 0, width, height);
         const xAdj = (xOff - this.offset.x) * zoom;
         const yAdj = (yOff - this.offset.y) * zoom;
-        const localStep = this.step * zoom;
+        const scale = (1 / this.gridChangeScaleFactor) ** Math.floor(Math.log(zoom) / Math.log(this.gridChangeScaleFactor)); // magic maths that gets the answer!
+        const localStep = this.step * zoom * scale;
         // standard grid
         this.ctx.beginPath();
         this.ctx.lineWidth = 1;
@@ -63,7 +77,7 @@ export class GridWidget extends Widget {
         this.ctx.stroke();
         // megagrid
         this.ctx.beginPath();
-        this.ctx.lineWidth = 3;
+        this.ctx.lineWidth = 2;
         this.ctx.strokeStyle = this.megaGridColor;
         for (let x = -xAdj % (localStep * this.megaStep); x < width; x += localStep * this.megaStep) {
             this.vLine(x, height);
@@ -75,7 +89,7 @@ export class GridWidget extends Widget {
         // draw x axis
         if (yAdj <= 0 && yAdj >= -height) {
             this.ctx.beginPath();
-            this.ctx.lineWidth = 4;
+            this.ctx.lineWidth = 2;
             this.ctx.strokeStyle = "red";
             this.hLine(-yAdj, width);
             this.ctx.stroke();
@@ -83,7 +97,7 @@ export class GridWidget extends Widget {
         // draw y axis
         if (xAdj <= 0 && xAdj >= -width) {
             this.ctx.beginPath();
-            this.ctx.lineWidth = 4;
+            this.ctx.lineWidth = 2;
             this.ctx.strokeStyle = "seagreen";
             this.vLine(-xAdj, height);
             this.ctx.stroke();

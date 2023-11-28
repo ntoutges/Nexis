@@ -11,13 +11,20 @@ export class Draggable {
   private readonly mouseOffset = { x: 0, y: 0 };
   readonly pos = { x: 0, y: 0, z: 1 }; // z represents (z)oom
   readonly delta = { x: 0, y: 0, z: 0 };
-  readonly bounds = { width: 0, height: 0 };
+  readonly bounds = {
+    width: 0,
+    height: 0,
+    sWidth: 0,
+    sHeight: 0
+  };
 
   private scrollX: boolean;
   private scrollY: boolean;
   private zoomable: boolean;
   private blockDrag: boolean;
   private blockScroll: boolean;
+
+  scale: number = 1;
 
   readonly listener = new Listener<DraggableEvents, Draggable>();
 
@@ -34,7 +41,17 @@ export class Draggable {
     this.blockDrag = blockDrag;
     this.blockScroll = blockScroll;
 
-    setTimeout(() => { // force this to run after rest of parent object has finished initializing
+    let hasResized = false;
+    const initResizeId = this.listener.on("resize", () => { hasResized = true; });
+    const initInterval = setInterval(() => { // force this to run after rest of parent object has finished initializing // loop until resize HASN'T been triggered
+      if (hasResized) { // go for another itteration
+        hasResized = false;
+        return;
+      }
+      this.listener.setPollingInterval("resize", 400); // can now afford to slow down
+      this.listener.off(initResizeId);
+      clearInterval(initInterval); // prevent more repeat
+      
       viewport.addEventListener("mousemove", this.doDrag.bind(this));
       viewport.addEventListener("mouseup", this.endDrag.bind(this));
       
@@ -60,8 +77,7 @@ export class Draggable {
 
       this.updateBounds();
       this.listener.setAutoResponse("init", this);
-    }, 1);
-    // element.addEventListener("mouseleave", this.endDrag.bind(this));
+    }, 40);
 
     this.scrollX = scrollX;
     this.scrollY = scrollY;
@@ -69,7 +85,7 @@ export class Draggable {
 
     this.elements = Array.isArray(element) ? element : [element];
 
-    this.listener.setPollingOptions("resize", this.updateBounds.bind(this));
+    this.listener.setPollingOptions("resize", this.updateBounds.bind(this), 10); // initially go at HYPER SPEED to detect the smallest change
   }
 
   protected initDrag(e: MouseEvent) {
@@ -89,13 +105,13 @@ export class Draggable {
     if (this.scrollX) {
       this.delta.x = (this.mouseOffset.x - e.pageX) / this.pos.z;
       if (this.delta.x != 0) didMove = true;
-      this.pos.x += this.delta.x;
+      this.pos.x += this.delta.x / this.scale;
       this.mouseOffset.x = e.pageX;
     }
     if (this.scrollY) {
       this.delta.y = (e.pageY - this.mouseOffset.y) / this.pos.z;
       if (this.delta.y != 0) didMove = true;
-      this.pos.y -= this.delta.y;
+      this.pos.y -= this.delta.y / this.scale;
       this.mouseOffset.y = e.pageY;
     }
 
@@ -118,9 +134,9 @@ export class Draggable {
     // exact position of cursor actually matters here, rather than just difference in position
 
     const bounds = this.getBoundingClientRect();
-    const localX = e.pageX - bounds.left;
-    const localY = e.pageY - bounds.top;
-
+    const localX = (e.pageX - bounds.left) / this.scale;
+    const localY = (e.pageY - bounds.top) / this.scale;
+    
     const dir = (e.deltaY > 0) ? 1 : -1;
 
     this.pos.x += localX / this.pos.z;
@@ -133,40 +149,63 @@ export class Draggable {
   }
 
   protected updateBounds() {
-    const { width,height } = this.getBoundingClientRect();
-    // console.log(width,height)
+    const bounds = this.getBoundingClientRect();
 
-    if (width == this.bounds.width && height == this.bounds.height) return null; // no difference
-    this.bounds.width = width;
-    this.bounds.height = height;
+    if (
+      bounds.width == this.bounds.width
+      && bounds.height == this.bounds.height
+      && bounds.sWidth == this.bounds.sWidth
+      && bounds.sHeight == this.bounds.sHeight
+    ) return null; // no difference
+
+    this.bounds.width = bounds.width;
+    this.bounds.height = bounds.height;
+    this.bounds.sWidth = bounds.sWidth;
+    this.bounds.sHeight = bounds.sHeight;
     return this; // truthy/there *was* a difference
   }
 
   getBoundingClientRect() {
     let minX: number = null;
     let maxX: number = null;
+    let maxScaledX: number = null; // used to determine scaled width
     let minY: number = null;
     let maxY: number = null;
+    let maxScaledY: number = null; // used to determine scaled width
     let minRight: number = null;
     let minBottom: number = null;
 
     for (const el of this.elements) {
       const bounds = el.getBoundingClientRect();
+      const unscaledWidth = el.clientWidth;
+      const unscaledHeight = el.clientHeight;
       if (minX == null || bounds.left < minX) minX = bounds.left;
-      if (maxX == null || bounds.left + bounds.width > maxX) maxX = bounds.left + bounds.width;
+      if (maxX == null || bounds.left + unscaledWidth > maxX) maxX = bounds.left + unscaledWidth;
+      if (maxScaledX == null || bounds.left + bounds.width > maxScaledX) maxScaledX = bounds.left + bounds.width;
       if (minY == null || bounds.top < minY) minY = bounds.top;
-      if (maxY == null || bounds.top + bounds.height > maxY) maxY = bounds.top + bounds.height;
+      if (maxY == null || bounds.top + unscaledHeight > maxY) maxY = bounds.top + unscaledHeight;
+      if (maxScaledY == null || bounds.top + bounds.width > maxScaledY) maxScaledY = bounds.top + bounds.width;
       if (minRight == null || bounds.right < minRight) minRight = bounds.right;
       if (minBottom == null || bounds.bottom < minBottom) minBottom = bounds.bottom;
     }
+
+    // width ignoring any scaling (use for element dim decisions); SIZE IN DOM
+    const width = maxX - minX;
+    const height = maxY - minY;
+
+    // width taking into account scaling (use for canvas dim decisions); SIZE ON SCREEN
+    const sWidth = maxScaledX - minX;
+    const sHeight = maxScaledY - minY;
+
+    this.scale = sWidth / width;
 
     return {
       top: minY,
       bottom: minBottom,
       left: minX,
       right: minRight,
-      width: maxX - minX,
-      height: maxY - minY,
+      width,height,
+      sWidth,sHeight
     }
   }
 

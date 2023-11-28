@@ -132,6 +132,8 @@ export class DraggableWidget extends Widget {
     this.body.append(content);
 
     this.container.append(this.body);
+
+    this.addSceneListener("resize", (d) => { this.draggable.scale = d.scale; }); // allow gridception to work
   }
 
   setZoom(z: number) {

@@ -64,4 +64,5 @@ export interface GridWidgetInterface extends CommonWidgetInterface {
   }
   doCursorDragIcon?: boolean
   doIndependentCenter?: boolean
+  gridChangeScaleFactor?: number
 }

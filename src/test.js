@@ -3,7 +3,7 @@ import { Scene } from "./module/scene.js";
 import { DraggableWidget } from "./module/widgets/draggable-widget.js";
 const $ = document.querySelector.bind(document);
 const sceneHolder = document.createElement("div");
-const scene = new Scene({
+new Scene({
     parent: $("#sandbox"),
     style: {
         // width: "100vw",
@@ -49,27 +49,39 @@ const scene = new Scene({
             },
             positioning: 1
         }),
-        // new DraggableWidget({
-        //   content: document.createElement("div"),
-        //   name: "Top",
-        //   header: {
-        //     title: "Top",
-        //   },
-        //   style: {
-        //     width: "200px"
-        //   },
-        //   positioning: 0
-        // }),
+        new DraggableWidget({
+            content: document.createElement("div"),
+            name: "Top",
+            header: {
+                title: "Top",
+            },
+            style: {
+                width: "200px"
+            },
+            positioning: 1
+        }),
     ],
 });
 sceneHolder.style.width = "100%";
 sceneHolder.style.height = "100%";
-// TODO: fix problem in "gridception" where zooming confuses the inner grid
-const scene2 = new Scene({
+new Scene({
     parent: sceneHolder,
     widgets: [
         new GridWidget({
-            doCursorDragIcon: true
+            doCursorDragIcon: true,
+            doIndependentCenter: false,
+            style: {}
+        }),
+        new DraggableWidget({
+            content: document.createElement("div"),
+            name: "Top b",
+            header: {
+                title: "Top",
+            },
+            style: {
+                width: "200px"
+            },
+            positioning: 1
         })
     ],
     doStartCentered: true

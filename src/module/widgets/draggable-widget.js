@@ -98,6 +98,7 @@ export class DraggableWidget extends Widget {
         this.body.classList.add("framework-draggable-widget-bodies");
         this.body.append(content);
         this.container.append(this.body);
+        this.addSceneListener("resize", (d) => { this.draggable.scale = d.scale; }); // allow gridception to work
     }
     setZoom(z) {
         super.setZoom(z); // just in case this is eventually implemented in parent class

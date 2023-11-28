@@ -1,10 +1,12 @@
+import { SmartInterval } from "./smartInterval.js";
+
 export class Listener<Types, Data> {
   listenerIds: number = 0;
   private readonly listeners = new Map<Types, Map<number, (data: Data) => void>>();
   private readonly reserved = new Set<number>;
 
   private readonly pollingCallbacks = new Map<Types, [callback: () => (Data | null), period: number]>();
-  private readonly pollingIntervals = new Map<Types, number>(); // maps an event type to a polling interval
+  private readonly pollingIntervals = new Map<Types, SmartInterval>(); // maps an event type to a polling interval
 
   private readonly autoResponses = new Map<Types, Data>;
 
@@ -23,7 +25,7 @@ export class Listener<Types, Data> {
       const data = this.pollingCallbacks.get(type);
       this.pollingIntervals.set(
         type,
-        setInterval(() => {
+        new SmartInterval(() => {
           const output = data[0]();
           if (output !== null) this.trigger(type, output);
         }, data[1])
@@ -40,9 +42,23 @@ export class Listener<Types, Data> {
   setPollingOptions(
     type: Types,
     callback: () => (Data | null),
-    period: number = 400 // ms
+    period: number = null // ms
   ) {
-    this.pollingCallbacks.set(type, [ callback, period ]);
+    if (this.pollingIntervals.has(type)) { // modify existing SmartInterval
+      if (period != null) this.pollingIntervals.get(type).setInterval(period);
+      this.pollingIntervals.get(type).setCallback(callback);
+    }
+    this.pollingCallbacks.set(type, [ callback, period ?? 400 ]); // create new entry
+  }
+
+  setPollingInterval(
+    type: Types,
+    period: number
+  ) {
+    if (this.pollingIntervals.has(type)) { // modify existing SmartInterval
+      this.pollingIntervals.get(type).setInterval(period);
+    }
+    this.pollingCallbacks.set(type, [ () => { return null; }, period ?? 400 ]); // create new entry
   }
 
   /**
@@ -63,7 +79,8 @@ export class Listener<Types, Data> {
         if (this.listeners.get(type).size == 0) {
           this.listeners.delete(type); // remove listener callback
           if (this.pollingIntervals.has(type)) {
-            clearInterval(this.pollingIntervals.get(type)); // clear polling function
+            this.pollingIntervals.get(type).pause();
+            // clearInterval(this.pollingIntervals.get(type)); // clear polling function
             this.pollingIntervals.delete(type)
           }
         }
