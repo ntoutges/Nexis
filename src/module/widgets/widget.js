@@ -19,11 +19,12 @@ export class Widget extends FrameworkBase {
     align = { x: 0, y: 0 };
     name;
     constructor({ id, name, style, content, positioning = 1, layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
-    pos = {} }) {
+    pos = {}, resize }) {
         super({
             name: `${name}-widget widget`,
             children: [content],
-            style, id
+            style, id,
+            resize
         });
         this.name = name;
         this.positioning = positioning;
@@ -80,7 +81,7 @@ export class Widget extends FrameworkBase {
             }
         }
         scene.layers.setLayer(this, this.layer);
-        scene.element.append(this.el);
+        this.appendTo(scene.element);
     }
     detachFrom(scene) {
         if (this.scene != scene)

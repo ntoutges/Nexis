@@ -1,5 +1,5 @@
 import { Draggable } from "../draggable.js";
-import { getSvg } from "../svg.js";
+import { getIcon } from "../svg.js";
 import { buttonDefaults } from "./defaults.js";
 import { Widget } from "./widget.js";
 export class DraggableWidget extends Widget {
@@ -11,12 +11,13 @@ export class DraggableWidget extends Widget {
     buttonHideTimeout = null;
     minimizeTimeout = null;
     buttonColors = new Map();
-    constructor({ id, layer, positioning, pos, style, header = null, doCursorDragIcon = true, options, content, name }) {
+    constructor({ id, layer, positioning, pos, style, header = null, doCursorDragIcon = true, options, content, name, resize }) {
         const container = document.createElement("div");
         super({
             id, layer, positioning, pos, style,
             name,
-            content: container
+            content: container,
+            resize
         });
         this.container = container;
         this.container.classList.add("framework-draggable-widget-containers");
@@ -70,7 +71,7 @@ export class DraggableWidget extends Widget {
                         this.scene.layers.moveToTop(this); // still do select
                     });
                     // fetch svg data
-                    getSvg(`/module/icons/${options?.icon ?? defOptions.icon}`).then(svg => {
+                    getIcon(options?.icon ?? defOptions.icon).then(svg => {
                         button.append(svg);
                         svg.style.width = options?.size ?? defOptions.size;
                         svg.style.height = options?.size ?? defOptions.size;
@@ -104,21 +105,25 @@ export class DraggableWidget extends Widget {
     attachTo(scene) {
         super.attachTo(scene);
         if (this.header) {
-            this.draggable = new Draggable({
-                viewport: scene.element,
-                element: [
-                    this.header.querySelector(".framework-draggable-widget-titles"),
-                    this.header.querySelector(".framework-draggable-widget-title-ends")
-                ],
-                periphery: [this.container],
-                zoomable: false,
-                blockScroll: false
-            });
-            this.draggable.offsetBy(this.pos.x, this.pos.y);
-            this.draggable.listener.on("dragInit", this.dragInit.bind(this));
-            this.draggable.listener.on("drag", this.drag.bind(this));
-            this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
-            this.draggable.listener.on("selected", () => { this.scene.layers.moveToTop(this); });
+            if (!this.draggable) {
+                this.draggable = new Draggable({
+                    viewport: scene.element,
+                    element: [
+                        this.header.querySelector(".framework-draggable-widget-titles"),
+                        this.header.querySelector(".framework-draggable-widget-title-ends")
+                    ],
+                    periphery: [this.container],
+                    zoomable: false,
+                    blockScroll: false
+                });
+                this.draggable.offsetBy(this.pos.x, this.pos.y);
+                this.draggable.listener.on("dragInit", this.dragInit.bind(this));
+                this.draggable.listener.on("drag", this.drag.bind(this));
+                this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
+                this.draggable.listener.on("selected", () => { this.scene.layers.moveToTop(this); });
+            }
+            else
+                this.draggable.changeViewport(scene.element);
         }
     }
     dragInit() {

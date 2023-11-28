@@ -44,3 +44,7 @@ export async function getSvg(src: string): Promise<SVGSVGElement> {
   const svg = doc.parseFromString(response, "image/svg+xml").querySelector("svg");
   return svg;
 }
+
+export async function getIcon(src: string): Promise<SVGSVGElement> {
+  return getSvg(`/module/icons/${src}`);
+} 

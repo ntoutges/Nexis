@@ -39,4 +39,7 @@ export async function getSvg(src) {
     const svg = doc.parseFromString(response, "image/svg+xml").querySelector("svg");
     return svg;
 }
+export async function getIcon(src) {
+    return getSvg(`/module/icons/${src}`);
+}
 //# sourceMappingURL=svg.js.map

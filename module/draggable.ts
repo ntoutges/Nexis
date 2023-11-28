@@ -24,6 +24,10 @@ export class Draggable {
   private blockDrag: boolean;
   private blockScroll: boolean;
 
+  private viewport: HTMLElement;
+  private readonly doDragBound = this.doDrag.bind(this);
+  private readonly endDragBound = this.endDrag.bind(this);
+
   scale: number = 1;
 
   readonly listener = new Listener<DraggableEvents, Draggable>();
@@ -36,7 +40,7 @@ export class Draggable {
     scrollY = true,
     zoomable = true,
     blockDrag = true,
-    blockScroll = true
+    blockScroll = true,
   }: DraggableInterface) {
     this.blockDrag = blockDrag;
     this.blockScroll = blockScroll;
@@ -52,8 +56,7 @@ export class Draggable {
       this.listener.off(initResizeId);
       clearInterval(initInterval); // prevent more repeat
       
-      viewport.addEventListener("mousemove", this.doDrag.bind(this));
-      viewport.addEventListener("mouseup", this.endDrag.bind(this));
+      this.changeViewport(viewport);
       
       if (Array.isArray(element)) {
         if (element.length == 0) throw new Error("Draggable must have at least one [element] (got 0)");
@@ -103,15 +106,15 @@ export class Draggable {
     
     let didMove = false;
     if (this.scrollX) {
-      this.delta.x = (this.mouseOffset.x - e.pageX) / this.pos.z;
+      this.delta.x = (this.mouseOffset.x - e.pageX) / (this.pos.z * this.scale);
       if (this.delta.x != 0) didMove = true;
-      this.pos.x += this.delta.x / this.scale;
+      this.pos.x += this.delta.x;
       this.mouseOffset.x = e.pageX;
     }
     if (this.scrollY) {
-      this.delta.y = (e.pageY - this.mouseOffset.y) / this.pos.z;
+      this.delta.y = (e.pageY - this.mouseOffset.y) / (this.pos.z * this.scale);
       if (this.delta.y != 0) didMove = true;
-      this.pos.y -= this.delta.y / this.scale;
+      this.pos.y -= this.delta.y;
       this.mouseOffset.y = e.pageY;
     }
 
@@ -177,8 +180,8 @@ export class Draggable {
 
     for (const el of this.elements) {
       const bounds = el.getBoundingClientRect();
-      const unscaledWidth = el.clientWidth;
-      const unscaledHeight = el.clientHeight;
+      const unscaledWidth = el.offsetWidth;
+      const unscaledHeight = el.offsetHeight;
       if (minX == null || bounds.left < minX) minX = bounds.left;
       if (maxX == null || bounds.left + unscaledWidth > maxX) maxX = bounds.left + unscaledWidth;
       if (maxScaledX == null || bounds.left + bounds.width > maxScaledX) maxScaledX = bounds.left + bounds.width;
@@ -211,11 +214,12 @@ export class Draggable {
 
   offsetBy(
     x: number,
-    y: number
+    y: number,
+    triggerDrag: boolean = true
   ) {
     this.pos.x -= Math.round(x);
     this.pos.y -= Math.round(y);
-    this.listener.trigger("drag", this);
+    if (triggerDrag) this.listener.trigger("drag", this);
   }
 
   setZoom(z: number) {
@@ -242,5 +246,16 @@ export class Draggable {
       (x - this.pos.x) * this.pos.z,
       (y - this.pos.y) * this.pos.z
     ];
+  }
+
+  changeViewport(viewport: HTMLElement) {
+    if (this.viewport) { // remove old listeners
+      this.viewport.removeEventListener("mousemove", this.doDragBound);
+      this.viewport.removeEventListener("mousemove", this.endDragBound);
+    }
+    // add new listeners
+    viewport.addEventListener("mousemove", this.doDragBound);
+    viewport.addEventListener("mouseup", this.endDragBound);
+    this.viewport = viewport;
   }
 }

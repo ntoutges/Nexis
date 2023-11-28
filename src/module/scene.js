@@ -10,11 +10,12 @@ export class Scene extends FrameworkBase {
     elListener = new Listener();
     widgets = [];
     layers = new Layers();
-    constructor({ id = null, parent = null, options = {}, style, widgets = [], doStartCentered = false }) {
+    constructor({ id = null, parent = null, options = {}, style, widgets = [], doStartCentered = false, resize }) {
         super({
             name: "scene",
             id, parent,
-            style
+            style,
+            resize
         });
         this.draggable = new Draggable({
             viewport: this.element,
@@ -84,8 +85,8 @@ export class Scene extends FrameworkBase {
         const offX = cX - x * widget.positioning;
         const offY = cY - y * widget.positioning;
         const bounds = widget.calculateBounds(this.draggable.pos.z);
-        const sX = x * widget.positioning + offX - widget.align.x * bounds.width;
-        const sY = y * widget.positioning + offY - widget.align.y * bounds.height;
+        const sX = x * widget.positioning + offX /*- widget.align.x * bounds.width*/;
+        const sY = y * widget.positioning + offY /*- widget.align.y * bounds.height*/;
         // outside viewable bounds
         if (sX + bounds.width <= 0
             || sX >= this.draggable.bounds.width

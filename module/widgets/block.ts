@@ -5,7 +5,8 @@ export class BlockWidget extends Widget {
   constructor({
     id,layer,style,
     positioning = 1,
-    pos
+    pos,
+    resize
   }: CommonWidgetInterface) {
     const el = document.createElement("div");
 
@@ -14,7 +15,8 @@ export class BlockWidget extends Widget {
       name: "block",
       positioning,
       pos,
-      content: el
+      content: el,
+      resize
     });
   }
 }

@@ -1,6 +1,6 @@
 import { Draggable } from "../draggable.js";
 import { Scene } from "../scene.js";
-import { getSvg } from "../svg.js";
+import { getIcon, getSvg } from "../svg.js";
 import { buttonDefaults } from "./defaults.js";
 import { DraggableWidgetInterface, buttonTypes, headerOption } from "./interfaces.js";
 import { Widget } from "./widget.js";
@@ -26,14 +26,16 @@ export class DraggableWidget extends Widget {
     doCursorDragIcon=true,
     options,
     content,
-    name
+    name,
+    resize
   }: DraggableWidgetInterface) {
     const container = document.createElement("div");
     
     super({
       id,layer,positioning,pos,style,
       name,
-      content: container
+      content: container,
+      resize
     });
 
     this.container = container;
@@ -98,7 +100,7 @@ export class DraggableWidget extends Widget {
           });
 
           // fetch svg data
-          getSvg(`/module/icons/${options?.icon ?? defOptions.icon}`).then(svg => {
+          getIcon(options?.icon ?? defOptions.icon).then(svg => {
             button.append(svg);
             svg.style.width = options?.size ?? defOptions.size;
             svg.style.height = options?.size ?? defOptions.size;
@@ -142,22 +144,25 @@ export class DraggableWidget extends Widget {
     super.attachTo(scene);
 
     if (this.header) {
-      this.draggable = new Draggable({
-        viewport: scene.element,
-        element: [
-          this.header.querySelector(".framework-draggable-widget-titles"),
-          this.header.querySelector(".framework-draggable-widget-title-ends")
-        ],
-        periphery: [this.container],
-        zoomable: false,
-        blockScroll: false
-      });
-      this.draggable.offsetBy(this.pos.x, this.pos.y);
+      if (!this.draggable) {
+        this.draggable = new Draggable({
+          viewport: scene.element,
+          element: [
+            this.header.querySelector(".framework-draggable-widget-titles"),
+            this.header.querySelector(".framework-draggable-widget-title-ends")
+          ],
+          periphery: [this.container],
+          zoomable: false,
+          blockScroll: false
+        });
+        this.draggable.offsetBy(this.pos.x, this.pos.y);
 
-      this.draggable.listener.on("dragInit", this.dragInit.bind(this));
-      this.draggable.listener.on("drag", this.drag.bind(this));
-      this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
-      this.draggable.listener.on("selected", () => { this.scene.layers.moveToTop(this); })
+        this.draggable.listener.on("dragInit", this.dragInit.bind(this));
+        this.draggable.listener.on("drag", this.drag.bind(this));
+        this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
+        this.draggable.listener.on("selected", () => { this.scene.layers.moveToTop(this); })
+      }
+      else this.draggable.changeViewport(scene.element);
     }
   }
 

@@ -2,6 +2,7 @@ import { Scene } from "./scene.js"
 import { Draggable } from "./draggable.js"
 import { Widget } from "./widgets/widget.js"
 
+export type resizeType = "none" | "vertical" | "horizontal" | "both";
 export interface CommonFrameworkInterface {
   id?: string
   style?: { // this mainly intended for debugging
@@ -11,6 +12,7 @@ export interface CommonFrameworkInterface {
     border?: string,
     opacity?: number
   }
+  resize?: resizeType
 }
 
 export interface FrameworkBaseInterface extends CommonFrameworkInterface {

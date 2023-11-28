@@ -34,12 +34,14 @@ export class Widget extends FrameworkBase {
     content,
     positioning = 1,
     layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
-    pos = {}
+    pos = {},
+    resize
   }: BasicWidgetInterface) {
     super({
       name: `${name}-widget widget`,
       children: [content],
-      style,id
+      style,id,
+      resize
     });
 
     this.name = name;
@@ -107,7 +109,7 @@ export class Widget extends FrameworkBase {
       }
     }
     scene.layers.setLayer(this, this.layer);
-    scene.element.append(this.el);
+    this.appendTo(scene.element);
   }
 
   detachFrom(scene: Scene) {

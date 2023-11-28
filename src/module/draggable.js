@@ -18,12 +18,15 @@ export class Draggable {
     zoomable;
     blockDrag;
     blockScroll;
+    viewport;
+    doDragBound = this.doDrag.bind(this);
+    endDragBound = this.endDrag.bind(this);
     scale = 1;
     listener = new Listener();
     constructor({ viewport, // continues movement
     element, // Initiates movement
     periphery = [], // Has event listener, but only to stop propagation
-    scrollX = true, scrollY = true, zoomable = true, blockDrag = true, blockScroll = true }) {
+    scrollX = true, scrollY = true, zoomable = true, blockDrag = true, blockScroll = true, }) {
         this.blockDrag = blockDrag;
         this.blockScroll = blockScroll;
         let hasResized = false;
@@ -36,8 +39,7 @@ export class Draggable {
             this.listener.setPollingInterval("resize", 400); // can now afford to slow down
             this.listener.off(initResizeId);
             clearInterval(initInterval); // prevent more repeat
-            viewport.addEventListener("mousemove", this.doDrag.bind(this));
-            viewport.addEventListener("mouseup", this.endDrag.bind(this));
+            this.changeViewport(viewport);
             if (Array.isArray(element)) {
                 if (element.length == 0)
                     throw new Error("Draggable must have at least one [element] (got 0)");
@@ -85,17 +87,17 @@ export class Draggable {
             e.stopPropagation();
         let didMove = false;
         if (this.scrollX) {
-            this.delta.x = (this.mouseOffset.x - e.pageX) / this.pos.z;
+            this.delta.x = (this.mouseOffset.x - e.pageX) / (this.pos.z * this.scale);
             if (this.delta.x != 0)
                 didMove = true;
-            this.pos.x += this.delta.x / this.scale;
+            this.pos.x += this.delta.x;
             this.mouseOffset.x = e.pageX;
         }
         if (this.scrollY) {
-            this.delta.y = (e.pageY - this.mouseOffset.y) / this.pos.z;
+            this.delta.y = (e.pageY - this.mouseOffset.y) / (this.pos.z * this.scale);
             if (this.delta.y != 0)
                 didMove = true;
-            this.pos.y -= this.delta.y / this.scale;
+            this.pos.y -= this.delta.y;
             this.mouseOffset.y = e.pageY;
         }
         if (didMove) {
@@ -152,8 +154,8 @@ export class Draggable {
         let minBottom = null;
         for (const el of this.elements) {
             const bounds = el.getBoundingClientRect();
-            const unscaledWidth = el.clientWidth;
-            const unscaledHeight = el.clientHeight;
+            const unscaledWidth = el.offsetWidth;
+            const unscaledHeight = el.offsetHeight;
             if (minX == null || bounds.left < minX)
                 minX = bounds.left;
             if (maxX == null || bounds.left + unscaledWidth > maxX)
@@ -187,10 +189,11 @@ export class Draggable {
             sWidth, sHeight
         };
     }
-    offsetBy(x, y) {
+    offsetBy(x, y, triggerDrag = true) {
         this.pos.x -= Math.round(x);
         this.pos.y -= Math.round(y);
-        this.listener.trigger("drag", this);
+        if (triggerDrag)
+            this.listener.trigger("drag", this);
     }
     setZoom(z) {
         this.pos.z = z;
@@ -208,6 +211,16 @@ export class Draggable {
             (x - this.pos.x) * this.pos.z,
             (y - this.pos.y) * this.pos.z
         ];
+    }
+    changeViewport(viewport) {
+        if (this.viewport) { // remove old listeners
+            this.viewport.removeEventListener("mousemove", this.doDragBound);
+            this.viewport.removeEventListener("mousemove", this.endDragBound);
+        }
+        // add new listeners
+        viewport.addEventListener("mousemove", this.doDragBound);
+        viewport.addEventListener("mouseup", this.endDragBound);
+        this.viewport = viewport;
     }
 }
 //# sourceMappingURL=draggable.js.map

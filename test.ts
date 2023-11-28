@@ -31,17 +31,6 @@ new Scene({
       doCursorDragIcon: true,
       layer: -1
     }),
-    // new DraggableWidget({
-    //   content: document.createElement("div"),
-    //   name: "Bottom1",
-    //   header: {
-    //     title: "Bottom1",
-    //   },
-    //   style: {
-    //     width: "150px",
-    //     height: "50%"
-    //   }
-    // }),
     new DraggableWidget({
       content: sceneHolder,
       name: "Bottom2",
@@ -52,19 +41,25 @@ new Scene({
         width: "50%",
         height: "50%"
       },
-      positioning: 1
-    }),
-    new DraggableWidget({
-      content: document.createElement("div"),
-      name: "Top",
-      header: {
-        title: "Top",
+      positioning: 1,
+      pos: {
+        // x: 100
+        xAlign: "middle",
+        yAlign: "middle"
       },
-      style: {
-        width: "200px"
-      },
-      positioning: 1
+      resize: "both"
     }),
+    // new DraggableWidget({
+    //   content: document.createElement("div"),
+    //   name: "Top",
+    //   header: {
+    //     title: "Top",
+    //   },
+    //   style: {
+    //     width: "200px"
+    //   },
+    //   positioning: 1
+    // }),
   ],
 });
 
@@ -78,6 +73,7 @@ new Scene({
       doCursorDragIcon: true,
       doIndependentCenter: false,
       style: {
+
       }
     }),
     new DraggableWidget({
@@ -90,35 +86,39 @@ new Scene({
         width: "200px",
         height: "200px"
       },
-      positioning: 1
-    })
-  ],
-  doStartCentered: true
-})
-
-scene2Holder.style.width = "100%";
-scene2Holder.style.height = "100%";
-
-new Scene({
-  parent: scene2Holder,
-  widgets: [
-    new GridWidget({
-      doCursorDragIcon: true,
-      doIndependentCenter: false,
-      style: {
+      positioning: 1,
+      pos: {
+        xAlign: "middle",
+        yAlign: "middle"
       }
-    }),
-    new DraggableWidget({
-      content: document.createElement("div"),
-      name: "Top b",
-      header: {
-        title: "Top",
-      },
-      style: {
-        width: "200px"
-      },
-      positioning: 1
     })
   ],
   doStartCentered: true
 })
+
+// scene2Holder.style.width = "100%";
+// scene2Holder.style.height = "100%";
+
+// new Scene({
+//   parent: scene2Holder,
+//   widgets: [
+//     new GridWidget({
+//       doCursorDragIcon: true,
+//       doIndependentCenter: false,
+//       style: {
+//       }
+//     }),
+//     new DraggableWidget({
+//       content: document.createElement("div"),
+//       name: "Top b",
+//       header: {
+//         title: "Top",
+//       },
+//       style: {
+//         width: "200px"
+//       },
+//       positioning: 1
+//     })
+//   ],
+//   doStartCentered: true
+// })

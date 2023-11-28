@@ -53,6 +53,8 @@
   margin-bottom: -4px;
 
   filter: drop-shadow(0px 0px 1px black);
+
+  white-space: nowrap;
 }
 
 .framework-draggable-widget-titles {
@@ -65,6 +67,8 @@
   display: inline-block;
   padding: 5px;
   padding-bottom: 6px;
+
+  font-size: 11px;
 
   /* height: 100%; */
 
