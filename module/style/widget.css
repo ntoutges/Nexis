@@ -12,7 +12,7 @@
 
 .framework-widget.hidden {
   visibility: hidden;
-  opacity: none;
+  opacity: 0;
 }
 
 /* .framework-grid-widget:not(.no-cursor):hover {

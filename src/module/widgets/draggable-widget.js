@@ -1,4 +1,5 @@
 import { Draggable } from "../draggable.js";
+import { getSvg } from "../svg.js";
 import { buttonDefaults } from "./defaults.js";
 import { Widget } from "./widget.js";
 export class DraggableWidget extends Widget {
@@ -69,11 +70,7 @@ export class DraggableWidget extends Widget {
                         this.scene.layers.moveToTop(this); // still do select
                     });
                     // fetch svg data
-                    const src = `/module/icons/${options?.icon ?? defOptions.icon}`;
-                    fetch(src).then(async (data) => {
-                        const response = (await data.text()).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ""); // replace removes script tags (like that injected by live-server)
-                        const doc = new DOMParser();
-                        const svg = doc.parseFromString(response, "image/svg+xml").querySelector("svg");
+                    getSvg(`/module/icons/${options?.icon ?? defOptions.icon}`).then(svg => {
                         button.append(svg);
                         svg.style.width = options?.size ?? defOptions.size;
                         svg.style.height = options?.size ?? defOptions.size;
