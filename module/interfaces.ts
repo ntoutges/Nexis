@@ -1,6 +1,7 @@
 import { Scene } from "./scene.js"
 import { Draggable } from "./draggable.js"
 import { Widget } from "./widgets/widget.js"
+import { ContextMenuItem } from "./widgets/contextmenu/items.js";
 
 export type resizeType = "none" | "vertical" | "horizontal" | "both";
 export interface CommonFrameworkInterface {
@@ -49,3 +50,18 @@ export interface ScrollableInterface {
 export type basicListener = () => void;
 export type draggableListener = (draggable: Draggable) => void;
 export type DraggableEvents = "init" | "dragInit" | "dragEnd" | "drag" | "selected" | "scroll" | "resize";
+
+
+export interface ContextMenuItemInterface {
+  value: string
+  name?: string
+  shortcut?: string
+  icon?: string
+}
+
+export interface ContextMenuSectionInterface {
+  items: ContextMenuItem[]
+  name?: string
+}
+
+export type ContextMenuEvents = "click" | "mouseenter" | "mouseleave";

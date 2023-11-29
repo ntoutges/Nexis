@@ -2,6 +2,8 @@ import { GridWidget } from "./module/widgets/grid.js";
 import { Scene } from "./module/scene.js";
 import { BlockWidget } from "./module/widgets/block.js";
 import { DraggableWidget } from "./module/widgets/draggable-widget.js";
+import { ContextMenu } from "./module/widgets/contextmenu/contextmenu.js";
+import { ContextMenuItem, ContextMenuSection } from "./module/widgets/contextmenu/items.js";
 
 const $ = document.querySelector.bind(document);
 
@@ -22,104 +24,100 @@ new Scene({
   },
   widgets: [
     new GridWidget({
-      options: {
-        coords: true
-      },
       style: {
         background: "cornsilk"
-      },
-      doCursorDragIcon: true,
-      layer: -1
+      }
     }),
-    new DraggableWidget({
-      content: sceneHolder,
-      name: "Bottom2",
-      header: {
-        title: "Bottom2",
-      },
-      style: {
-        width: "50%",
-        height: "50%"
-      },
-      positioning: 1,
+    new ContextMenu({
       pos: {
-        yAlign: "top",
-        xAlign: "left",
-        y: 0,
-        x: 0
+        x: 20,
+        y: 20
       },
-      resize: "both"
-    }),
-    // new DraggableWidget({
-    //   content: document.createElement("div"),
-    //   name: "Top",
-    //   header: {
-    //     title: "Top",
-    //   },
-    //   style: {
-    //     width: "200px"
-    //   },
-    //   positioning: 1
-    // }),
-  ],
+      items: [
+        new ContextMenuSection({
+          items: [
+            new ContextMenuItem({
+              value: "New Item!"
+            }),
+            new ContextMenuItem({
+              value: "Another Item...",
+              shortcut: "Ctrl-X"
+            })
+          ]
+        }),
+        new ContextMenuSection({
+          items: [
+            new ContextMenuItem({
+              value: "New Section?",
+              icon: "battery-empty.svg"
+            }),
+            new ContextMenuItem({
+              value: "Item",
+              shortcut: "Ctrl-Z"
+            })
+          ]
+        })
+      ]
+    })
+  ]
 });
 
-sceneHolder.style.width = "100%";
-sceneHolder.style.height = "100%";
-
-new Scene({
-  parent: sceneHolder,
-  widgets: [
-    new GridWidget({
-      doCursorDragIcon: true,
-      doIndependentCenter: false,
-      style: {
-
-      }
-    }),
-    new DraggableWidget({
-      content: scene2Holder,
-      name: "Top b",
-      header: {
-        title: "Top",
-      },
-      style: {
-        width: "200px",
-        height: "200px"
-      },
-      positioning: 1,
-      pos: {
-        xAlign: "middle",
-        yAlign: "middle"
-      }
-    })
-  ],
-  doStartCentered: true
-})
-
-// scene2Holder.style.width = "100%";
-// scene2Holder.style.height = "100%";
+// sceneHolder.style.width = "100%";
+// sceneHolder.style.height = "100%";
 
 // new Scene({
-//   parent: scene2Holder,
+//   parent: sceneHolder,
 //   widgets: [
 //     new GridWidget({
 //       doCursorDragIcon: true,
 //       doIndependentCenter: false,
 //       style: {
+
 //       }
 //     }),
 //     new DraggableWidget({
-//       content: document.createElement("div"),
+//       content: scene2Holder,
 //       name: "Top b",
 //       header: {
 //         title: "Top",
 //       },
 //       style: {
-//         width: "200px"
+//         width: "200px",
+//         height: "200px"
 //       },
-//       positioning: 1
+//       positioning: 1,
+//       pos: {
+//         xAlign: "middle",
+//         yAlign: "middle"
+//       }
 //     })
 //   ],
 //   doStartCentered: true
 // })
+
+// // scene2Holder.style.width = "100%";
+// // scene2Holder.style.height = "100%";
+
+// // new Scene({
+// //   parent: scene2Holder,
+// //   widgets: [
+// //     new GridWidget({
+// //       doCursorDragIcon: true,
+// //       doIndependentCenter: false,
+// //       style: {
+// //       }
+// //     }),
+// //     new DraggableWidget({
+// //       content: document.createElement("div"),
+// //       name: "Top b",
+// //       header: {
+// //         title: "Top",
+// //       },
+// //       style: {
+// //         width: "200px"
+// //       },
+// //       positioning: 1
+// //     })
+// //   ],
+// //   doStartCentered: true
+// // })

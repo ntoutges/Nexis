@@ -232,3 +232,74 @@
 .draggable-widget-minimize {
   display: none;
 }
+
+
+.framework-contextmenu-containers {
+  background-color: white;
+  border: solid 1px grey;
+
+  font-size: 11px;
+  font-family: 'Courier New', Courier, monospace;
+
+  box-shadow: 2px 2px 3px black;
+  
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  padding: 4px;
+}
+
+.framework-contextmenu-sections {
+  display: contents;
+}
+
+.framework-contextmenu-items {
+  display: contents;
+}
+
+.framework-contextmenu-items > :not(.framework-contextmenu-icons) {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.framework-contextmenu-items > :first-child {
+  padding-left: 5px;
+  padding-right: 10px;
+}
+
+.framework-contextmenu-items > :last-child {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.framework-contextmenu-shortcuts {
+  color: grey;
+}
+
+.framework-contextmenu-icons > svg {
+  height: 100%;
+}
+
+.framework-contextmenu-names:not(:empty) + .framework-contextmenu-shortcuts:not(:empty) {
+  padding-left: 5px;
+}
+
+.framework-contextmenu-shortcuts:not(:empty):has(+ :not(:empty)) {
+  padding-right: 5px;
+}
+
+.framework-contextmenu-items:has(> :hover) > div {
+  background-color: #d3d3d3;
+}
+
+.framework-contextmenu-section-separators {
+  height: 1px;
+  background-color: #c5c5c5;
+  grid-column: 1 / 4;
+
+  margin-bottom: 4px;
+  margin-top: 4px;
+}
+
+.framework-contextmenu-sections:first-child > .framework-contextmenu-section-separators {
+  display: none;
+}

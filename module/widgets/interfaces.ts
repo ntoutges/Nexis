@@ -1,4 +1,5 @@
 import { CommonFrameworkInterface, draggableListener } from "../interfaces.js";
+import { ContextMenuItem, ContextMenuSection } from "./contextmenu/items.js";
 
 export type SceneListenerTypes = "dragStart" | "dragEnd" | "drag" | "zoom" | "move" | "resize" | "init";
 export type sceneListener = draggableListener;
@@ -65,4 +66,8 @@ export interface GridWidgetInterface extends CommonWidgetInterface {
   doCursorDragIcon?: boolean
   doIndependentCenter?: boolean
   gridChangeScaleFactor?: number
+}
+
+export interface ContextMenuInterface extends CommonWidgetInterface {
+  items: ContextMenuSection[] | ContextMenuItem[]
 }
