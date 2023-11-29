@@ -10,7 +10,9 @@ export class DraggableWidget extends Widget {
     doCursorDrag;
     buttonHideTimeout = null;
     minimizeTimeout = null;
+    acceptableMouseButtons;
     buttonColors = new Map();
+    isClosing = false;
     constructor({ id, layer, positioning, pos, style, header = null, doCursorDragIcon = true, options, content, name, resize }) {
         const container = document.createElement("div");
         super({
@@ -87,6 +89,7 @@ export class DraggableWidget extends Widget {
                 }
             }
             title.append(buttons);
+            this.acceptableMouseButtons = options?.acceptableMouseButtons ?? [];
             title.addEventListener("mouseenter", this.showButtons.bind(this));
             title.addEventListener("mouseleave", this.hideButtons.bind(this));
             titleEnd.addEventListener("mouseenter", this.showButtons.bind(this));
@@ -114,7 +117,10 @@ export class DraggableWidget extends Widget {
                     ],
                     periphery: [this.body],
                     zoomable: false,
-                    blockScroll: false
+                    blockScroll: false,
+                    input: {
+                        acceptableMouseButtons: this.acceptableMouseButtons
+                    }
                 });
                 this.draggable.offsetBy(this.pos.x, this.pos.y);
                 this.draggable.listener.on("dragInit", this.dragInit.bind(this));
@@ -147,6 +153,7 @@ export class DraggableWidget extends Widget {
             this.minimizeTimeout = setTimeout(() => {
                 this.el.classList.add("is-minimized");
                 this.minimizeTimeout = null;
+                // this.updatePositionOnResize();
             }, 300);
         }
         else {
@@ -158,7 +165,24 @@ export class DraggableWidget extends Widget {
         }
     }
     close() {
-        this.detachFrom(this.scene);
+        if (this.isClosing)
+            return; // don't interrupt process
+        if (this.body.classList.contains("draggable-widget-minimize")) {
+            this.header.classList.add("draggable-widget-close");
+            setTimeout(() => {
+                this.detachFrom(this.scene);
+            }, 100);
+        }
+        else {
+            this.minimize(); // minimizing animation first
+            setTimeout(() => {
+                this.detachFrom(this.scene);
+            }, 400);
+            setTimeout(() => {
+                this.header.classList.add("draggable-widget-close");
+            }, 200);
+        }
+        this.isClosing = true;
     }
     showButtons() {
         if (this.buttonHideTimeout != null) { // stop timeout

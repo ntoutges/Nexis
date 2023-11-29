@@ -38,7 +38,7 @@ export type buttonTypes = "collapse" | "close";
 
 export interface DraggableWidgetInterface extends BasicWidgetInterface {
   options?: {
-    
+    acceptableMouseButtons?: number[]
   }
   header?: {
     title?: string
@@ -59,7 +59,8 @@ export interface GridWidgetInterface extends CommonWidgetInterface {
       size?: number
       color?: string
     },
-    coords?: boolean
+    coords?: boolean,
+    acceptedMouseButtons?: number[]
   }
   doCursorDragIcon?: boolean
   doIndependentCenter?: boolean

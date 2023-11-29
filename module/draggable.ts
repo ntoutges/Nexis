@@ -28,6 +28,8 @@ export class Draggable {
   private readonly doDragBound = this.doDrag.bind(this);
   private readonly endDragBound = this.endDrag.bind(this);
 
+  private readonly acceptableMouseButtons = new Set<number>();
+
   scale: number = 1;
 
   readonly listener = new Listener<DraggableEvents, Draggable>();
@@ -41,6 +43,7 @@ export class Draggable {
     zoomable = true,
     blockDrag = true,
     blockScroll = true,
+    input
   }: DraggableInterface) {
     this.blockDrag = blockDrag;
     this.blockScroll = blockScroll;
@@ -86,6 +89,13 @@ export class Draggable {
     this.scrollY = scrollY;
     this.zoomable = zoomable;
 
+    if (input?.acceptableMouseButtons && input.acceptableMouseButtons.length > 0) {
+      for (const button of input.acceptableMouseButtons) {
+        this.acceptableMouseButtons.add(button);
+      }
+    }
+    else this.acceptableMouseButtons.add(0); // by default, only listen to left-click
+
     this.elements = Array.isArray(element) ? element : [element];
 
     this.listener.setPollingOptions("resize", this.updateBounds.bind(this), 10); // initially go at HYPER SPEED to detect the smallest change
@@ -93,6 +103,7 @@ export class Draggable {
 
   protected initDrag(e: MouseEvent) {
     if (this.blockDrag) e.stopPropagation();
+    if (!this.acceptableMouseButtons.has(e.button)) return;
     e.preventDefault();
     this.isDragging = true;
     this.mouseOffset.x = e.pageX;

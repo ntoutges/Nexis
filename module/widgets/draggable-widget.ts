@@ -14,11 +14,14 @@ export class DraggableWidget extends Widget {
   private doCursorDrag: boolean;
   private buttonHideTimeout: number = null;
   private minimizeTimeout: number = null;
+  private readonly acceptableMouseButtons: number[];
 
   private readonly buttonColors = new Map<buttonTypes, {
     dormant: { fill: string, highlight: string }
     active: { fill: string, highlight: string },
   }>();
+
+  private isClosing: boolean = false;
 
   constructor({
     id,layer,positioning,pos,style,
@@ -119,13 +122,14 @@ export class DraggableWidget extends Widget {
       }
 
       title.append(buttons);
+      this.acceptableMouseButtons = options?.acceptableMouseButtons ?? [];
 
       title.addEventListener("mouseenter", this.showButtons.bind(this));
       title.addEventListener("mouseleave", this.hideButtons.bind(this));
       titleEnd.addEventListener("mouseenter", this.showButtons.bind(this));
       titleEnd.addEventListener("mouseleave", this.hideButtons.bind(this));
     }
-    
+
     this.body = document.createElement("div");
     this.body.classList.add("framework-draggable-widget-bodies");
     this.body.append(content);
@@ -153,7 +157,10 @@ export class DraggableWidget extends Widget {
           ],
           periphery: [this.body],
           zoomable: false,
-          blockScroll: false
+          blockScroll: false,
+          input: {
+            acceptableMouseButtons: this.acceptableMouseButtons
+          }
         });
         this.draggable.offsetBy(this.pos.x, this.pos.y);
 
@@ -188,6 +195,7 @@ export class DraggableWidget extends Widget {
       this.minimizeTimeout = setTimeout(() => {
         this.el.classList.add("is-minimized");
         this.minimizeTimeout = null;
+        // this.updatePositionOnResize();
       }, 300);
     }
     else {
@@ -200,7 +208,23 @@ export class DraggableWidget extends Widget {
   }
 
   protected close() {
-    this.detachFrom(this.scene);
+    if (this.isClosing) return; // don't interrupt process
+    if (this.body.classList.contains("draggable-widget-minimize")) {
+      this.header.classList.add("draggable-widget-close");
+      setTimeout(() => { // wait for closing animation
+        this.detachFrom(this.scene);
+      }, 100);
+    }
+    else {
+      this.minimize(); // minimizing animation first
+      setTimeout(() => { // wait for closing animation
+        this.detachFrom(this.scene);
+      }, 400);
+      setTimeout(() => {
+        this.header.classList.add("draggable-widget-close");
+      }, 200);
+    }
+    this.isClosing = true;
   }
 
   private showButtons() {

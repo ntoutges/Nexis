@@ -41,6 +41,9 @@ export interface ScrollableInterface {
   zoomable?: boolean
   blockDrag?: boolean
   blockScroll?: boolean
+  input?: {
+    acceptableMouseButtons?: number[]
+  }
 }
 
 export type basicListener = () => void;

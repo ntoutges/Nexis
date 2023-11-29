@@ -21,12 +21,13 @@ export class Draggable {
     viewport;
     doDragBound = this.doDrag.bind(this);
     endDragBound = this.endDrag.bind(this);
+    acceptableMouseButtons = new Set();
     scale = 1;
     listener = new Listener();
     constructor({ viewport, // continues movement
     element, // Initiates movement
     periphery = [], // Has event listener, but only to stop propagation
-    scrollX = true, scrollY = true, zoomable = true, blockDrag = true, blockScroll = true, }) {
+    scrollX = true, scrollY = true, zoomable = true, blockDrag = true, blockScroll = true, input }) {
         this.blockDrag = blockDrag;
         this.blockScroll = blockScroll;
         let hasResized = false;
@@ -67,12 +68,21 @@ export class Draggable {
         this.scrollX = scrollX;
         this.scrollY = scrollY;
         this.zoomable = zoomable;
+        if (input?.acceptableMouseButtons && input.acceptableMouseButtons.length > 0) {
+            for (const button of input.acceptableMouseButtons) {
+                this.acceptableMouseButtons.add(button);
+            }
+        }
+        else
+            this.acceptableMouseButtons.add(0); // by default, only listen to left-click
         this.elements = Array.isArray(element) ? element : [element];
         this.listener.setPollingOptions("resize", this.updateBounds.bind(this), 10); // initially go at HYPER SPEED to detect the smallest change
     }
     initDrag(e) {
         if (this.blockDrag)
             e.stopPropagation();
+        if (!this.acceptableMouseButtons.has(e.button))
+            return;
         e.preventDefault();
         this.isDragging = true;
         this.mouseOffset.x = e.pageX;

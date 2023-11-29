@@ -72,25 +72,6 @@ export class GridWidget extends Widget {
   }
   
   protected resize(d: Draggable) {
-    // align with real pixels
-    // this.canvas.setAttribute("width", `${d.bounds.sWidth}px`);
-    // this.canvas.setAttribute("height", `${d.bounds.sHeight}px`);
-    // // set width based on DOM
-    // this.canvas.style.width = `${d.bounds.width}px`;
-    // this.canvas.style.height = `${d.bounds.height}px`;
-    
-    // if (d.bounds.width != 0 && d.bounds.height != 0) { // only resize if non-NaN scale-factor
-    //   // const scaleX = d.bounds.sWidth / d.bounds.width;
-    //   const scaleY = d.bounds.sHeight / d.bounds.height;
-      
-    //   // set canvas scale (now, 1px on canvs doesn't exactly correspond to 1px on screen)
-    //   this.ctx.setTransform(1, 0, 0, 1, 0, 0); // reset scaling (apparently?)
-    //   this.ctx.scale(
-    //     d.scale,
-    //     scaleY
-    //   );
-    // }
-
     this.canvas.setAttribute("width", `${d.bounds.width}px`);
     this.canvas.setAttribute("height", `${d.bounds.height}px`);
     
