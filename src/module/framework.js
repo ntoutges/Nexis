@@ -62,6 +62,7 @@ export class FrameworkBase {
         const newHeight = this.el.offsetHeight + d.delta.y;
         this.el.style.width = `${newWidth}px`;
         this.el.style.height = `${newHeight}px`;
+        d.listener.trigger("resize", d);
     }
 }
 //# sourceMappingURL=framework.js.map

@@ -43,9 +43,10 @@ new Scene({
       },
       positioning: 1,
       pos: {
-        // x: 100
-        xAlign: "middle",
-        yAlign: "middle"
+        yAlign: "top",
+        xAlign: "left",
+        y: 0,
+        x: 0
       },
       resize: "both"
     }),

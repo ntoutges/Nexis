@@ -113,8 +113,8 @@ export class Scene extends FrameworkBase {
     const offY = cY - y*widget.positioning;
     
     const bounds = widget.calculateBounds(this.draggable.pos.z);
-    const sX = x * widget.positioning + offX /*- widget.align.x * bounds.width*/;
-    const sY = y * widget.positioning + offY /*- widget.align.y * bounds.height*/;
+    const sX = x * widget.positioning + offX - widget.align.x * bounds.width;
+    const sY = y * widget.positioning + offY - widget.align.y * bounds.height;
       
     // outside viewable bounds
     if (

@@ -2,6 +2,7 @@ import { Scene } from "../scene.js";
 import { FrameworkBase } from "../framework.js";
 import { DraggableEvents } from "../interfaces.js";
 import { BasicWidgetInterface, sceneListener, SceneListenerTypes } from "./interfaces.js";
+import { Draggable } from "../draggable.js";
 
 var maxLayer: number = 0;
 
@@ -77,7 +78,8 @@ export class Widget extends FrameworkBase {
   }
 
   attachTo(scene: Scene) {
-    if (this.scene) this.detachFrom(this.scene);
+    const isFirstScene = this.scene == null;
+    if (!isFirstScene) this.detachFrom(this.scene);
     this.scene = scene;
     this.setZoom(scene.draggable.pos.z);
     for (const [type,listener] of this.sceneListeners.entries()) {
@@ -110,6 +112,9 @@ export class Widget extends FrameworkBase {
     }
     scene.layers.setLayer(this, this.layer);
     this.appendTo(scene.element);
+    if (isFirstScene && this.resizeData.draggable) {
+      this.resizeData.draggable.listener.on("resize", this.updatePositionOnResize.bind(this))
+    }
   }
 
   detachFrom(scene: Scene) {
@@ -146,5 +151,13 @@ export class Widget extends FrameworkBase {
 
   setZIndex(zIndex: number) {
     this.el.style.zIndex = zIndex.toString();
+  }
+
+  protected updatePositionOnResize(d: Draggable) {
+    const xOff = d.delta.x * this.align.x;
+    const yOff = d.delta.y * this.align.y;
+
+    this.pos.x -= xOff;
+    this.pos.y += yOff;
   }
 }

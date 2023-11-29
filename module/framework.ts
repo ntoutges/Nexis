@@ -81,5 +81,7 @@ export class FrameworkBase {
 
     this.el.style.width = `${newWidth}px`;
     this.el.style.height = `${newHeight}px`;
+
+    d.listener.trigger("resize", d);
   }
 }

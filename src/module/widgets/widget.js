@@ -48,7 +48,8 @@ export class Widget extends FrameworkBase {
         this.sceneListeners.set(type, sceneListener);
     }
     attachTo(scene) {
-        if (this.scene)
+        const isFirstScene = this.scene == null;
+        if (!isFirstScene)
             this.detachFrom(this.scene);
         this.scene = scene;
         this.setZoom(scene.draggable.pos.z);
@@ -82,6 +83,9 @@ export class Widget extends FrameworkBase {
         }
         scene.layers.setLayer(this, this.layer);
         this.appendTo(scene.element);
+        if (isFirstScene && this.resizeData.draggable) {
+            this.resizeData.draggable.listener.on("resize", this.updatePositionOnResize.bind(this));
+        }
     }
     detachFrom(scene) {
         if (this.scene != scene)
@@ -116,6 +120,12 @@ export class Widget extends FrameworkBase {
     }
     setZIndex(zIndex) {
         this.el.style.zIndex = zIndex.toString();
+    }
+    updatePositionOnResize(d) {
+        const xOff = d.delta.x * this.align.x;
+        const yOff = d.delta.y * this.align.y;
+        this.pos.x -= xOff;
+        this.pos.y += yOff;
     }
 }
 //# sourceMappingURL=widget.js.map
