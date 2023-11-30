@@ -1,10 +1,9 @@
 import { Draggable } from "../draggable.js";
+import { ContextMenu, Widget } from "../framework.js";
 import { Scene } from "../scene.js";
 import { getIcon, getSvg } from "../svg.js";
-import { ContextMenu, itemBuilder, sectionBuilder, sectionsBuilder } from "./contextmenu/contextmenu.js";
 import { buttonDefaults } from "./defaults.js";
 import { DraggableWidgetInterface, buttonTypes, headerOption } from "./interfaces.js";
-import { Widget } from "./widget.js";
 
 export class DraggableWidget extends Widget {
   private readonly container: HTMLDivElement;
@@ -33,8 +32,7 @@ export class DraggableWidget extends Widget {
     options,
     content,
     name,
-    resize,
-    contextmenu
+    resize
   }: DraggableWidgetInterface) {
     const container = document.createElement("div");
     
@@ -132,29 +130,28 @@ export class DraggableWidget extends Widget {
       titleEnd.addEventListener("mouseenter", this.showButtons.bind(this));
       titleEnd.addEventListener("mouseleave", this.hideButtons.bind(this));
 
-      const itemStrs: string[] = [];
-      if (contextmenu?.close ?? true) itemStrs.push("close/close/x.svg");
-      if (contextmenu?.minimize ?? true) itemStrs.push("minimize/minimize/minus.svg");
+      // const itemStrs: string[] = [];
+      // if (contextmenu?.close ?? true) itemStrs.push("close/close/x.svg");
+      // if (contextmenu?.minimize ?? true) itemStrs.push("minimize/minimize/minus.svg");
 
-      if (itemStrs.length != 0) {
-        this.contextmenu = new ContextMenu({
-          items: sectionsBuilder(itemStrs.join(";"))
-        });
+      // if (itemStrs.length != 0) {
+      //   this.contextmenu = new ContextMenu({
+      //     items: sectionsBuilder(itemStrs.join(";")),
+      //     trigger: this.header
+      //   });
 
-        this.header.addEventListener("contextmenu", this.showContextMenu.bind(this));
-
-        this.contextmenu.listener.on("click", (item) => {
-          switch (item.value) {
-            case "close":
-              this.close();
-              break;
-            case "minimize":
-              this.minimize();
-              break;
-          }
-          this.contextmenu.unbuild();
-        });
-      }
+      //   this.contextmenu.listener.on("click", (item) => {
+      //     switch (item.value) {
+      //       case "close":
+      //         this.close();
+      //         break;
+      //       case "minimize":
+      //         this.minimize();
+      //         break;
+      //     }
+      //     this.contextmenu.unbuild();
+      //   });
+      // }
     }
 
     this.body = document.createElement("div");
@@ -289,11 +286,5 @@ export class DraggableWidget extends Widget {
   private updateButtonColor(button: HTMLDivElement, type: buttonTypes, set: "dormant" | "active") {
     button.style.background = this.buttonColors.get(type)[set].highlight;
     button.style.fill = this.buttonColors.get(type)[set].fill;
-  }
-
-  private showContextMenu(e: MouseEvent) {
-    e.preventDefault();
-    this.contextmenu.build();
-    this.scene.setWidgetPos(this.contextmenu, e.pageX, e.pageY);
   }
 }

@@ -48,7 +48,6 @@ export interface DraggableWidgetInterface extends BasicWidgetInterface {
     color?: string
   }
   doCursorDragIcon?: boolean
-  contextmenu?: Record<"minimize"|"close",boolean>
 }
 
 export interface GridWidgetInterface extends CommonWidgetInterface {
@@ -77,5 +76,6 @@ export interface GlobalSingleUseWidgetInterface extends BasicWidgetInterface {
 
 export interface ContextMenuInterface extends CommonWidgetInterface {
   items: ContextMenuSection[] | ContextMenuItem[]
+  trigger: HTMLElement | HTMLElement[]
 }
 

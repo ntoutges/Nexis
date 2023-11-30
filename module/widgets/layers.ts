@@ -1,4 +1,3 @@
-import { Widget } from "./widget";
 
 // minimizes the used layers
 export class Layers<T> {

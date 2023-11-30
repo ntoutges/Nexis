@@ -245,7 +245,7 @@
   
   display: grid;
   grid-template-columns: repeat(3, auto);
-  padding: 4px;
+  padding: 2px;
 }
 
 .framework-contextmenu-sections {

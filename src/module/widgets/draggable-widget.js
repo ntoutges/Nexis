@@ -1,8 +1,7 @@
 import { Draggable } from "../draggable.js";
+import { Widget } from "../framework.js";
 import { getIcon } from "../svg.js";
-import { ContextMenu, sectionsBuilder } from "./contextmenu/contextmenu.js";
 import { buttonDefaults } from "./defaults.js";
-import { Widget } from "./widget.js";
 export class DraggableWidget extends Widget {
     container;
     header = null;
@@ -15,7 +14,7 @@ export class DraggableWidget extends Widget {
     buttonColors = new Map();
     isClosing = false;
     contextmenu;
-    constructor({ id, layer, positioning, pos, style, header = null, doCursorDragIcon = true, options, content, name, resize, contextmenu }) {
+    constructor({ id, layer, positioning, pos, style, header = null, doCursorDragIcon = true, options, content, name, resize }) {
         const container = document.createElement("div");
         super({
             id, layer, positioning, pos, style,
@@ -96,28 +95,26 @@ export class DraggableWidget extends Widget {
             title.addEventListener("mouseleave", this.hideButtons.bind(this));
             titleEnd.addEventListener("mouseenter", this.showButtons.bind(this));
             titleEnd.addEventListener("mouseleave", this.hideButtons.bind(this));
-            const itemStrs = [];
-            if (contextmenu?.close ?? true)
-                itemStrs.push("close/close/x.svg");
-            if (contextmenu?.minimize ?? true)
-                itemStrs.push("minimize/minimize/minus.svg");
-            if (itemStrs.length != 0) {
-                this.contextmenu = new ContextMenu({
-                    items: sectionsBuilder(itemStrs.join(";"))
-                });
-                this.header.addEventListener("contextmenu", this.showContextMenu.bind(this));
-                this.contextmenu.listener.on("click", (item) => {
-                    switch (item.value) {
-                        case "close":
-                            this.close();
-                            break;
-                        case "minimize":
-                            this.minimize();
-                            break;
-                    }
-                    this.contextmenu.unbuild();
-                });
-            }
+            // const itemStrs: string[] = [];
+            // if (contextmenu?.close ?? true) itemStrs.push("close/close/x.svg");
+            // if (contextmenu?.minimize ?? true) itemStrs.push("minimize/minimize/minus.svg");
+            // if (itemStrs.length != 0) {
+            //   this.contextmenu = new ContextMenu({
+            //     items: sectionsBuilder(itemStrs.join(";")),
+            //     trigger: this.header
+            //   });
+            //   this.contextmenu.listener.on("click", (item) => {
+            //     switch (item.value) {
+            //       case "close":
+            //         this.close();
+            //         break;
+            //       case "minimize":
+            //         this.minimize();
+            //         break;
+            //     }
+            //     this.contextmenu.unbuild();
+            //   });
+            // }
         }
         this.body = document.createElement("div");
         this.body.classList.add("framework-draggable-widget-bodies");
@@ -241,11 +238,6 @@ export class DraggableWidget extends Widget {
     updateButtonColor(button, type, set) {
         button.style.background = this.buttonColors.get(type)[set].highlight;
         button.style.fill = this.buttonColors.get(type)[set].fill;
-    }
-    showContextMenu(e) {
-        e.preventDefault();
-        this.contextmenu.build();
-        this.scene.setWidgetPos(this.contextmenu, e.pageX, e.pageY);
     }
 }
 //# sourceMappingURL=draggable-widget.js.map

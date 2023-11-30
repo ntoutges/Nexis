@@ -1,4 +1,4 @@
-import { Widget } from "./widget.js";
+import { Widget } from "../framework.js";
 export class GridWidget extends Widget {
     canvas;
     ctx;

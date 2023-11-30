@@ -4,5 +4,6 @@
     "module": "ES2022",
     "sourceMap": true,
     "outDir": "src"
+    // "outFile": "src/build.js"
   }
 }

@@ -1,6 +1,6 @@
 import { Draggable } from "../draggable.js";
+import { Widget } from "../framework.js";
 import { GridWidgetInterface } from "./interfaces.js";
-import { Widget } from "./widget.js";
 
 export class GridWidget extends Widget {
   private readonly canvas: HTMLCanvasElement;

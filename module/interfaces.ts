@@ -1,7 +1,7 @@
 import { Scene } from "./scene.js"
 import { Draggable } from "./draggable.js"
-import { Widget } from "./widgets/widget.js"
 import { ContextMenuItem } from "./widgets/contextmenu/items.js";
+import { Widget } from "./framework.js";
 
 export type resizeType = "none" | "vertical" | "horizontal" | "both";
 export interface CommonFrameworkInterface {
@@ -14,6 +14,7 @@ export interface CommonFrameworkInterface {
     opacity?: number
   }
   resize?: resizeType
+  contextmenu?: Record<string, { el: HTMLElement | HTMLElement, options: string }>
 }
 
 export interface FrameworkBaseInterface extends CommonFrameworkInterface {
@@ -64,4 +65,4 @@ export interface ContextMenuSectionInterface {
   name?: string
 }
 
-export type ContextMenuEvents = "click" | "mouseenter" | "mouseleave" | "change" | "add" | "remove";
+export type ContextMenuEvents = "click" | "mouseenter" | "mouseleave" | "change" | "add" | "remove" | "open" | "close";
