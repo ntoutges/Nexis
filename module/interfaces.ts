@@ -64,4 +64,4 @@ export interface ContextMenuSectionInterface {
   name?: string
 }
 
-export type ContextMenuEvents = "click" | "mouseenter" | "mouseleave";
+export type ContextMenuEvents = "click" | "mouseenter" | "mouseleave" | "change" | "add" | "remove";

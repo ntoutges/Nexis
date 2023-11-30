@@ -6,6 +6,7 @@ import { Draggable } from "./draggable.js";
 import { Listener } from "./listener.js";
 import { Widget } from "./widgets/widget.js";
 import { Layers } from "./widgets/layers.js";
+import { unbuildType } from "./widgets/globalSingleUseWidget.js";
 
 var sceneIdentifiers = 0;
 
@@ -49,7 +50,8 @@ export class Scene extends FrameworkBase {
 
     this.onD("drag", this.updateWidgetPosition.bind(this));
     this.onD("scroll", this.updateWidgetPositionAndScale.bind(this));
-    if (doStartCentered) this.onD("init", this.centerScene.bind(this))
+    if (doStartCentered) this.onD("init", this.centerScene.bind(this));
+    this.onE("mousedown", () => { unbuildType("contextmenu"); })
   }
 
   addWidget(widget: Widget) {
@@ -147,6 +149,17 @@ export class Scene extends FrameworkBase {
       widget.setTransformation("scale", scale.toString());
       widget.setZoom(this.draggable.pos.z);
     }
+  }
+
+  setWidgetPos(
+    widget: Widget,
+    x: number,
+    y: number
+  ) {
+    if (!this.widgets.includes(widget)) return;
+    const [sX, sY] = this.draggable.toSceneSpace(x,y);
+    widget.setPos( sX, sY );
+    this.updateIndividualWidget(widget);
   }
 
   protected centerScene(d: Draggable) {

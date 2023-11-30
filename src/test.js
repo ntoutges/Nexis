@@ -1,5 +1,6 @@
 import { GridWidget } from "./module/widgets/grid.js";
 import { Scene } from "./module/scene.js";
+import { DraggableWidget } from "./module/widgets/draggable-widget.js";
 import { ContextMenu } from "./module/widgets/contextmenu/contextmenu.js";
 import { ContextMenuItem, ContextMenuSection } from "./module/widgets/contextmenu/items.js";
 const $ = document.querySelector.bind(document);
@@ -21,7 +22,8 @@ new Scene({
         new GridWidget({
             style: {
                 background: "cornsilk"
-            }
+            },
+            doCursorDragIcon: true
         }),
         new ContextMenu({
             pos: {
@@ -32,15 +34,18 @@ new Scene({
                 new ContextMenuSection({
                     items: [
                         new ContextMenuItem({
-                            value: "New Item!"
+                            value: "push",
+                            name: "Push Item!"
                         }),
                         new ContextMenuItem({
-                            value: "Another Item...",
+                            value: "pop",
+                            name: "Pop Item!",
                             shortcut: "Ctrl-X"
                         })
                     ]
                 }),
                 new ContextMenuSection({
+                    name: "test",
                     items: [
                         new ContextMenuItem({
                             value: "New Section?",
@@ -53,6 +58,15 @@ new Scene({
                     ]
                 })
             ]
+        }),
+        new DraggableWidget({
+            name: "test",
+            content: document.createElement("div"),
+            header: {},
+            style: {
+                width: "200px",
+                height: "100px"
+            }
         })
     ]
 });

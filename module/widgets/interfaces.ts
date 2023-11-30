@@ -48,6 +48,7 @@ export interface DraggableWidgetInterface extends BasicWidgetInterface {
     color?: string
   }
   doCursorDragIcon?: boolean
+  contextmenu?: Record<"minimize"|"close",boolean>
 }
 
 export interface GridWidgetInterface extends CommonWidgetInterface {
@@ -68,6 +69,13 @@ export interface GridWidgetInterface extends CommonWidgetInterface {
   gridChangeScaleFactor?: number
 }
 
+export interface GlobalSingleUseWidgetInterface extends BasicWidgetInterface {
+  options?: {
+    autobuild?: boolean
+  }
+}
+
 export interface ContextMenuInterface extends CommonWidgetInterface {
   items: ContextMenuSection[] | ContextMenuItem[]
 }
+
