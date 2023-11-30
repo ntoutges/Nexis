@@ -1,0 +1,396 @@
+import { Draggable } from "../draggable.js";
+import { FrameworkBase } from "../framework.js";
+import { ContextMenuEvents, ContextMenuItemInterface } from "../interfaces";
+import { Listener } from "../listener.js";
+import { Scene } from "../scene.js";
+import { ContextMenuItem, ContextMenuSection } from "./contextmenu/items.js";
+import { BasicWidgetInterface, ContextMenuInterface, GlobalSingleUseWidgetInterface, SceneListenerTypes, sceneListener } from "./interfaces.js";
+
+const alignmentMap = {
+  "left": 0,
+  "top": 0,
+  "middle": 0.5,
+  "right": 1,
+  "bottom": 1
+};
+
+// what is put into scenes
+export class Widget extends FrameworkBase {
+  private readonly sceneListeners: Map<SceneListenerTypes, sceneListener> = new Map<SceneListenerTypes,sceneListener>(); 
+  private readonly sceneListenerIds: Map<number, number[]> = new Map<number, number[]>(); // keep track of sceneListener ids
+  private readonly transformations = new Map<string, string>();
+  readonly contextmenus: Record<string,ContextMenu> = {};
+
+  protected scene: Scene = null;
+  private layer: number; // used to store layer until attached to a scene
+
+  readonly positioning: number;
+
+  readonly pos = { x:0, y:0 };
+  readonly align = { x:0, y:0 };
+
+  readonly name: string;
+
+  constructor({
+    id,name,style,
+    content,
+    positioning = 1,
+    layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
+    pos = {},
+    resize,
+    contextmenu
+    // contextmenu = {}
+  }: BasicWidgetInterface) {
+    super({
+      name: `${name}-widget widget`,
+      children: [content],
+      style,id,
+      resize
+    });
+
+    this.name = name;
+
+    this.positioning = positioning;
+    this.layer = layer;
+
+    this.align.x = alignmentMap[pos?.xAlign ?? "left"];
+    this.align.y = alignmentMap[pos?.yAlign ?? "top"];
+
+    this.setPos(
+      pos?.x ?? 0,
+      pos?.y ?? 0
+    );
+
+    for (const name in contextmenu) {
+      this.contextmenus[name] = new ContextMenu({
+        items: sectionsBuilder(contextmenu[name].options),
+        trigger: contextmenu[name].el
+      });
+    }
+  }
+
+  setPos(x: number, y: number) {
+    this.pos.x = x;
+    this.pos.y = y;
+  }
+
+  setZoom(z: number) {} // placeholder for future functions that may need this
+
+  calculateBounds(scale: number = 1) {
+    return {
+      width: this.el.offsetWidth * scale,
+      height: this.el.offsetHeight * scale
+    };
+  }
+
+  addSceneListener(type: SceneListenerTypes, sceneListener: sceneListener) {
+    this.sceneListeners.set(type, sceneListener);
+  }
+
+  attachTo(scene: Scene) {
+    const isFirstScene = this.scene == null;
+    if (!isFirstScene) this.detachFrom(this.scene);
+    this.scene = scene;
+    this.setZoom(scene.draggable.pos.z);
+    for (const [type,listener] of this.sceneListeners.entries()) {
+      switch (type) {
+        case "init":
+          this.saveId(scene.identifier, scene.onD("init", listener));
+          break;
+        case "dragStart":
+          this.saveId(scene.identifier, scene.onD("dragInit", listener));
+          break;
+        case "dragEnd":
+          this.saveId(scene.identifier, scene.onD("dragEnd", listener));
+          break;
+        case "drag":
+          this.saveId(scene.identifier, scene.onD("drag", listener));
+          break;
+        case "zoom":
+          this.saveId(scene.identifier, scene.onD("scroll", listener));
+          break;
+        case "move":
+          this.saveId(scene.identifier, scene.onD("drag", listener));
+          this.saveId(scene.identifier, scene.onD("scroll", listener));
+          break;
+        case "resize":
+          this.saveId(scene.identifier, scene.onD("resize", listener));
+          break;
+        default:
+          console.log(`Invalid SceneListenerType ${type}`);
+      }
+    }
+    scene.layers.setLayer(this, this.layer);
+    this.appendTo(scene.element);
+    if (isFirstScene && this.resizeData.draggable) {
+      this.resizeData.draggable.listener.on("resize", this.updatePositionOnResize.bind(this))
+    }
+    for (const name in this.contextmenus) {
+      scene.addWidget(this.contextmenus[name]);
+    }
+  }
+
+  detachFrom(scene: Scene) {
+    if (this.scene != scene) return; // scenes don't match
+    this.scene = null;
+    if (this.sceneListenerIds.has(scene.identifier)) {
+      for (const listenerId of this.sceneListenerIds.get(scene.identifier)) {
+        scene.off(listenerId);
+      }
+    }
+    this.el.remove();
+    scene.removeWidget(this);
+  }
+
+  private saveId(sceneIdentifier: number, callbackId: number) {
+    if (!this.sceneListenerIds.has(sceneIdentifier)) this.sceneListenerIds.set(sceneIdentifier, []);
+    this.sceneListenerIds.get(sceneIdentifier).push(callbackId);
+  }
+
+  setTransformation(property: string, value: string = "") {
+    if (value.length == 0) this.transformations.delete(property); // delete property
+    else this.transformations.set(property, value); // add property
+
+    this.updateTransformations();
+  }
+
+  protected updateTransformations() {
+    let transformations: string[] = [];
+    for (const [property,value] of this.transformations.entries()) {
+      transformations.push(`${property}(${value})`);
+    }
+    this.el.style.transform = transformations.join(",");
+  }
+
+  setZIndex(zIndex: number) {
+    this.el.style.zIndex = zIndex.toString();
+  }
+
+  protected updatePositionOnResize(d: Draggable) {
+    const xOff = d.delta.x * this.align.x;
+    const yOff = d.delta.y * this.align.y;
+
+    this.pos.x -= xOff;
+    this.pos.y += yOff;
+  }
+}
+
+const globalSingleUseWidgetMap = new Map<string, GlobalSingleUseWidget>();
+
+export function unbuildType(type: string) {
+  if (globalSingleUseWidgetMap.has(type)) {
+    globalSingleUseWidgetMap.get(type).unbuild();
+  }
+}
+
+export abstract class GlobalSingleUseWidget extends Widget {
+  private _isBuilt: boolean;
+  constructor({
+    name,content,
+    id,layer,pos,positioning,resize,style,
+    options
+  }: GlobalSingleUseWidgetInterface) {
+    super({
+      name,content,
+      id,layer,
+      pos,positioning,resize,
+      style
+    });
+    this._isBuilt = false;
+
+    if (options?.autobuild ?? true) {
+      setTimeout(() => { this.build() }); // taking advantage of event system; wait for parent constructor to finish before calling build
+    }
+    this.el.style.display = "none";
+  }
+  
+  build() {
+    if (globalSingleUseWidgetMap.has(this.name)) { // get rid of old
+      const oldWidget = globalSingleUseWidgetMap.get(this.name);
+      if (oldWidget != this) oldWidget.unbuild();
+    }
+    globalSingleUseWidgetMap.set(this.name, this);
+    this._isBuilt = true;
+    this.el.style.display = "";
+  }
+  
+  unbuild() {
+    this._isBuilt = false;
+    this.el.style.display = "none";
+    if (globalSingleUseWidgetMap.has(this.name)) {
+      globalSingleUseWidgetMap.delete(this.name); // remove current entry
+    }
+  }
+
+  get isBuilt() { return this._isBuilt; }
+}
+
+export class ContextMenu extends GlobalSingleUseWidget {
+  private readonly sections: ContextMenuSection[];
+  private readonly container: HTMLDivElement;
+  readonly listener = new Listener<ContextMenuEvents, ContextMenuItem>();
+
+  constructor({
+    id,
+    layer=999999,
+    pos,
+    positioning,
+    resize,
+    style,
+    items,
+    trigger
+  }: ContextMenuInterface) {
+    const container = document.createElement("div");
+
+    super({
+      id,layer,pos,positioning,resize,style,
+      name: "contextmenu",
+      content: container,
+      options: {
+        autobuild: false
+      }
+    });
+
+    container.classList.add("framework-contextmenu-containers");
+
+    if (items.length > 0) {
+      if (items[0] instanceof ContextMenuSection) this.sections = items as ContextMenuSection[];
+      else {
+        this.sections = [
+          new ContextMenuSection({
+            items: items as ContextMenuItem[]
+          })
+        ]
+      }
+    }
+
+    this.sections.forEach(section => { section.setListener(this.listener); });
+    this.container = container;
+    
+    this.listener.on("add", () => { if (this.isBuilt) this.rebuild(); });
+
+    if (!Array.isArray(trigger)) trigger = [trigger];
+    for (const el of trigger) {
+      el.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!this.scene) return; // don't continue unless attached to something
+        this.build();
+        this.scene.setWidgetPos(this, e.pageX, e.pageY);
+        this.listener.trigger("open", null);
+      });
+      el.addEventListener("click", (e) => {
+        if (e.button == 2) return; // ignore right-click
+        this.unbuild();
+      });
+    }
+  }
+
+  private rebuild() {
+    this.container.innerHTML = ""; // clear
+    const sectionElements = this.sections.map(section => section.build());
+    for (const sectionEl of sectionElements) {
+      this.container.append(sectionEl);
+    }
+  }
+
+  build() {
+    this.rebuild();
+    super.build();
+  }
+
+  unbuild() {
+    this.container.innerHTML = "";
+    this.listener.trigger("close", null);
+    super.unbuild();
+  }
+
+  addSection(section: ContextMenuSection) {
+    this.sections.push(section);
+  }
+  removeSection(name: string | number) {
+    const section = this.getSection(name);
+    if (section == null) return;
+    const index = this.sections.indexOf(section);
+    
+    section.unbuild()?.remove();
+    this.sections.splice(index,1);
+  }
+
+  getSection(name: string | number): ContextMenuSection {
+    if (typeof name == "number") { // given exact index
+      if (name < 0) name += this.sections.length;
+      if (name >= 0 && name < this.sections.length) {
+        return this.sections[name]
+      }
+      return null;
+    }
+
+    // given name
+    for (const section of this.sections) {
+      if (section.name == name) {
+        return section;
+      }
+    }
+    return null;
+  }
+
+  size() {
+    let total = 0;
+    this.sections.forEach(section => { total += section.size(); });
+    return total;
+  }
+}
+
+// format: value//name//icon//shortcut
+export function itemBuilder(input: string): ContextMenuItem {
+  const parts = input.split("/");
+  
+  const buildData: ContextMenuItemInterface = { value: "" };
+
+  if (parts.length == 0) return null;
+  buildData.value = parts[0];
+  
+  if (parts.length > 1 && parts[1].trim()) buildData.name = parts[1];
+  if (parts.length > 2 && parts[2].trim()) buildData.icon = parts[2];
+  if (parts.length > 3 && parts[3].trim()) buildData.shortcut = parts[3];
+
+  return new ContextMenuItem(buildData);
+}
+
+// format: ;name;<item>;<item>;...
+const sectionPattern = /^(?:;([^;]+))?(.+?)$/;
+export function sectionBuilder(input: string): ContextMenuSection {
+  const sectionData = sectionPattern.exec(input);
+  if (!sectionData) return null;
+
+  const name = sectionData[1] ?? null;
+  const items: ContextMenuItem[] = [];
+  
+  const itemsData = (sectionData[2] ?? "").split(";");
+  for (const itemInput of itemsData) {
+    const item = itemBuilder(itemInput);
+    if (item == null) continue; // throw out
+    items.push(item);
+  }
+
+  if (items.length == 0) return null;
+  return new ContextMenuSection({
+    items,
+    name
+  });
+}
+
+// format: <section>~<section>~...
+export function sectionsBuilder(input: string): ContextMenuSection[] {
+  const sectionsData = input.split("~");
+
+  const sections: ContextMenuSection[] = [];
+  for (const sectionData of sectionsData) {
+    const section = sectionBuilder(sectionData);
+    if (section == null) continue; // throw out
+    sections.push(section);
+  }
+
+  return sections;
+}

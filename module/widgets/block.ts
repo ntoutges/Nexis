@@ -1,5 +1,5 @@
-import { Widget } from "../framework.js";
 import { CommonWidgetInterface } from "./interfaces.js";
+import { Widget } from "./widget.js";
 
 export class BlockWidget extends Widget {
   constructor({

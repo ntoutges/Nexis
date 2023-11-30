@@ -1,9 +1,9 @@
 import { Draggable } from "../draggable.js";
-import { ContextMenu, Widget } from "../framework.js";
 import { Scene } from "../scene.js";
 import { getIcon, getSvg } from "../svg.js";
 import { buttonDefaults } from "./defaults.js";
 import { DraggableWidgetInterface, buttonTypes, headerOption } from "./interfaces.js";
+import { ContextMenu, Widget } from "./widget.js";
 
 export class DraggableWidget extends Widget {
   private readonly container: HTMLDivElement;
@@ -23,8 +23,6 @@ export class DraggableWidget extends Widget {
 
   private isClosing: boolean = false;
 
-  readonly contextmenu: ContextMenu;
-
   constructor({
     id,layer,positioning,pos,style,
     header = null,
@@ -35,19 +33,29 @@ export class DraggableWidget extends Widget {
     resize
   }: DraggableWidgetInterface) {
     const container = document.createElement("div");
+    const headerEl = document.createElement("div");
     
+      // itemStrs.push("close/close/x.svg");
+      // if (contextmenu?.minimize ?? true) itemStrs.push("minimize/minimize/minus.svg");
+
     super({
       id,layer,positioning,pos,style,
       name,
       content: container,
-      resize
+      resize,
+      contextmenu: {
+        "header": {
+          el: headerEl,
+          options: "close/close/x.svg;minimize/minimize/minus.svg"
+        }
+      }
     });
 
     this.container = container;
     this.container.classList.add("framework-draggable-widget-containers")
     
     if (header) {
-      this.header = document.createElement("div");
+      this.header = headerEl;
       this.header.classList.add("framework-draggable-widget-headers");
       this.container.append(this.header);
 
@@ -130,28 +138,17 @@ export class DraggableWidget extends Widget {
       titleEnd.addEventListener("mouseenter", this.showButtons.bind(this));
       titleEnd.addEventListener("mouseleave", this.hideButtons.bind(this));
 
-      // const itemStrs: string[] = [];
-      // if (contextmenu?.close ?? true) itemStrs.push("close/close/x.svg");
-      // if (contextmenu?.minimize ?? true) itemStrs.push("minimize/minimize/minus.svg");
-
-      // if (itemStrs.length != 0) {
-      //   this.contextmenu = new ContextMenu({
-      //     items: sectionsBuilder(itemStrs.join(";")),
-      //     trigger: this.header
-      //   });
-
-      //   this.contextmenu.listener.on("click", (item) => {
-      //     switch (item.value) {
-      //       case "close":
-      //         this.close();
-      //         break;
-      //       case "minimize":
-      //         this.minimize();
-      //         break;
-      //     }
-      //     this.contextmenu.unbuild();
-      //   });
-      // }
+      this.contextmenus.header.listener.on("click", (item) => {
+        switch (item.value) {
+          case "close":
+            this.close();
+            break;
+          case "minimize":
+            this.minimize();
+            break;
+        }
+        this.contextmenus.header.unbuild();
+      });
     }
 
     this.body = document.createElement("div");
@@ -194,8 +191,6 @@ export class DraggableWidget extends Widget {
         this.draggable.listener.on("selected", () => { this.scene.layers.moveToTop(this); })
       }
       else this.draggable.changeViewport(scene.element);
-
-      if (this.contextmenu) scene.addWidget(this.contextmenu);
     }
   }
 

@@ -14,7 +14,6 @@ export interface CommonFrameworkInterface {
     opacity?: number
   }
   resize?: resizeType
-  contextmenu?: Record<string, { el: HTMLElement | HTMLElement, options: string }>
 }
 
 export interface FrameworkBaseInterface extends CommonFrameworkInterface {

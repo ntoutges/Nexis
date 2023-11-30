@@ -205,8 +205,15 @@ export class Draggable {
         if (triggerDrag)
             this.listener.trigger("drag", this);
     }
+    center(triggerDrag = true) {
+        this.pos.x = -this.bounds.width / 2;
+        this.pos.y = -this.bounds.height / 2;
+        if (triggerDrag)
+            this.listener.trigger("drag", this);
+    }
     setZoom(z) {
         this.pos.z = z;
+        this.listener.trigger("scroll", this);
     }
     // convert x,y in screen to x,y within transformations of scene
     toSceneSpace(x, y) {

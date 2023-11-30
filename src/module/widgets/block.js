@@ -1,4 +1,4 @@
-import { Widget } from "../framework.js";
+import { Widget } from "./widget.js";
 export class BlockWidget extends Widget {
     constructor({ id, layer, style, positioning = 1, pos, resize }) {
         const el = document.createElement("div");

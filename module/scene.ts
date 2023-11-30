@@ -1,10 +1,11 @@
 // containers of everything--imagine this as the viewport
 
-import { FrameworkBase, Widget, unbuildType } from "./framework.js";
+import { FrameworkBase } from "./framework.js";
 import { DraggableEvents, SceneInterface, draggableListener } from "./interfaces.js";
 import { Draggable } from "./draggable.js";
 import { Listener } from "./listener.js";
 import { Layers } from "./widgets/layers.js";
+import { Widget, unbuildType } from "./widgets/widget.js";
 
 var sceneIdentifiers = 0;
 

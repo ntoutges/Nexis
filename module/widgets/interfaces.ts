@@ -18,6 +18,7 @@ export interface CommonWidgetInterface extends CommonFrameworkInterface {
 export interface BasicWidgetInterface extends CommonWidgetInterface {
   name: string
   content: HTMLElement
+  contextmenu?: Record<string, { el: HTMLElement | HTMLElement, options: string }>
 }
 
 export interface headerOption {

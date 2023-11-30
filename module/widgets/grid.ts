@@ -1,6 +1,6 @@
 import { Draggable } from "../draggable.js";
-import { Widget } from "../framework.js";
 import { GridWidgetInterface } from "./interfaces.js";
+import { Widget } from "./widget.js";
 
 export class GridWidget extends Widget {
   private readonly canvas: HTMLCanvasElement;
@@ -35,7 +35,13 @@ export class GridWidget extends Widget {
       positioning,
       id,style,
       layer,
-      resize
+      resize,
+      contextmenu: {
+        "menu": {
+          el: canvas,
+          options: "center/Center Grid/home.svg;reset/Reset Zoom/action-undo.svg"
+        }
+      }
     });
 
     this.step = Math.max(options?.grid?.size, 10) || 50;
@@ -59,6 +65,18 @@ export class GridWidget extends Widget {
     this.addSceneListener("init", this.init.bind(this));
     this.addSceneListener("dragStart", this.dragStart.bind(this));
     this.addSceneListener("dragEnd", this.dragEnd.bind(this));
+
+    this.contextmenus.menu.listener.on("click", item => {
+      switch (item.value) {
+        case "reset":
+          this.scene.draggable.setZoom(1);
+          break;
+        case "center":
+          this.scene.draggable.center(true);
+          break;
+      }
+      this.contextmenus.menu.unbuild();
+    })
   }
 
   protected drag(d: Draggable) {
