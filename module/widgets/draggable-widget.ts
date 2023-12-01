@@ -3,7 +3,7 @@ import { Scene } from "../scene.js";
 import { getIcon, getSvg } from "../svg.js";
 import { buttonDefaults } from "./defaults.js";
 import { DraggableWidgetInterface, buttonTypes, headerOption } from "./interfaces.js";
-import { ContextMenu, Widget } from "./widget.js";
+import { ContextMenu, GlobalSingleUseWidget, Widget } from "./widget.js";
 
 export class DraggableWidget extends Widget {
   private readonly container: HTMLDivElement;
@@ -31,14 +31,24 @@ export class DraggableWidget extends Widget {
     content,
     name,
     resize,
-    contextmenu,
+    contextmenu=[],
     doZoomScale
   }: DraggableWidgetInterface) {
     const container = document.createElement("div");
     const headerEl = document.createElement("div");
+    const body = document.createElement("div");
     
-      // itemStrs.push("close/close/x.svg");
-      // if (contextmenu?.minimize ?? true) itemStrs.push("minimize/minimize/minus.svg");
+    if (!Array.isArray(contextmenu)) contextmenu = [contextmenu];
+    contextmenu.push({ // add in base options
+      "header": {
+        el: headerEl,
+        options: "close/close/x.svg;collapse/collapse/minus.svg"
+      },
+      "body": {
+        el: body,
+        options: ""
+      }
+    });
 
     super({
       id,layer,positioning,pos,style,
@@ -46,16 +56,12 @@ export class DraggableWidget extends Widget {
       content: container,
       resize,
       doZoomScale,
-      contextmenu: {
-        "header": {
-          el: headerEl,
-          options: ";test;close/close/x.svg;collapse/collapse/minus.svg"
-        }
-      }
+      contextmenu: contextmenu
     });
 
     this.container = container;
     this.container.classList.add("framework-draggable-widget-containers")
+    container.addEventListener("click", GlobalSingleUseWidget.unbuildType.bind(null, "contextmenu"));
     
     if (header) {
       this.header = headerEl;
@@ -155,7 +161,7 @@ export class DraggableWidget extends Widget {
       });
     }
 
-    this.body = document.createElement("div");
+    this.body = body;
     this.body.classList.add("framework-draggable-widget-bodies");
     this.body.append(content);
 
@@ -200,6 +206,7 @@ export class DraggableWidget extends Widget {
 
   protected dragInit() {
     if (this.doCursorDrag) this.header.classList.add("dragging");
+    GlobalSingleUseWidget.unbuildType("contextmenu");
   }
 
   protected dragEnd() {

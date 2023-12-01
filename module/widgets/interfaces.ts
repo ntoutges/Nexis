@@ -13,13 +13,14 @@ export interface CommonWidgetInterface extends CommonFrameworkInterface {
     y?: number
     xAlign?: "left" | "middle" | "right"
     yAlign?: "top" | "middle" | "bottom"
-  }
+  },
+  contextmenu?: contextmenuType | contextmenuType[]
 }
 
+type contextmenuType = Record<string, { el: HTMLElement | HTMLElement, options: string }>;
 export interface BasicWidgetInterface extends CommonWidgetInterface {
   name: string
   content: HTMLElement
-  contextmenu?: Record<string, { el: HTMLElement | HTMLElement, options: string }>
 }
 
 export interface headerOption {

@@ -259,6 +259,10 @@
   animation: contextmenu-enter 100ms;
 }
 
+.framework-contextmenu-containers:empty {
+  display: none;
+}
+
 .framework-contextmenu-sections {
   display: contents;
 }

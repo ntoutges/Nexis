@@ -12,8 +12,16 @@ export class GridWidget extends Widget {
     gridChangeScaleFactor;
     offset = { x: 0, y: 0 };
     constructor({ id, style, options = {}, layer = -1, // default: behind everything
-    positioning = 0, doCursorDragIcon = false, doIndependentCenter = false, gridChangeScaleFactor = 0.4, resize }) {
+    positioning = 0, doCursorDragIcon = false, doIndependentCenter = false, gridChangeScaleFactor = 0.4, resize, contextmenu = [] }) {
         const canvas = document.createElement("canvas");
+        if (!Array.isArray(contextmenu))
+            contextmenu = [contextmenu];
+        contextmenu.push({
+            "menu": {
+                el: canvas,
+                options: "center/Center Grid/home.svg;reset/Reset Positioning/action-undo.svg~"
+            }
+        });
         super({
             name: "grid",
             content: canvas,
@@ -21,12 +29,7 @@ export class GridWidget extends Widget {
             id, style,
             layer,
             resize,
-            contextmenu: {
-                "menu": {
-                    el: canvas,
-                    options: "center/Center Grid/home.svg;reset/Reset Positioning/action-undo.svg~"
-                }
-            }
+            contextmenu
         });
         this.step = Math.max(options?.grid?.size, 10) || 50;
         this.gridColor = options?.grid?.color || "lightgrey";

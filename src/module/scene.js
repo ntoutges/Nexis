@@ -3,7 +3,7 @@ import { FrameworkBase } from "./framework.js";
 import { Draggable } from "./draggable.js";
 import { Listener } from "./listener.js";
 import { Layers } from "./widgets/layers.js";
-import { unbuildType } from "./widgets/widget.js";
+import { GlobalSingleUseWidget } from "./widgets/widget.js";
 var sceneIdentifiers = 0;
 export class Scene extends FrameworkBase {
     draggable;
@@ -33,7 +33,7 @@ export class Scene extends FrameworkBase {
         this.onD("scroll", this.updateWidgetPositionAndScale.bind(this));
         if (doStartCentered)
             this.onD("init", this.centerScene.bind(this));
-        this.onE("mousedown", () => { unbuildType("contextmenu"); });
+        this.onE("mousedown", () => { GlobalSingleUseWidget.unbuildType("contextmenu"); });
     }
     addWidget(widget) {
         widget.attachTo(this);
@@ -80,6 +80,8 @@ export class Scene extends FrameworkBase {
         this.updateIndividualWidgetPosition(widget);
     }
     updateIndividualWidgetPosition(widget) {
+        if (!widget.isBuilt)
+            return;
         const [cX1, cY1] = this.draggable.toScreenSpace(widget.pos.x, widget.pos.y);
         const cX = widget.pos.x * (1 - widget.positioning) + cX1 * widget.positioning;
         const cY = widget.pos.y * (1 - widget.positioning) + cY1 * widget.positioning;

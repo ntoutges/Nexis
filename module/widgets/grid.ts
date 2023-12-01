@@ -25,10 +25,19 @@ export class GridWidget extends Widget {
     doCursorDragIcon = false,
     doIndependentCenter = false,
     gridChangeScaleFactor = 0.4,
-    resize
+    resize,
+    contextmenu=[]
   }: GridWidgetInterface) {
     const canvas = document.createElement("canvas");
     
+    if (!Array.isArray(contextmenu)) contextmenu = [contextmenu];
+    contextmenu.push({ // defaults
+      "menu": {
+        el: canvas,
+        options: "center/Center Grid/home.svg;reset/Reset Positioning/action-undo.svg~"
+      }
+    });
+
     super({
       name: "grid",
       content: canvas,
@@ -36,12 +45,7 @@ export class GridWidget extends Widget {
       id,style,
       layer,
       resize,
-      contextmenu: {
-        "menu": {
-          el: canvas,
-          options: "center/Center Grid/home.svg;reset/Reset Positioning/action-undo.svg~"
-        }
-      }
+      contextmenu
     });
 
     this.step = Math.max(options?.grid?.size, 10) || 50;

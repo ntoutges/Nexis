@@ -55,8 +55,6 @@ export class ContextMenuItem {
     this.el.addEventListener("click", this.onEvent.bind(this, "click"));
     this.el.addEventListener("mouseenter", this.onEvent.bind(this, "mouseenter"));
     this.el.addEventListener("mouseleave", this.onEvent.bind(this, "mouseleave"));
-    this.el.addEventListener("mousedown", (e) => { e.stopPropagation(); }); // block dragging
-    this.el.addEventListener("contextmenu", (e) => { e.preventDefault(); }) // prevent real context-menu on fake context-menu
 
     this.updateEnabledState();
     return this.el;

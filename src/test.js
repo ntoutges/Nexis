@@ -30,6 +30,12 @@ new Scene({
             style: {
                 width: "200px",
                 height: "100px"
+            },
+            contextmenu: {
+                "header": {
+                    el: null,
+                    options: "; ;test/another test"
+                }
             }
         })
     ]

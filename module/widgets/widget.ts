@@ -40,7 +40,7 @@ export class Widget extends FrameworkBase {
     layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
     pos = {},
     resize,
-    contextmenu = {},
+    contextmenu = [],
   }: BasicWidgetInterface) {
     super({
       name: `${name}-widget widget`,
@@ -63,9 +63,20 @@ export class Widget extends FrameworkBase {
       pos?.y ?? 0
     );
 
+    if (Array.isArray(contextmenu)) {
+      if (contextmenu.length == 0) contextmenu = {};
+      else if (contextmenu.length == 1) contextmenu = contextmenu[0];
+      else {
+        const base = contextmenu[contextmenu.length-1]; // fill list back-to-front
+        for (let i = contextmenu.length-2; i >= 0; i--) {
+          ContextMenu.combineContextMenus( base, contextmenu[i] );
+        }
+        contextmenu = base;
+      }
+    }
     for (const name in contextmenu) {
       this.contextmenus[name] = new ContextMenu({
-        items: sectionsBuilder(contextmenu[name].options),
+        items: ContextMenu.sectionsBuilder(contextmenu[name].options),
         trigger: contextmenu[name].el
       });
     }
@@ -177,15 +188,11 @@ export class Widget extends FrameworkBase {
     this.pos.x -= xOff;
     this.pos.y += yOff;
   }
+
+  get isBuilt(): boolean { return true; } // used by types like GlobalSingleUseWidget for scene optimization
 }
 
 const globalSingleUseWidgetMap = new Map<string, GlobalSingleUseWidget>();
-
-export function unbuildType(type: string) {
-  if (globalSingleUseWidgetMap.has(type)) {
-    globalSingleUseWidgetMap.get(type).unbuild();
-  }
-}
 
 export abstract class GlobalSingleUseWidget extends Widget {
   private _isBuilt: boolean;
@@ -229,8 +236,15 @@ export abstract class GlobalSingleUseWidget extends Widget {
   }
 
   get isBuilt() { return this._isBuilt; }
+
+  static unbuildType(type: string) {
+    if (globalSingleUseWidgetMap.has(type)) {
+      globalSingleUseWidgetMap.get(type).unbuild();
+    }
+  }
 }
 
+const sectionPattern = /^(?:;([^;]+))?(.+?)$/;
 export class ContextMenu extends GlobalSingleUseWidget {
   private readonly sections: ContextMenuSection[];
   private readonly container: HTMLDivElement;
@@ -239,12 +253,8 @@ export class ContextMenu extends GlobalSingleUseWidget {
   private doAutoClose: boolean;
 
   constructor({
-    id,
+    id,pos,positioning,resize,style,
     layer=999999,
-    pos,
-    positioning,
-    resize,
-    style,
     items,
     trigger
   }: ContextMenuInterface) {
@@ -261,6 +271,8 @@ export class ContextMenu extends GlobalSingleUseWidget {
     });
 
     container.classList.add("framework-contextmenu-containers");
+    container.addEventListener("mousedown", (e) => { e.stopPropagation(); }); // block dragging
+    container.addEventListener("contextmenu", (e) => { e.preventDefault(); }) // prevent real context-menu on fake context-menu
 
     if (items.length > 0) {
       if (items[0] instanceof ContextMenuSection) this.sections = items as ContextMenuSection[];
@@ -271,9 +283,10 @@ export class ContextMenu extends GlobalSingleUseWidget {
           })
         ]
       }
+      this.sections.forEach(section => { section.setListener(this.listener); });
     }
+    else this.sections = [];
 
-    this.sections.forEach(section => { section.setListener(this.listener); });
     this.container = container;
     
     this.listener.on("add", () => { if (this.isBuilt) this.rebuild(); });
@@ -285,16 +298,12 @@ export class ContextMenu extends GlobalSingleUseWidget {
     if (!Array.isArray(trigger)) trigger = [trigger];
     for (const el of trigger) {
       el.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
+        if (this.sections.length > 0) e.preventDefault(); // if empty, allow standard contextmenu through (but still close previous contextmenu)
         e.stopPropagation();
         if (!this.scene) return; // don't continue unless attached to something
         this.build();
         this.scene.setWidgetPos(this, e.pageX, e.pageY);
         this.listener.trigger("open", null);
-      });
-      el.addEventListener("click", (e) => {
-        if (e.button == 2) return; // ignore right-click
-        this.unbuild();
       });
     }
   }
@@ -309,7 +318,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
 
   build() {
     this.doAutoClose = true;
-    this.rebuild();
+    if (!this.isEmpty()) this.rebuild(); // don't bother trying to build empty contextmenu
     super.build();
   }
 
@@ -361,57 +370,75 @@ export class ContextMenu extends GlobalSingleUseWidget {
   blockClosing() {
     this.doAutoClose = false;
   }
-}
 
-// format: value//name//icon//shortcut
-export function itemBuilder(input: string): ContextMenuItem {
-  const parts = input.split("/");
+  // format: <value>/<name>/<icon>/<shortcut>
+  static itemBuilder(input: string): ContextMenuItem {
+    const parts = input.split("/");
+    
+    const buildData: ContextMenuItemInterface = { value: "" };
   
-  const buildData: ContextMenuItemInterface = { value: "" };
-
-  if (parts.length == 1 && parts[0].length == 0) return null;
-  buildData.value = parts[0];
+    if (parts.length == 1 && parts[0].length == 0) return null;
+    buildData.value = parts[0];
+    
+    if (parts.length > 1 && parts[1].trim()) buildData.name = parts[1];
+    if (parts.length > 2 && parts[2].trim()) buildData.icon = parts[2];
+    if (parts.length > 3 && parts[3].trim()) buildData.shortcut = parts[3];
   
-  if (parts.length > 1 && parts[1].trim()) buildData.name = parts[1];
-  if (parts.length > 2 && parts[2].trim()) buildData.icon = parts[2];
-  if (parts.length > 3 && parts[3].trim()) buildData.shortcut = parts[3];
-
-  return new ContextMenuItem(buildData);
-}
-
-// format: ;name;<item>;<item>;...
-const sectionPattern = /^(?:;([^;]+))?(.+?)$/;
-export function sectionBuilder(input: string): ContextMenuSection {
-  const sectionData = sectionPattern.exec(input);
-  if (!sectionData) return null;
-
-  const name = sectionData[1] ?? null;
-  const items: ContextMenuItem[] = [];
-  
-  const itemsData = (sectionData[2] ?? "").split(";");
-  for (const itemInput of itemsData) {
-    const item = itemBuilder(itemInput);
-    if (item == null) continue; // throw out
-    items.push(item);
+    return new ContextMenuItem(buildData);
   }
 
-  if (items.length == 0) return null;
-  return new ContextMenuSection({
-    items,
-    name
-  });
-}
+  isEmpty() { return this.sections.length == 0; }
 
-// format: <section>~<section>~...
-export function sectionsBuilder(input: string): ContextMenuSection[] {
-  const sectionsData = input.split("~");
-
-  const sections: ContextMenuSection[] = [];
-  for (const sectionData of sectionsData) {
-    const section = sectionBuilder(sectionData);
-    if (section == null) continue; // throw out
-    sections.push(section);
+  // format: ;name;<item>;<item>;...
+  static sectionBuilder(input: string): ContextMenuSection {
+    const sectionData = sectionPattern.exec(input);
+    if (!sectionData) return null;
+  
+    const name = (sectionData[1]?.trim()) || null;
+    const items: ContextMenuItem[] = [];
+    
+    const itemsData = (sectionData[2] ?? "").split(";");
+    for (const itemInput of itemsData) {
+      const item = ContextMenu.itemBuilder(itemInput);
+      if (item == null) continue; // throw out
+      items.push(item);
+    }
+  
+    if (items.length == 0) return null;
+    return new ContextMenuSection({
+      items,
+      name
+    });
   }
 
-  return sections;
+  // format: <section>~<section>~...
+  static sectionsBuilder(input: string): ContextMenuSection[] {
+    const sectionsData = input.split("~");
+  
+    const sections: ContextMenuSection[] = [];
+    for (const sectionData of sectionsData) {
+      const section = ContextMenu.sectionBuilder(sectionData);
+      if (section == null) continue; // throw out
+      sections.push(section);
+    }
+  
+    return sections;
+  }
+
+  // copies data from [b] into [a]
+  static combineContextMenus(
+    a: Record<string, { el: HTMLElement | HTMLElement, options: string }>,
+    b: Record<string, { el: HTMLElement | HTMLElement, options: string }>
+  ) {
+    for (const name in b) {
+      if (name in a) {
+        const bMatch = sectionPattern.exec(b[name].options);
+        if (bMatch[1]) a[name].options += "~"; // new section
+        else if (a[name].options.length > 0) a[name].options += ";"; // add separator
+        a[name].options += b[name].options;
+        if (a[name].el == null) a[name].el = b[name].el; // [a] may leave element undefined; if so, fill with [b]'s element
+      }
+      else a[name] = b[name];
+    }
+  }
 }

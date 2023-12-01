@@ -5,7 +5,7 @@ import { DraggableEvents, SceneInterface, draggableListener } from "./interfaces
 import { Draggable } from "./draggable.js";
 import { Listener } from "./listener.js";
 import { Layers } from "./widgets/layers.js";
-import { Widget, unbuildType } from "./widgets/widget.js";
+import { GlobalSingleUseWidget, Widget } from "./widgets/widget.js";
 
 var sceneIdentifiers = 0;
 
@@ -50,7 +50,7 @@ export class Scene extends FrameworkBase {
     this.onD("drag", this.updateWidgetPosition.bind(this));
     this.onD("scroll", this.updateWidgetPositionAndScale.bind(this));
     if (doStartCentered) this.onD("init", this.centerScene.bind(this));
-    this.onE("mousedown", () => { unbuildType("contextmenu"); })
+    this.onE("mousedown", () => { GlobalSingleUseWidget.unbuildType("contextmenu"); })
   }
 
   addWidget(widget: Widget) {
@@ -100,6 +100,8 @@ export class Scene extends FrameworkBase {
   }
 
   protected updateIndividualWidgetPosition(widget: Widget) {
+    if (!widget.isBuilt) return;
+
     const [cX1, cY1] = this.draggable.toScreenSpace(
       widget.pos.x,
       widget.pos.y
