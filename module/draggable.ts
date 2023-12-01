@@ -24,6 +24,9 @@ export class Draggable {
   private blockDrag: boolean;
   private blockScroll: boolean;
 
+  private maxZoom: number;
+  private minZoom: number;
+
   private viewport: HTMLElement;
   private readonly doDragBound = this.doDrag.bind(this);
   private readonly endDragBound = this.endDrag.bind(this);
@@ -43,7 +46,8 @@ export class Draggable {
     zoomable = true,
     blockDrag = true,
     blockScroll = true,
-    input
+    input,
+    options={}
   }: DraggableInterface) {
     this.blockDrag = blockDrag;
     this.blockScroll = blockScroll;
@@ -88,6 +92,11 @@ export class Draggable {
     this.scrollX = scrollX;
     this.scrollY = scrollY;
     this.zoomable = zoomable;
+
+    const minZoom = options?.zoom?.min ?? 0;
+    const maxZoom = options?.zoom?.max ?? Number.MAX_VALUE;
+    this.minZoom = Math.min(minZoom, maxZoom);
+    this.maxZoom = Math.max(minZoom, maxZoom);
 
     if (input?.acceptableMouseButtons && input.acceptableMouseButtons.length > 0) {
       for (const button of input.acceptableMouseButtons) {
@@ -156,6 +165,7 @@ export class Draggable {
     this.pos.x += localX / this.pos.z;
     this.pos.y += localY / this.pos.z;
     this.pos.z -= this.pos.z / (dir * 20);
+    this.pos.z = Math.min(Math.max(this.pos.z, this.minZoom), this.maxZoom); // constrain
     this.pos.x -= localX / this.pos.z;
     this.pos.y -= localY / this.pos.z;
 
@@ -242,7 +252,7 @@ export class Draggable {
   }
 
   setZoom(z: number) {
-    this.pos.z = z;
+    this.pos.z = Math.min(Math.max(z, this.minZoom), this.maxZoom);
     this.listener.trigger("scroll", this);
   }
 

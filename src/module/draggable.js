@@ -18,6 +18,8 @@ export class Draggable {
     zoomable;
     blockDrag;
     blockScroll;
+    maxZoom;
+    minZoom;
     viewport;
     doDragBound = this.doDrag.bind(this);
     endDragBound = this.endDrag.bind(this);
@@ -27,7 +29,7 @@ export class Draggable {
     constructor({ viewport, // continues movement
     element, // Initiates movement
     periphery = [], // Has event listener, but only to stop propagation
-    scrollX = true, scrollY = true, zoomable = true, blockDrag = true, blockScroll = true, input }) {
+    scrollX = true, scrollY = true, zoomable = true, blockDrag = true, blockScroll = true, input, options = {} }) {
         this.blockDrag = blockDrag;
         this.blockScroll = blockScroll;
         let hasResized = false;
@@ -68,6 +70,10 @@ export class Draggable {
         this.scrollX = scrollX;
         this.scrollY = scrollY;
         this.zoomable = zoomable;
+        const minZoom = options?.zoom?.min ?? 0;
+        const maxZoom = options?.zoom?.max ?? Number.MAX_VALUE;
+        this.minZoom = Math.min(minZoom, maxZoom);
+        this.maxZoom = Math.max(minZoom, maxZoom);
         if (input?.acceptableMouseButtons && input.acceptableMouseButtons.length > 0) {
             for (const button of input.acceptableMouseButtons) {
                 this.acceptableMouseButtons.add(button);
@@ -136,6 +142,7 @@ export class Draggable {
         this.pos.x += localX / this.pos.z;
         this.pos.y += localY / this.pos.z;
         this.pos.z -= this.pos.z / (dir * 20);
+        this.pos.z = Math.min(Math.max(this.pos.z, this.minZoom), this.maxZoom); // constrain
         this.pos.x -= localX / this.pos.z;
         this.pos.y -= localY / this.pos.z;
         this.listener.trigger("scroll", this);
@@ -212,7 +219,7 @@ export class Draggable {
             this.listener.trigger("drag", this);
     }
     setZoom(z) {
-        this.pos.z = z;
+        this.pos.z = Math.min(Math.max(z, this.minZoom), this.maxZoom);
         this.listener.trigger("scroll", this);
     }
     // convert x,y in screen to x,y within transformations of scene

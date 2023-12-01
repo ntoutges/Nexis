@@ -18,6 +18,10 @@ new Scene({
   options: {
     // scrollX: false,
     // scrollY: false
+    zoom: {
+      max: 1e2,
+      min: 1e-2
+    }
   },
   widgets: [
     new GridWidget({

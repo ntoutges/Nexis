@@ -39,7 +39,13 @@ export class Scene extends FrameworkBase {
       element: parent,
       scrollX: options?.scrollX ?? true,
       scrollY: options?.scrollY ?? true,
-      zoomable: options?.zoomable ?? true
+      zoomable: options?.zoom?.able ?? true,
+      options: {
+        zoom: {
+          max: options?.zoom?.max ?? Number.MAX_VALUE,
+          min: options?.zoom?.min ?? 0
+        }
+      }
     });
 
     this.layers.onMove((type, zIndex) => { type.setZIndex(zIndex); });

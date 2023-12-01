@@ -26,7 +26,12 @@ export interface SceneInterface extends CommonFrameworkInterface{
   options?: {
     scrollX?: boolean
     scrollY?: boolean
-    zoomable?: boolean
+    
+    zoom?: {
+      able?: boolean
+      max?: number
+      min?: number
+    }
   },
   parent?: HTMLElement
   widgets?: Widget[]
@@ -44,6 +49,12 @@ export interface ScrollableInterface {
   blockScroll?: boolean
   input?: {
     acceptableMouseButtons?: number[]
+  },
+  options?: {
+    zoom?: {
+      max?: number
+      min?: number
+    }
   }
 }
 
