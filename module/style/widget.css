@@ -298,7 +298,11 @@
   padding-right: 5px;
 }
 
-.framework-contextmenu-items:has(> :hover) > div {
+.framework-contextmenu-items.framework-contextmenu-item-disabled > div {
+  opacity: 0.5;
+}
+
+.framework-contextmenu-items:has(> :hover):not(.framework-contextmenu-item-disabled) > div {
   background-color: #d3d3d3;
 }
 

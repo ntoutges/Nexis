@@ -49,7 +49,7 @@ export class DraggableWidget extends Widget {
       contextmenu: {
         "header": {
           el: headerEl,
-          options: ";test;close/close/x.svg;minimize/minimize/minus.svg"
+          options: ";test;close/close/x.svg;collapse/collapse/minus.svg"
         }
       }
     });
@@ -146,11 +146,12 @@ export class DraggableWidget extends Widget {
           case "close":
             this.close();
             break;
-          case "minimize":
-            this.minimize();
+          case "collapse":
+            const isMinimized = this.minimize();
+            this.contextmenus.header.getSection(0).getItem("collapse").name = isMinimized ? "expand" : "collapse";
+            this.contextmenus.header.getSection(0).getItem("collapse").icon = isMinimized ? "plus.svg" : "minus.svg";
             break;
         }
-        this.contextmenus.header.unbuild();
       });
     }
 
@@ -212,6 +213,10 @@ export class DraggableWidget extends Widget {
     this.scene?.updateIndividualWidget(this);
   }
 
+  /**
+   * call to toggle the minimized state of the widget
+   * @returns if element is currently minimized
+   */
   protected minimize() {
     this.body.classList.toggle("draggable-widget-minimize");
     if (this.body.classList.contains("draggable-widget-minimize")) {
@@ -222,6 +227,7 @@ export class DraggableWidget extends Widget {
         this.minimizeTimeout = null;
         // this.updatePositionOnResize();
       }, 300);
+      return true;
     }
     else {
       if (this.minimizeTimeout != null) { // timeout in progress
@@ -229,6 +235,7 @@ export class DraggableWidget extends Widget {
         this.minimizeTimeout = null;
       }
       this.el.classList.remove("is-minimized");
+      return false;
     }
   }
 

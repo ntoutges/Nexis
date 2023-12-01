@@ -236,6 +236,8 @@ export class ContextMenu extends GlobalSingleUseWidget {
   private readonly container: HTMLDivElement;
   readonly listener = new Listener<ContextMenuEvents, ContextMenuItem>();
 
+  private doAutoClose: boolean;
+
   constructor({
     id,
     layer=999999,
@@ -275,6 +277,10 @@ export class ContextMenu extends GlobalSingleUseWidget {
     this.container = container;
     
     this.listener.on("add", () => { if (this.isBuilt) this.rebuild(); });
+    this.listener.on("click", () => {
+      if (this.doAutoClose) this.unbuild();
+      this.doAutoClose = false; // reset 
+    }, 0); // priority of 0, will wait until all else executed
 
     if (!Array.isArray(trigger)) trigger = [trigger];
     for (const el of trigger) {
@@ -302,6 +308,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
   }
 
   build() {
+    this.doAutoClose = true;
     this.rebuild();
     super.build();
   }
@@ -346,6 +353,13 @@ export class ContextMenu extends GlobalSingleUseWidget {
     let total = 0;
     this.sections.forEach(section => { total += section.size(); });
     return total;
+  }
+
+  /**
+   * Call this to prevent the contextmenu from closing when clicked
+   */
+  blockClosing() {
+    this.doAutoClose = false;
   }
 }
 

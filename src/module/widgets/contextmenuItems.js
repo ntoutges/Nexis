@@ -6,6 +6,7 @@ export class ContextMenuItem {
     _icon;
     listener = null;
     el = null;
+    isEnabled = true;
     constructor({ value, name = value, shortcut = "", icon = "" }) {
         this._value = value;
         this._name = name;
@@ -40,6 +41,7 @@ export class ContextMenuItem {
         this.el.addEventListener("mouseleave", this.onEvent.bind(this, "mouseleave"));
         this.el.addEventListener("mousedown", (e) => { e.stopPropagation(); }); // block dragging
         this.el.addEventListener("contextmenu", (e) => { e.preventDefault(); }); // prevent real context-menu on fake context-menu
+        this.updateEnabledState();
         return this.el;
     }
     unbuild() {
@@ -48,7 +50,7 @@ export class ContextMenuItem {
         return el;
     }
     onEvent(type) {
-        if (!this.listener)
+        if (!this.listener || !this.isEnabled)
             return;
         this.listener.trigger(type, this);
     }
@@ -57,6 +59,40 @@ export class ContextMenuItem {
     get icon() { return this._icon; }
     get shortcut() { return this._shortcut; }
     get element() { return this.el; }
+    set name(name) {
+        let wasChange = name != this._name;
+        this._name = name;
+        if (wasChange)
+            this.listener.trigger("change", this);
+    }
+    set icon(icon) {
+        let wasChange = icon != this._icon;
+        this._icon = icon;
+        if (wasChange)
+            this.listener.trigger("change", this);
+    }
+    set shortcut(shortcut) {
+        let wasChange = shortcut != this._shortcut;
+        this._shortcut = shortcut;
+        if (wasChange)
+            this.listener.trigger("change", this);
+    }
+    enable() {
+        this.isEnabled = true;
+        this.updateEnabledState();
+    }
+    disable() {
+        this.isEnabled = false;
+        this.updateEnabledState();
+    }
+    updateEnabledState() {
+        if (!this.el)
+            return; // no element to update
+        if (this.isEnabled)
+            this.el.classList.remove("framework-contextmenu-item-disabled");
+        else
+            this.el.classList.add("framework-contextmenu-item-disabled");
+    }
 }
 export class ContextMenuSection {
     items;

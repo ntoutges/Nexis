@@ -74,7 +74,6 @@ export class GridWidget extends Widget {
         case "center":
           this.scene.draggable.center(true);
       }
-      this.contextmenus.menu.unbuild();
     })
   }
 

@@ -10,6 +10,8 @@ export class ContextMenuItem {
   private listener: Listener<ContextMenuEvents, ContextMenuItem> = null;
 
   private el: HTMLDivElement = null;
+  
+  private isEnabled: boolean = true;
 
   constructor({
     value,
@@ -56,6 +58,7 @@ export class ContextMenuItem {
     this.el.addEventListener("mousedown", (e) => { e.stopPropagation(); }); // block dragging
     this.el.addEventListener("contextmenu", (e) => { e.preventDefault(); }) // prevent real context-menu on fake context-menu
 
+    this.updateEnabledState();
     return this.el;
   }
 
@@ -66,7 +69,7 @@ export class ContextMenuItem {
   }
 
   private onEvent(type: ContextMenuEvents) {
-    if (!this.listener) return;
+    if (!this.listener || !this.isEnabled) return;
     this.listener.trigger(type, this);
   }
 
@@ -76,6 +79,39 @@ export class ContextMenuItem {
   get shortcut() { return this._shortcut; }
 
   get element() { return this.el; }
+
+  set name(name: string) {
+    let wasChange = name != this._name;
+    this._name = name;
+    if (wasChange) this.listener.trigger("change", this);
+  }
+
+  set icon(icon: string) {
+    let wasChange = icon != this._icon;
+    this._icon = icon;
+    if (wasChange) this.listener.trigger("change", this);
+  }
+
+  set shortcut(shortcut: string) {
+    let wasChange = shortcut != this._shortcut;
+    this._shortcut = shortcut;
+    if (wasChange) this.listener.trigger("change", this);
+  }
+
+  enable() {
+    this.isEnabled = true;
+    this.updateEnabledState();
+  }
+  disable() {
+    this.isEnabled = false;
+    this.updateEnabledState();
+  }
+
+  private updateEnabledState() {
+    if (!this.el) return; // no element to update
+    if (this.isEnabled) this.el.classList.remove("framework-contextmenu-item-disabled")
+    else this.el.classList.add("framework-contextmenu-item-disabled");
+  }
 }
 
 export class ContextMenuSection {
