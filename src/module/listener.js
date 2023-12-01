@@ -2,16 +2,25 @@ import { SmartInterval } from "./smartInterval.js";
 export class Listener {
     listenerIds = 0;
     listeners = new Map();
-    reserved = new Set;
+    priorities = new Map(); // gives the priority of any given id in the call stack
+    reserved = new Set; // stores listener ids currently in use
     pollingCallbacks = new Map();
     pollingIntervals = new Map(); // maps an event type to a polling interval
     autoResponses = new Map;
-    on(type, listener) {
+    /**
+     * listens for events
+     * @param type type of event to listen for
+     * @param listener callback when event is triggered
+     * @param priority order in which callbacks are called; greater values mean the callback is called earlier
+     * @returns numeric id to reference specific callback
+     */
+    on(type, listener, priority = 100) {
         const newId = this.listenerIds++;
         if (!this.listeners.has(type))
             this.listeners.set(type, new Map());
         this.listeners.get(type).set(newId, listener);
         this.reserved.add(newId);
+        this.priorities.set(newId, priority);
         if (this.autoResponses.has(type)) {
             listener(this.autoResponses.get(type));
         }
@@ -59,6 +68,7 @@ export class Listener {
             if (this.listeners.get(type).has(listenerId)) {
                 this.listeners.get(type).delete(listenerId);
                 this.reserved.delete(listenerId); // remove tracking for listener id
+                this.priorities.delete(listenerId);
                 if (this.listeners.get(type).size == 0) {
                     this.listeners.delete(type); // remove listener callback
                     if (this.pollingIntervals.has(type)) {
@@ -75,8 +85,9 @@ export class Listener {
     trigger(type, data) {
         if (!this.listeners.has(type))
             return;
-        for (const listeners of this.listeners.get(type).values()) {
-            listeners(data);
+        const listeners = (Array.from(this.listeners.get(type).entries()).sort((a, b) => this.priorities.get(b[0]) - this.priorities.get(a[0])));
+        for (const listener of listeners) {
+            listener[1](data);
         }
     }
     reserve(listenerId) {

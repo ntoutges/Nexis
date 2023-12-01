@@ -39,7 +39,7 @@ export class GridWidget extends Widget {
       contextmenu: {
         "menu": {
           el: canvas,
-          options: "center/Center Grid/home.svg;reset/Reset Zoom/action-undo.svg"
+          options: "center/Center Grid/home.svg;reset/Reset Positioning/action-undo.svg~"
         }
       }
     });
@@ -70,10 +70,9 @@ export class GridWidget extends Widget {
       switch (item.value) {
         case "reset":
           this.scene.draggable.setZoom(1);
-          break;
+          // nobreak;
         case "center":
           this.scene.draggable.center(true);
-          break;
       }
       this.contextmenus.menu.unbuild();
     })

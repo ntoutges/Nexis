@@ -3,18 +3,27 @@ import { SmartInterval } from "./smartInterval.js";
 export class Listener<Types, Data> {
   listenerIds: number = 0;
   private readonly listeners = new Map<Types, Map<number, (data: Data) => void>>();
-  private readonly reserved = new Set<number>;
+  private readonly priorities = new Map<number,number>(); // gives the priority of any given id in the call stack
+  private readonly reserved = new Set<number>; // stores listener ids currently in use
 
   private readonly pollingCallbacks = new Map<Types, [callback: () => (Data | null), period: number]>();
   private readonly pollingIntervals = new Map<Types, SmartInterval>(); // maps an event type to a polling interval
 
   private readonly autoResponses = new Map<Types, Data>;
 
-  on(type: Types, listener: (data: Data) => void) {
+  /**
+   * listens for events
+   * @param type type of event to listen for
+   * @param listener callback when event is triggered
+   * @param priority order in which callbacks are called; greater values mean the callback is called earlier
+   * @returns numeric id to reference specific callback
+   */
+  on(type: Types, listener: (data: Data) => void, priority=100) {
     const newId = this.listenerIds++;
     if (!this.listeners.has(type)) this.listeners.set(type, new Map<number, (data: Data) => void>());
     this.listeners.get(type).set(newId, listener);
     this.reserved.add(newId);
+    this.priorities.set(newId, priority);
 
     if (this.autoResponses.has(type)) {
       listener(this.autoResponses.get(type));
@@ -76,6 +85,7 @@ export class Listener<Types, Data> {
       if (this.listeners.get(type).has(listenerId)) {
         this.listeners.get(type).delete(listenerId);
         this.reserved.delete(listenerId); // remove tracking for listener id
+        this.priorities.delete(listenerId);
         if (this.listeners.get(type).size == 0) {
           this.listeners.delete(type); // remove listener callback
           if (this.pollingIntervals.has(type)) {
@@ -92,7 +102,16 @@ export class Listener<Types, Data> {
 
   trigger(type: Types, data: Data) {
     if (!this.listeners.has(type)) return;
-    for (const listeners of this.listeners.get(type).values()) { listeners(data); }
+    const listeners = (
+      Array.from(
+        this.listeners.get(type).entries()
+      ).sort(
+        (a,b) => this.priorities.get(b[0]) - this.priorities.get(a[0])
+      )
+    );
+    for (const listener of listeners) {
+      listener[1](data);
+    }
   }
 
   reserve(listenerId: number) {

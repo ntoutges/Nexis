@@ -1,7 +1,7 @@
 import { Scene } from "./scene.js"
 import { Draggable } from "./draggable.js"
-import { ContextMenuItem } from "./widgets/contextmenu/items.js";
-import { Widget } from "./framework.js";
+import { ContextMenuItem } from "./widgets/contextmenuItems.js";
+import { Widget } from "./widgets/widget.js";
 
 export type resizeType = "none" | "vertical" | "horizontal" | "both";
 export interface CommonFrameworkInterface {

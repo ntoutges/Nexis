@@ -3,7 +3,7 @@ import { FrameworkBase } from "../framework.js";
 import { ContextMenuEvents, ContextMenuItemInterface } from "../interfaces";
 import { Listener } from "../listener.js";
 import { Scene } from "../scene.js";
-import { ContextMenuItem, ContextMenuSection } from "./contextmenu/items.js";
+import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 import { BasicWidgetInterface, ContextMenuInterface, GlobalSingleUseWidgetInterface, SceneListenerTypes, sceneListener } from "./interfaces.js";
 
 const alignmentMap = {
@@ -25,6 +25,7 @@ export class Widget extends FrameworkBase {
   private layer: number; // used to store layer until attached to a scene
 
   readonly positioning: number;
+  readonly doZoomScale: boolean;
 
   readonly pos = { x:0, y:0 };
   readonly align = { x:0, y:0 };
@@ -35,22 +36,23 @@ export class Widget extends FrameworkBase {
     id,name,style,
     content,
     positioning = 1,
+    doZoomScale = true,
     layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
     pos = {},
     resize,
-    contextmenu
-    // contextmenu = {}
+    contextmenu = {},
   }: BasicWidgetInterface) {
     super({
       name: `${name}-widget widget`,
       children: [content],
       style,id,
-      resize
+      resize,
     });
 
     this.name = name;
 
     this.positioning = positioning;
+    this.doZoomScale = doZoomScale;
     this.layer = layer;
 
     this.align.x = alignmentMap[pos?.xAlign ?? "left"];
@@ -74,7 +76,9 @@ export class Widget extends FrameworkBase {
     this.pos.y = y;
   }
 
-  setZoom(z: number) {} // placeholder for future functions that may need this
+  setZoom(z: number) {
+    if (!this.doZoomScale) this.setTransformation("scale", "1"); // force scale to not change
+  }
 
   calculateBounds(scale: number = 1) {
     return {
@@ -188,13 +192,15 @@ export abstract class GlobalSingleUseWidget extends Widget {
   constructor({
     name,content,
     id,layer,pos,positioning,resize,style,
-    options
+    options,
+    doZoomScale
   }: GlobalSingleUseWidgetInterface) {
     super({
       name,content,
       id,layer,
       pos,positioning,resize,
-      style
+      style,
+      doZoomScale
     });
     this._isBuilt = false;
 
@@ -248,7 +254,8 @@ export class ContextMenu extends GlobalSingleUseWidget {
       content: container,
       options: {
         autobuild: false
-      }
+      },
+      doZoomScale: false
     });
 
     container.classList.add("framework-contextmenu-containers");
@@ -348,7 +355,7 @@ export function itemBuilder(input: string): ContextMenuItem {
   
   const buildData: ContextMenuItemInterface = { value: "" };
 
-  if (parts.length == 0) return null;
+  if (parts.length == 1 && parts[0].length == 0) return null;
   buildData.value = parts[0];
   
   if (parts.length > 1 && parts[1].trim()) buildData.name = parts[1];

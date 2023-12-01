@@ -13,7 +13,7 @@ export class DraggableWidget extends Widget {
     acceptableMouseButtons;
     buttonColors = new Map();
     isClosing = false;
-    constructor({ id, layer, positioning, pos, style, header = null, doCursorDragIcon = true, options, content, name, resize }) {
+    constructor({ id, layer, positioning, pos, style, header = null, doCursorDragIcon = true, options, content, name, resize, contextmenu, doZoomScale }) {
         const container = document.createElement("div");
         const headerEl = document.createElement("div");
         // itemStrs.push("close/close/x.svg");
@@ -23,10 +23,11 @@ export class DraggableWidget extends Widget {
             name,
             content: container,
             resize,
+            doZoomScale,
             contextmenu: {
                 "header": {
                     el: headerEl,
-                    options: "close/close/x.svg;minimize/minimize/minus.svg"
+                    options: ";test;close/close/x.svg;minimize/minimize/minus.svg"
                 }
             }
         });

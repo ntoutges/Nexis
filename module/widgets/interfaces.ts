@@ -1,5 +1,5 @@
 import { CommonFrameworkInterface, draggableListener } from "../interfaces.js";
-import { ContextMenuItem, ContextMenuSection } from "./contextmenu/items.js";
+import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 
 export type SceneListenerTypes = "dragStart" | "dragEnd" | "drag" | "zoom" | "move" | "resize" | "init";
 export type sceneListener = draggableListener;
@@ -7,6 +7,7 @@ export type sceneListener = draggableListener;
 export interface CommonWidgetInterface extends CommonFrameworkInterface {
   layer?: number // higher is closer to the screen
   positioning?: number // ranges from 0-1: 0 indicates it ignores scene position, 1 indicates follows perfectly with scene movement
+  doZoomScale?: boolean // if false, ignores scaling from the scene
   pos?: {
     x?: number
     y?: number

@@ -30,7 +30,9 @@ export class DraggableWidget extends Widget {
     options,
     content,
     name,
-    resize
+    resize,
+    contextmenu,
+    doZoomScale
   }: DraggableWidgetInterface) {
     const container = document.createElement("div");
     const headerEl = document.createElement("div");
@@ -43,10 +45,11 @@ export class DraggableWidget extends Widget {
       name,
       content: container,
       resize,
+      doZoomScale,
       contextmenu: {
         "header": {
           el: headerEl,
-          options: "close/close/x.svg;minimize/minimize/minus.svg"
+          options: ";test;close/close/x.svg;minimize/minimize/minus.svg"
         }
       }
     });

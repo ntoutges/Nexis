@@ -1,6 +1,6 @@
-import { ContextMenuEvents, ContextMenuItemInterface, ContextMenuSectionInterface } from "../../interfaces.js";
-import { Listener } from "../../listener.js";
-import { getIcon } from "../../svg.js"
+import { ContextMenuEvents, ContextMenuItemInterface, ContextMenuSectionInterface } from "../interfaces.js";
+import { Listener } from "../listener.js";
+import { getIcon } from "../svg.js"
 
 export class ContextMenuItem {
   private _value: string;
@@ -137,6 +137,19 @@ export class ContextMenuSection {
     const separator = document.createElement("div");
     separator.classList.add("framework-contextmenu-section-separators");
     this.element.append(separator);
+    if (this.name != null) { // section is named
+      const lineL = document.createElement("div");
+      const lineR = document.createElement("div");
+      const name = document.createElement("div");
+
+      name.innerText=  this.name;
+
+      lineL.classList.add("framework-contextmenu-section-separator-lines");
+      lineR.classList.add("framework-contextmenu-section-separator-lines");
+      name.classList.add("framework-contextmenu-section-separator-names")
+
+      separator.append(lineL, name, lineR);
+    }
 
     for (const item of this.items) {
       this.element.append(item.build());
