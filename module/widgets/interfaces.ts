@@ -43,6 +43,8 @@ export type buttonTypes = "collapse" | "close";
 export interface DraggableWidgetInterface extends BasicWidgetInterface {
   options?: {
     acceptableMouseButtons?: number[]
+    bodyBackground?: string
+    hideOnInactivity?: boolean
   }
   header?: {
     title?: string

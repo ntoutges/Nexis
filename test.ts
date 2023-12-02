@@ -37,16 +37,12 @@ const scene = new Scene({
     new DraggableWidget({
       name: "test",
       content: document.createElement("div"),
-      header: {},
       style: {
         width: "200px",
         height: "100px"
       },
-      contextmenu: {
-        // "header": {
-        //   el: null,
-        //   options: "; ;test/another test"
-        // }
+      options: {
+        hideOnInactivity: true
       }
     })
   ]

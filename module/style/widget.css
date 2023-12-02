@@ -19,6 +19,23 @@
   display: none;
 }
 
+.framework-draggable-widget-containers.framework-widgets-hide-on-inactive > .framework-draggable-widget-headers {
+  opacity: 0.1;
+}
+
+.framework-draggable-widget-containers.framework-widgets-hide-on-inactive:has(> .framework-draggable-widget-headers:not(:hover)) > .framework-draggable-widget-bodies:not(:hover) {
+  background: transparent !important;
+  /* box-shadow: none; */
+}
+
+.framework-draggable-widget-containers.framework-widgets-hide-on-inactive > .framework-draggable-widget-headers:hover {
+  opacity: 1;
+}
+
+.framework-draggable-widget-containers.framework-widgets-hide-on-inactive:has(> .framework-draggable-widget-bodies:hover) > .framework-draggable-widget-headers {
+  opacity: 0.5 !important;
+}
+
 /* .framework-grid-widget:not(.no-cursor):hover {
   cursor: grab;
 } */

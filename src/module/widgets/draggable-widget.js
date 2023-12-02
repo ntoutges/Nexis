@@ -125,6 +125,9 @@ export class DraggableWidget extends Widget {
         this.body = body;
         this.body.classList.add("framework-draggable-widget-bodies");
         this.body.append(content);
+        this.body.style.background = options?.bodyBackground ?? "";
+        if (options?.hideOnInactivity ?? false)
+            this.container.classList.add("framework-widgets-hide-on-inactive");
         this.container.append(this.body);
         this.addSceneListener("resize", (d) => { this.draggable.scale = d.scale; }); // allow gridception to work
     }
