@@ -13,7 +13,7 @@ export class DraggableWidget extends Widget {
     acceptableMouseButtons;
     buttonColors = new Map();
     isClosing = false;
-    constructor({ id, layer, positioning, pos, style, header = null, doCursorDragIcon = true, options, content, name, resize, contextmenu = [], doZoomScale }) {
+    constructor({ id, layer, positioning, pos, style, header = {}, doCursorDragIcon = true, options, content, name, resize, contextmenu = [], doZoomScale }) {
         const container = document.createElement("div");
         const headerEl = document.createElement("div");
         const body = document.createElement("div");
@@ -40,90 +40,88 @@ export class DraggableWidget extends Widget {
         this.container = container;
         this.container.classList.add("framework-draggable-widget-containers");
         container.addEventListener("click", GlobalSingleUseWidget.unbuildType.bind(null, "contextmenu"));
-        if (header) {
-            this.header = headerEl;
-            this.header.classList.add("framework-draggable-widget-headers");
-            this.container.append(this.header);
-            const title = document.createElement("div");
-            title.classList.add("framework-draggable-widget-titles");
-            title.setAttribute("draggable", "false");
-            title.innerText = header?.title ?? "Unnamed";
-            this.header.append(title);
-            const titleEnd = document.createElement('div');
-            titleEnd.classList.add("framework-draggable-widget-title-ends");
-            this.header.append(titleEnd);
-            this.doCursorDrag = doCursorDragIcon;
-            if (!doCursorDragIcon) {
-                this.container.classList.add("no-cursor"); // don't show dragging indication
-            }
-            title.style.background = header.background ?? "#999999";
-            titleEnd.style.background = header.background ?? "#999999";
-            this.header.style.color = header.color ?? "black";
-            const buttons = document.createElement("div");
-            buttons.classList.add("framework-draggable-widget-button-holder");
-            for (const type in buttonDefaults) {
-                const options = ("buttons" in header ? header.buttons[type] : {});
-                const defOptions = buttonDefaults[type];
-                if (options?.show ?? defOptions.show) {
-                    const button = document.createElement("div");
-                    button.classList.add(`framework-draggable-widget-${type}s`, "framework-draggable-widget-buttons");
-                    button.setAttribute("title", type);
-                    this.buttonColors.set(type, {
-                        dormant: {
-                            fill: options?.dormant?.fill ?? defOptions.dormant.fill,
-                            highlight: options?.dormant?.highlight ?? defOptions.dormant.highlight
-                        },
-                        active: {
-                            fill: options?.active?.fill ?? defOptions.active.fill,
-                            highlight: options?.active?.highlight ?? defOptions.active.highlight
-                        }
-                    });
-                    button.style.width = options?.size ?? defOptions.size;
-                    button.style.height = options?.size ?? defOptions.size;
-                    button.style.padding = options?.padding ?? defOptions.padding;
-                    buttons.append(button);
-                    button.addEventListener("mouseenter", this.updateButtonColor.bind(this, button, type, "active"));
-                    button.addEventListener("mouseleave", this.updateButtonColor.bind(this, button, type, "dormant"));
-                    this.updateButtonColor(button, type, "dormant");
-                    button.addEventListener("mousedown", (e) => {
-                        e.stopPropagation(); // prevent dragging from button
-                        this.scene.layers.moveToTop(this); // still do select
-                    });
-                    // fetch svg data
-                    getIcon(options?.icon ?? defOptions.icon).then(svg => {
-                        button.append(svg);
-                        svg.style.width = options?.size ?? defOptions.size;
-                        svg.style.height = options?.size ?? defOptions.size;
-                    });
-                    switch (type) {
-                        case "close":
-                            button.addEventListener("click", this.close.bind(this));
-                            break;
-                        case "collapse":
-                            button.addEventListener("click", this.minimize.bind(this));
-                            break;
+        this.header = headerEl;
+        this.header.classList.add("framework-draggable-widget-headers");
+        this.container.append(this.header);
+        const title = document.createElement("div");
+        title.classList.add("framework-draggable-widget-titles");
+        title.setAttribute("draggable", "false");
+        title.innerText = header?.title ?? "Unnamed";
+        this.header.append(title);
+        const titleEnd = document.createElement('div');
+        titleEnd.classList.add("framework-draggable-widget-title-ends");
+        this.header.append(titleEnd);
+        this.doCursorDrag = doCursorDragIcon;
+        if (!doCursorDragIcon) {
+            this.container.classList.add("no-cursor"); // don't show dragging indication
+        }
+        title.style.background = header.background ?? "#999999";
+        titleEnd.style.background = header.background ?? "#999999";
+        this.header.style.color = header.color ?? "black";
+        const buttons = document.createElement("div");
+        buttons.classList.add("framework-draggable-widget-button-holder");
+        for (const type in buttonDefaults) {
+            const options = ("buttons" in header ? header.buttons[type] : {});
+            const defOptions = buttonDefaults[type];
+            if (options?.show ?? defOptions.show) {
+                const button = document.createElement("div");
+                button.classList.add(`framework-draggable-widget-${type}s`, "framework-draggable-widget-buttons");
+                button.setAttribute("title", type);
+                this.buttonColors.set(type, {
+                    dormant: {
+                        fill: options?.dormant?.fill ?? defOptions.dormant.fill,
+                        highlight: options?.dormant?.highlight ?? defOptions.dormant.highlight
+                    },
+                    active: {
+                        fill: options?.active?.fill ?? defOptions.active.fill,
+                        highlight: options?.active?.highlight ?? defOptions.active.highlight
                     }
-                }
-            }
-            title.append(buttons);
-            this.acceptableMouseButtons = options?.acceptableMouseButtons ?? [];
-            title.addEventListener("mouseenter", this.showButtons.bind(this));
-            title.addEventListener("mouseleave", this.hideButtons.bind(this));
-            titleEnd.addEventListener("mouseenter", this.showButtons.bind(this));
-            titleEnd.addEventListener("mouseleave", this.hideButtons.bind(this));
-            this.contextmenus.header.listener.on("click", (item) => {
-                switch (item.value) {
+                });
+                button.style.width = options?.size ?? defOptions.size;
+                button.style.height = options?.size ?? defOptions.size;
+                button.style.padding = options?.padding ?? defOptions.padding;
+                buttons.append(button);
+                button.addEventListener("mouseenter", this.updateButtonColor.bind(this, button, type, "active"));
+                button.addEventListener("mouseleave", this.updateButtonColor.bind(this, button, type, "dormant"));
+                this.updateButtonColor(button, type, "dormant");
+                button.addEventListener("mousedown", (e) => {
+                    e.stopPropagation(); // prevent dragging from button
+                    this.scene.layers.moveToTop(this); // still do select
+                });
+                // fetch svg data
+                getIcon(options?.icon ?? defOptions.icon).then(svg => {
+                    button.append(svg);
+                    svg.style.width = options?.size ?? defOptions.size;
+                    svg.style.height = options?.size ?? defOptions.size;
+                });
+                switch (type) {
                     case "close":
-                        this.close();
+                        button.addEventListener("click", this.close.bind(this));
                         break;
                     case "collapse":
-                        const isMinimized = this.minimize();
-                        this.contextmenus.header.getSection(0).getItem("collapse").name = isMinimized ? "expand" : "collapse";
-                        this.contextmenus.header.getSection(0).getItem("collapse").icon = isMinimized ? "plus.svg" : "minus.svg";
+                        button.addEventListener("click", this.minimize.bind(this));
                         break;
                 }
-            });
+            }
         }
+        title.append(buttons);
+        this.acceptableMouseButtons = options?.acceptableMouseButtons ?? [];
+        title.addEventListener("mouseenter", this.showButtons.bind(this));
+        title.addEventListener("mouseleave", this.hideButtons.bind(this));
+        titleEnd.addEventListener("mouseenter", this.showButtons.bind(this));
+        titleEnd.addEventListener("mouseleave", this.hideButtons.bind(this));
+        this.contextmenus.header.listener.on("click", (item) => {
+            switch (item.value) {
+                case "close":
+                    this.close();
+                    break;
+                case "collapse":
+                    const isMinimized = this.minimize();
+                    this.contextmenus.header.getSection(0).getItem("collapse").name = isMinimized ? "expand" : "collapse";
+                    this.contextmenus.header.getSection(0).getItem("collapse").icon = isMinimized ? "plus.svg" : "minus.svg";
+                    break;
+            }
+        });
         this.body = body;
         this.body.classList.add("framework-draggable-widget-bodies");
         this.body.append(content);

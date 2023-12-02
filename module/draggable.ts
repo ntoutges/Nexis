@@ -208,7 +208,7 @@ export class Draggable {
       if (maxScaledX == null || bounds.left + bounds.width > maxScaledX) maxScaledX = bounds.left + bounds.width;
       if (minY == null || bounds.top < minY) minY = bounds.top;
       if (maxY == null || bounds.top + unscaledHeight > maxY) maxY = bounds.top + unscaledHeight;
-      if (maxScaledY == null || bounds.top + bounds.width > maxScaledY) maxScaledY = bounds.top + bounds.width;
+      if (maxScaledY == null || bounds.top + bounds.width > maxScaledY) maxScaledY = bounds.top + bounds.height;
       if (minRight == null || bounds.right < minRight) minRight = bounds.right;
       if (minBottom == null || bounds.bottom < minBottom) minBottom = bounds.bottom;
     }

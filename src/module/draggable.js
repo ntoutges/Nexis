@@ -184,7 +184,7 @@ export class Draggable {
             if (maxY == null || bounds.top + unscaledHeight > maxY)
                 maxY = bounds.top + unscaledHeight;
             if (maxScaledY == null || bounds.top + bounds.width > maxScaledY)
-                maxScaledY = bounds.top + bounds.width;
+                maxScaledY = bounds.top + bounds.height;
             if (minRight == null || bounds.right < minRight)
                 minRight = bounds.right;
             if (minBottom == null || bounds.bottom < minBottom)
