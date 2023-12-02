@@ -213,8 +213,8 @@ export class Draggable {
             this.listener.trigger("drag", this);
     }
     center(triggerDrag = true) {
-        this.pos.x = -this.bounds.width / 2;
-        this.pos.y = -this.bounds.height / 2;
+        this.pos.x = -this.bounds.width / (2 * this.pos.z);
+        this.pos.y = -this.bounds.height / (2 * this.pos.z);
         if (triggerDrag)
             this.listener.trigger("drag", this);
     }

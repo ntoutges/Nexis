@@ -149,7 +149,7 @@ export class DraggableWidget extends Widget {
                         acceptableMouseButtons: this.acceptableMouseButtons
                     }
                 });
-                this.draggable.offsetBy(this.pos.x, this.pos.y);
+                this.draggable.offsetBy(this.pos.getPosComponent("x"), this.pos.getPosComponent("y"));
                 this.draggable.listener.on("dragInit", this.dragInit.bind(this));
                 this.draggable.listener.on("drag", this.drag.bind(this));
                 this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
@@ -169,8 +169,10 @@ export class DraggableWidget extends Widget {
             this.header.classList.remove("dragging");
     }
     drag(d) {
-        this.pos.x = -d.pos.x;
-        this.pos.y = -d.pos.y;
+        this.pos.setPos({
+            x: -d.pos.x,
+            y: -d.pos.y
+        });
         this.scene?.updateIndividualWidget(this);
     }
     /**

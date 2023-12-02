@@ -6,6 +6,7 @@ import { Draggable } from "./draggable.js";
 import { Listener } from "./listener.js";
 import { Layers } from "./widgets/layers.js";
 import { GlobalSingleUseWidget, Widget } from "./widgets/widget.js";
+import { Grid, Pos } from "./pos.js";
 
 var sceneIdentifiers = 0;
 
@@ -15,6 +16,9 @@ export class Scene extends FrameworkBase {
 
   private readonly elListener = new Listener<string, Event>();
   private readonly widgets: Widget[] = [];
+
+  private readonly snapObjects = new Map<number,Pos<"x"|"y"> | Grid<"x"|"y">>();
+  private nextSnapObjectId: number = 0;
 
   readonly layers = new Layers<Widget>();
 
@@ -63,6 +67,8 @@ export class Scene extends FrameworkBase {
     widget.attachTo(this);
     this.widgets.push(widget);
     this.layers.add(widget);
+
+    for (const snapObj of this.snapObjects.values()) { widget.pos.addSnapObject(snapObj); } // add snap objects
   }
 
   removeWidget(widget: Widget) {
@@ -71,6 +77,8 @@ export class Scene extends FrameworkBase {
     this.widgets.splice(index,1); // remove widget from list
     this.layers.remove(widget);
     widget.detachFrom(this);
+
+    for (const snapObj of this.snapObjects.values()) { widget.pos.removeSnapObject(snapObj); } // remove snap objects
   }
 
   /**
@@ -108,13 +116,16 @@ export class Scene extends FrameworkBase {
   protected updateIndividualWidgetPosition(widget: Widget) {
     if (!widget.isBuilt) return;
 
+    const widgetX = widget.pos.getPosComponent("x");
+    const widgetY = widget.pos.getPosComponent("y");
+
     const [cX1, cY1] = this.draggable.toScreenSpace(
-      widget.pos.x,
-      widget.pos.y
+      widgetX,
+      widgetY
     );
 
-    const cX = widget.pos.x * (1-widget.positioning) + cX1 * widget.positioning;
-    const cY = widget.pos.y * (1-widget.positioning) + cY1 * widget.positioning;
+    const cX = widgetX * (1-widget.positioning) + cX1 * widget.positioning;
+    const cY = widgetY * (1-widget.positioning) + cY1 * widget.positioning;
       
     const [x,y] = this.draggable.toScreenSpace(0,0);
 
@@ -174,5 +185,32 @@ export class Scene extends FrameworkBase {
       d.bounds.width / 2,
       d.bounds.height / 2
     );
+  }
+
+  addGlobalSnapObject(obj: Grid<"x"|"y"> | Pos<"x"|"y">): number {
+    for (const widget of this.widgets) {
+      widget.pos.addSnapObject(obj);
+    }
+
+    const id = this.nextSnapObjectId++;
+    this.snapObjects.set(id,obj);
+    return id;
+  }
+  removeGlobalSnapObject(obj: number | Grid<"x"|"y"> | Pos<"x"|"y">) {
+    if (typeof obj == "number") obj = this.snapObjects.get(obj);
+    for (const widget of this.widgets) {
+      widget.pos.removeSnapObject(obj);
+    }
+
+    let id = -1;
+    for (const [i,snapObj] of this.snapObjects.entries()) {
+      if (snapObj == obj) {
+        id = i;
+        break;
+      }
+    }
+    if (id == -1) return false; // doesn't exist
+    this.snapObjects.delete(id);
+    return true; // exists
   }
 }

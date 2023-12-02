@@ -1,5 +1,6 @@
 import { FrameworkBase } from "../framework.js";
 import { Listener } from "../listener.js";
+import { SnapPos } from "../pos.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 const alignmentMap = {
     "left": 0,
@@ -18,7 +19,7 @@ export class Widget extends FrameworkBase {
     layer; // used to store layer until attached to a scene
     positioning;
     doZoomScale;
-    pos = { x: 0, y: 0 };
+    pos = new SnapPos({}, 20);
     align = { x: 0, y: 0 };
     name;
     constructor({ id, name, style, content, positioning = 1, doZoomScale = true, layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
@@ -57,8 +58,7 @@ export class Widget extends FrameworkBase {
         }
     }
     setPos(x, y) {
-        this.pos.x = x;
-        this.pos.y = y;
+        this.pos.setPos({ x, y });
     }
     setZoom(z) {
         if (!this.doZoomScale)
@@ -153,8 +153,10 @@ export class Widget extends FrameworkBase {
     updatePositionOnResize(d) {
         const xOff = d.delta.x * this.align.x;
         const yOff = d.delta.y * this.align.y;
-        this.pos.x -= xOff;
-        this.pos.y += yOff;
+        this.pos.offsetPos({
+            x: -xOff,
+            y: yOff
+        });
     }
     get isBuilt() { return true; } // used by types like GlobalSingleUseWidget for scene optimization
 }

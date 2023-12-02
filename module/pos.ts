@@ -20,12 +20,12 @@ export class Pos<Dims extends string> {
 
   setPos(pos: Partial<Record<Dims, number>>) {
     for (const component in pos) {
-      const [min,max] = this.bounds.has(component) ? this.bounds.get(component) : [Number.MIN_VALUE,Number.MAX_VALUE];
+      const [min,max] = this.bounds.has(component) ? this.bounds.get(component) : [-Number.MAX_VALUE,Number.MAX_VALUE];
       let newPos = Math.min(Math.max(pos[component], min), max);
       this.dimensions.set(component, newPos);
     }
   }
-
+  
   offsetPos(pos: Partial<Record<Dims, number>>) {
     Object.keys(pos).forEach((component: Dims) => {
       pos[component] += this.getPosComponent(component); // do offset
@@ -91,22 +91,24 @@ export class Grid<Dims extends string> {
   ) {
     const data: Partial<Record<Dims, { val: number }>> = {};
     for (const component of components) {
-      data[component] = { val: pos.getPosComponent(component) };
+      const gap = this.gaps.getPosComponent(component);
+      const offset = this.offsets.getPosComponent(component);
+      data[component] = {
+        val: Math.round((pos.getPosComponent(component) - offset) / gap) * gap + offset
+      };
     }
     return new Pos(data);
   }
 }
 
 export class SnapPos<Dims extends string> extends Pos<Dims> {
-  private readonly snapPoints: Pos<Dims>[] = [];
-  private readonly snapPointIds: number[] = [];
-  private readonly snapGrids: Grid<Dims>[] = [];
-  private readonly snapGridIds: number[] = [];
+  private readonly snapPoints = new Map<number, Pos<Dims>>();
+  private readonly snapGrids = new Map<number, Grid<Dims>>();
   
   private nextSnapId = 0;
   private snapPoint: Pos<Dims> = null;
   
-  readonly snapRadius: number;
+  snapRadius: number;
 
   constructor(
     data: Partial<Record<Dims, { val?: number, min?: number, max?: number }>>,
@@ -116,50 +118,74 @@ export class SnapPos<Dims extends string> extends Pos<Dims> {
     this.snapRadius = snapRadius;
   }
 
-  addSnapPoint(pos: Pos<Dims>): number {
-    this.snapPoints.push(pos);
-    this.snapPointIds.push(this.nextSnapId);
-    return this.nextSnapId++;
+  private addSnapPoint(pos: Pos<Dims>): number {
+    const id = this.nextSnapId++;
+    this.snapPoints.set(id, pos);
+    return this.nextSnapId;
   }
-  getSnapPoint(id: number) {
-    const index = this.snapPointIds.indexOf(id);
-    if (index == -1) return null;
-    return this.snapPoints[index];
+  private getSnapPoint(id: number) {
+    return this.snapPoints.get(id) ?? null;
   }
-  removeSnapPoint(id: number) {
-    const index = this.snapPointIds.indexOf(id);
-    if (index == -1) return;
-    this.snapPoints.splice(index,1);
-    this.snapPointIds.splice(index,1);
+  private removeSnapPoint(id: number | Pos<Dims>): boolean {
+    if (id instanceof Pos) {
+      for (const pos of this.snapPoints.values()) {
+        if (pos == id) {
+          id = pos;
+          break;
+        }
+      }
+      if (id instanceof Pos) return false; // couldn't find id, so doesn't exist
+    }
+    
+    return this.snapPoints.delete(id);
   }
 
-  addSnapGrid(grid: Grid<Dims>): number {
-    this.snapGrids.push(grid);
-    this.snapGridIds.push(this.nextSnapId);
-    return this.nextSnapId++;
+  private addSnapGrid(grid: Grid<Dims>): number {
+    const id = this.nextSnapId++;
+    this.snapGrids.set(id,grid);
+    return this.nextSnapId;
   }
-  getSnapGrid(id: number) {
-    const index = this.snapGridIds.indexOf(id);
-    if (index == -1) return null;
-    return this.snapGrids[index];
+  private getSnapGrid(id: number) {
+    return this.snapGrids.get(id) ?? null;
   }
-  removeSnapGrid(id: number) {
-    const index = this.snapGridIds.indexOf(id);
-    if (index == -1) return null;
-    this.snapGrids.splice(index,1);
-    this.snapPointIds.splice(index,1);
+  private removeSnapGrid(id: number | Grid<Dims>): boolean {
+    if (id instanceof Grid) {
+      for (const grid of this.snapGrids.values()) {
+        if (grid == id) {
+          id = grid;
+          break;
+        }
+      }
+      if (id instanceof Grid) return false; // couldn't find id, so doesn't exist
+    }
+    
+    return this.snapPoints.delete(id);
+  }
+
+  addSnapObject(obj: Grid<Dims> | Pos<Dims>): number {
+    if (obj instanceof Grid) return this.addSnapGrid(obj);
+    return this.addSnapPoint(obj);
+  }
+  getSnapObject(id: number) {
+    return this.getSnapPoint(id) ?? this.getSnapGrid(id);
+  }
+  removeSnapObject(id: number | Grid<Dims> | Pos<Dims>): boolean {
+    if (id instanceof Pos) return this.removeSnapPoint(id);
+    else if (id instanceof Grid) return this.removeSnapGrid(id);
+    return this.removeSnapPoint(id) || this.removeSnapGrid(id);
   }
 
   setPos(pos: Partial<Record<Dims, number>>) {
     super.setPos(pos);
     
+    this.snapPoint = null; // prevent current snap point from interfering
     let minDist: number = Infinity;
     let minPos: Pos<Dims> = null;
-
+    
     const components = Object.keys(pos) as Dims[];
-
+    
     // check snapPoints
-    for (const point of this.snapPoints) {
+    for (const point of this.snapPoints.values()) {
       const dist = this.distanceToPos(point, components);
       if (dist < minDist) {
         minDist = dist;
@@ -168,7 +194,7 @@ export class SnapPos<Dims extends string> extends Pos<Dims> {
     }
 
     // check snapGrids
-    for (const grid of this.snapGrids) {
+    for (const grid of this.snapGrids.values()) {
       const point = grid.getPointAt(this, components);
       const dist = this.distanceToPos(point, components);
       if (dist < minDist) {

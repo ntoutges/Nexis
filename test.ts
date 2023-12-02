@@ -1,3 +1,4 @@
+import { Grid, Pos } from "./module/pos.js";
 import { Scene } from "./module/scene.js";
 import { DraggableWidget } from "./module/widgets/draggable-widget.js";
 import { GridWidget } from "./module/widgets/grid.js";
@@ -7,7 +8,7 @@ const $ = document.querySelector.bind(document);
 const sceneHolder = document.createElement("div");
 const scene2Holder = document.createElement("div");
 
-new Scene({
+const scene = new Scene({
   parent: $("#sandbox"),
   style: {
     // width: "100vw",
@@ -28,6 +29,9 @@ new Scene({
       style: {
         background: "cornsilk"
       },
+      options: {
+        coords: true
+      },
       doCursorDragIcon: true
     }),
     new DraggableWidget({
@@ -47,6 +51,17 @@ new Scene({
     })
   ]
 });
+
+scene.addGlobalSnapObject(
+  new Grid<"x"|"y">(
+    new Pos<"x"|"y">({
+      x: {val: 50},
+      y: {val: 50}
+    }),
+    new Pos<"x"|"y">({})
+  )
+)
+
 
 
 // sceneHolder.style.width = "100%";

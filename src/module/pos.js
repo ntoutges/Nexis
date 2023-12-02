@@ -18,7 +18,7 @@ export class Pos {
     }
     setPos(pos) {
         for (const component in pos) {
-            const [min, max] = this.bounds.has(component) ? this.bounds.get(component) : [Number.MIN_VALUE, Number.MAX_VALUE];
+            const [min, max] = this.bounds.has(component) ? this.bounds.get(component) : [-Number.MAX_VALUE, Number.MAX_VALUE];
             let newPos = Math.min(Math.max(pos[component], min), max);
             this.dimensions.set(component, newPos);
         }
@@ -71,16 +71,18 @@ export class Grid {
     getPointAt(pos, components) {
         const data = {};
         for (const component of components) {
-            data[component] = { val: pos.getPosComponent(component) };
+            const gap = this.gaps.getPosComponent(component);
+            const offset = this.offsets.getPosComponent(component);
+            data[component] = {
+                val: Math.round((pos.getPosComponent(component) - offset) / gap) * gap + offset
+            };
         }
         return new Pos(data);
     }
 }
 export class SnapPos extends Pos {
-    snapPoints = [];
-    snapPointIds = [];
-    snapGrids = [];
-    snapGridIds = [];
+    snapPoints = new Map();
+    snapGrids = new Map();
     nextSnapId = 0;
     snapPoint = null;
     snapRadius;
@@ -89,48 +91,70 @@ export class SnapPos extends Pos {
         this.snapRadius = snapRadius;
     }
     addSnapPoint(pos) {
-        this.snapPoints.push(pos);
-        this.snapPointIds.push(this.nextSnapId);
-        return this.nextSnapId++;
+        const id = this.nextSnapId++;
+        this.snapPoints.set(id, pos);
+        return this.nextSnapId;
     }
     getSnapPoint(id) {
-        const index = this.snapPointIds.indexOf(id);
-        if (index == -1)
-            return null;
-        return this.snapPoints[index];
+        return this.snapPoints.get(id) ?? null;
     }
     removeSnapPoint(id) {
-        const index = this.snapPointIds.indexOf(id);
-        if (index == -1)
-            return;
-        this.snapPoints.splice(index, 1);
-        this.snapPointIds.splice(index, 1);
+        if (id instanceof Pos) {
+            for (const pos of this.snapPoints.values()) {
+                if (pos == id) {
+                    id = pos;
+                    break;
+                }
+            }
+            if (id instanceof Pos)
+                return false; // couldn't find id, so doesn't exist
+        }
+        return this.snapPoints.delete(id);
     }
     addSnapGrid(grid) {
-        this.snapGrids.push(grid);
-        this.snapGridIds.push(this.nextSnapId);
-        return this.nextSnapId++;
+        const id = this.nextSnapId++;
+        this.snapGrids.set(id, grid);
+        return this.nextSnapId;
     }
     getSnapGrid(id) {
-        const index = this.snapGridIds.indexOf(id);
-        if (index == -1)
-            return null;
-        return this.snapGrids[index];
+        return this.snapGrids.get(id) ?? null;
     }
     removeSnapGrid(id) {
-        const index = this.snapGridIds.indexOf(id);
-        if (index == -1)
-            return null;
-        this.snapGrids.splice(index, 1);
-        this.snapPointIds.splice(index, 1);
+        if (id instanceof Grid) {
+            for (const grid of this.snapGrids.values()) {
+                if (grid == id) {
+                    id = grid;
+                    break;
+                }
+            }
+            if (id instanceof Grid)
+                return false; // couldn't find id, so doesn't exist
+        }
+        return this.snapPoints.delete(id);
+    }
+    addSnapObject(obj) {
+        if (obj instanceof Grid)
+            return this.addSnapGrid(obj);
+        return this.addSnapPoint(obj);
+    }
+    getSnapObject(id) {
+        return this.getSnapPoint(id) ?? this.getSnapGrid(id);
+    }
+    removeSnapObject(id) {
+        if (id instanceof Pos)
+            return this.removeSnapPoint(id);
+        else if (id instanceof Grid)
+            return this.removeSnapGrid(id);
+        return this.removeSnapPoint(id) || this.removeSnapGrid(id);
     }
     setPos(pos) {
         super.setPos(pos);
+        this.snapPoint = null; // prevent current snap point from interfering
         let minDist = Infinity;
         let minPos = null;
         const components = Object.keys(pos);
         // check snapPoints
-        for (const point of this.snapPoints) {
+        for (const point of this.snapPoints.values()) {
             const dist = this.distanceToPos(point, components);
             if (dist < minDist) {
                 minDist = dist;
@@ -138,7 +162,7 @@ export class SnapPos extends Pos {
             }
         }
         // check snapGrids
-        for (const grid of this.snapGrids) {
+        for (const grid of this.snapGrids.values()) {
             const point = grid.getPointAt(this, components);
             const dist = this.distanceToPos(point, components);
             if (dist < minDist) {

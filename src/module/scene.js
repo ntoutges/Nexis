@@ -10,6 +10,8 @@ export class Scene extends FrameworkBase {
     identifier = sceneIdentifiers++;
     elListener = new Listener();
     widgets = [];
+    snapObjects = new Map();
+    nextSnapObjectId = 0;
     layers = new Layers();
     constructor({ id = null, parent = null, options = {}, style, widgets = [], doStartCentered = false, resize }) {
         super({
@@ -45,6 +47,9 @@ export class Scene extends FrameworkBase {
         widget.attachTo(this);
         this.widgets.push(widget);
         this.layers.add(widget);
+        for (const snapObj of this.snapObjects.values()) {
+            widget.pos.addSnapObject(snapObj);
+        } // add snap objects
     }
     removeWidget(widget) {
         const index = this.widgets.indexOf(widget);
@@ -53,6 +58,9 @@ export class Scene extends FrameworkBase {
         this.widgets.splice(index, 1); // remove widget from list
         this.layers.remove(widget);
         widget.detachFrom(this);
+        for (const snapObj of this.snapObjects.values()) {
+            widget.pos.removeSnapObject(snapObj);
+        } // remove snap objects
     }
     /**
      * On (E)lement event
@@ -88,9 +96,11 @@ export class Scene extends FrameworkBase {
     updateIndividualWidgetPosition(widget) {
         if (!widget.isBuilt)
             return;
-        const [cX1, cY1] = this.draggable.toScreenSpace(widget.pos.x, widget.pos.y);
-        const cX = widget.pos.x * (1 - widget.positioning) + cX1 * widget.positioning;
-        const cY = widget.pos.y * (1 - widget.positioning) + cY1 * widget.positioning;
+        const widgetX = widget.pos.getPosComponent("x");
+        const widgetY = widget.pos.getPosComponent("y");
+        const [cX1, cY1] = this.draggable.toScreenSpace(widgetX, widgetY);
+        const cX = widgetX * (1 - widget.positioning) + cX1 * widget.positioning;
+        const cY = widgetY * (1 - widget.positioning) + cY1 * widget.positioning;
         const [x, y] = this.draggable.toScreenSpace(0, 0);
         const offX = cX - x * widget.positioning;
         const offY = cY - y * widget.positioning;
@@ -134,6 +144,32 @@ export class Scene extends FrameworkBase {
     }
     centerScene(d) {
         this.draggable.offsetBy(d.bounds.width / 2, d.bounds.height / 2);
+    }
+    addGlobalSnapObject(obj) {
+        for (const widget of this.widgets) {
+            widget.pos.addSnapObject(obj);
+        }
+        const id = this.nextSnapObjectId++;
+        this.snapObjects.set(id, obj);
+        return id;
+    }
+    removeGlobalSnapObject(obj) {
+        if (typeof obj == "number")
+            obj = this.snapObjects.get(obj);
+        for (const widget of this.widgets) {
+            widget.pos.removeSnapObject(obj);
+        }
+        let id = -1;
+        for (const [i, snapObj] of this.snapObjects.entries()) {
+            if (snapObj == obj) {
+                id = i;
+                break;
+            }
+        }
+        if (id == -1)
+            return false; // doesn't exist
+        this.snapObjects.delete(id);
+        return true; // exists
     }
 }
 //# sourceMappingURL=scene.js.map

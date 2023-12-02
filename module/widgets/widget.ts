@@ -2,6 +2,7 @@ import { Draggable } from "../draggable.js";
 import { FrameworkBase } from "../framework.js";
 import { ContextMenuEvents, ContextMenuItemInterface } from "../interfaces";
 import { Listener } from "../listener.js";
+import { Grid, Pos, SnapPos } from "../pos.js";
 import { Scene } from "../scene.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 import { BasicWidgetInterface, ContextMenuInterface, GlobalSingleUseWidgetInterface, SceneListenerTypes, sceneListener } from "./interfaces.js";
@@ -27,7 +28,7 @@ export class Widget extends FrameworkBase {
   readonly positioning: number;
   readonly doZoomScale: boolean;
 
-  readonly pos = { x:0, y:0 };
+  readonly pos = new SnapPos<"x"|"y">({}, 20);
   readonly align = { x:0, y:0 };
 
   readonly name: string;
@@ -83,8 +84,7 @@ export class Widget extends FrameworkBase {
   }
 
   setPos(x: number, y: number) {
-    this.pos.x = x;
-    this.pos.y = y;
+    this.pos.setPos({x,y});
   }
 
   setZoom(z: number) {
@@ -185,8 +185,10 @@ export class Widget extends FrameworkBase {
     const xOff = d.delta.x * this.align.x;
     const yOff = d.delta.y * this.align.y;
 
-    this.pos.x -= xOff;
-    this.pos.y += yOff;
+    this.pos.offsetPos({
+      x: -xOff,
+      y: yOff
+    });
   }
 
   get isBuilt(): boolean { return true; } // used by types like GlobalSingleUseWidget for scene optimization
