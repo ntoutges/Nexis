@@ -48,11 +48,13 @@ export interface DraggableWidgetInterface extends BasicWidgetInterface {
   }
   header?: {
     title?: string
-    buttons?: Record<buttonTypes, Partial<headerOption>>,
-    background?: string,
+    buttons?: Record<buttonTypes, Partial<headerOption>>
+    background?: string
     color?: string
+    show?: boolean
   }
   doCursorDragIcon?: boolean
+  doDragAll?: boolean
 }
 
 export interface GridWidgetInterface extends CommonWidgetInterface {

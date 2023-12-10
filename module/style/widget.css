@@ -88,6 +88,10 @@
   opacity: 0.5;
 }
 
+.framework-draggable-widget-containers.draggable-widget-headerless > .framework-draggable-widget-headers {
+  display: none;
+}
+
 .framework-draggable-widget-titles {
   position: relative;
   overflow: hidden;

@@ -16,6 +16,8 @@ export class DraggableWidget extends Widget {
   private minimizeTimeout: number = null;
   private readonly acceptableMouseButtons: number[];
 
+  private readonly doDragAll: boolean;
+
   private readonly buttonColors = new Map<buttonTypes, {
     dormant: { fill: string, highlight: string }
     active: { fill: string, highlight: string },
@@ -27,6 +29,7 @@ export class DraggableWidget extends Widget {
     id,layer,positioning,pos,style,
     header = {},
     doCursorDragIcon=true,
+    doDragAll=false,
     options,
     content,
     name,
@@ -63,6 +66,8 @@ export class DraggableWidget extends Widget {
     this.container.classList.add("framework-draggable-widget-containers")
     container.addEventListener("click", GlobalSingleUseWidget.unbuildType.bind(null, "contextmenu"));
     
+    this.doDragAll = doDragAll;
+
     this.header = headerEl;
     this.header.classList.add("framework-draggable-widget-headers");
     this.container.append(this.header);
@@ -167,6 +172,10 @@ export class DraggableWidget extends Widget {
     if (options?.hideOnInactivity ?? false) this.container.classList.add("framework-widgets-hide-on-inactive");
     this.container.append(this.body);
 
+    if (!(header.show ?? true)) {
+      this.container.classList.add("draggable-widget-headerless");
+    }
+
     this.addSceneListener("resize", (d) => { this.draggable.scale = d.scale; }); // allow gridception to work
   }
 
@@ -178,8 +187,24 @@ export class DraggableWidget extends Widget {
   attachTo(scene: Scene): void {
     super.attachTo(scene);
 
-    if (this.header) {
-      if (!this.draggable) {
+    if (!this.draggable) {
+      if (this.doDragAll) {
+        this.draggable = new Draggable({
+          viewport: scene.element,
+          element: [
+            this.header.querySelector(".framework-draggable-widget-titles"),
+            this.header.querySelector(".framework-draggable-widget-title-ends"),
+            this.body
+          ],
+          periphery: [],
+          zoomable: false,
+          blockScroll: false,
+          input: {
+            acceptableMouseButtons: this.acceptableMouseButtons
+          }
+        });
+      }
+      else {
         this.draggable = new Draggable({
           viewport: scene.element,
           element: [
@@ -193,18 +218,19 @@ export class DraggableWidget extends Widget {
             acceptableMouseButtons: this.acceptableMouseButtons
           }
         });
-        this.draggable.offsetBy(
-          this.pos.getPosComponent("x"),
-          this.pos.getPosComponent("y")
-        );
-
-        this.draggable.listener.on("dragInit", this.dragInit.bind(this));
-        this.draggable.listener.on("drag", this.drag.bind(this));
-        this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
-        this.draggable.listener.on("selected", () => { this.scene.layers.moveToTop(this); })
       }
-      else this.draggable.changeViewport(scene.element);
+
+      this.draggable.offsetBy(
+        this.pos.getPosComponent("x"),
+        this.pos.getPosComponent("y")
+      );
+
+      this.draggable.listener.on("dragInit", this.dragInit.bind(this));
+      this.draggable.listener.on("drag", this.drag.bind(this));
+      this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
+      this.draggable.listener.on("selected", () => { this.scene.layers.moveToTop(this); })
     }
+    else this.draggable.changeViewport(scene.element);
   }
 
   protected dragInit() {

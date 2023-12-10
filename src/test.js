@@ -39,7 +39,11 @@ const scene = new Scene({
                 height: "100px"
             },
             options: {
-                hideOnInactivity: true
+            // hideOnInactivity: true
+            },
+            doDragAll: true,
+            header: {
+            // show: false
             }
         })
     ]
