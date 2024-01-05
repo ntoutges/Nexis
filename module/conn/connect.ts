@@ -1,11 +1,11 @@
-import { Listener } from "./listener";
+import { Listener } from "../listener";
 
 export type response = {
   body: string
   err: string
 };
 
-export abstract class CommonConnect<requests> {
+export abstract class CommonConnection<requests> {
   readonly listener = new Listener<requests, response>();
 
   abstract connect(uri: string): Promise<response>;
@@ -15,10 +15,10 @@ export abstract class CommonConnect<requests> {
   abstract queueSend(message: string): void;
   abstract sendQueue(message: string): Promise<response>;
 
-  abstract buildMessenger(): Messenger<requests>;
+  abstract buildChannel(key: string): Channel<requests>;
 }
 
-export abstract class Messenger<requests> {
+export abstract class Channel<requests> {
   readonly listener = new Listener<requests, response>();
 
   abstract sendImmediate(message: string): Promise<response>;
