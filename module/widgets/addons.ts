@@ -5,10 +5,10 @@ import { Listener } from "../listener.js";
 // this class can easily add 
 export class AddonContainer {
   protected readonly el: HTMLElement = document.createElement("div");
-  protected leftEdge = new AddonEdge(this.el);
-  protected rightEdge = new AddonEdge(this.el);
-  protected topEdge = new AddonEdge(this.el);
-  protected bottomEdge = new AddonEdge(this.el);
+  protected leftEdge = new AddonEdge(this.el, "left");
+  protected rightEdge = new AddonEdge(this.el, "right");
+  protected topEdge = new AddonEdge(this.el, "top");
+  protected bottomEdge = new AddonEdge(this.el, "bottom");
 
   protected readonly addonIdEdgeMap = new Map<number, AddonEdge>();
   
@@ -71,8 +71,8 @@ export class AddonEdge {
   private readonly addonListeners = new Map<number, number[]>();
   private size: number = 0;
 
-  constructor(parent: HTMLElement) {
-    this.el.classList.add("framework-addon-edges");
+  constructor(parent: HTMLElement, name: string) {
+    this.el.classList.add("framework-addon-edges", `framework-addon-edges-${name}`);
     parent.append(this.el);
   }
 

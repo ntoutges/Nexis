@@ -55,13 +55,13 @@ const scene = new Scene({
   ]
 });
 
-widget.addons.leftEdge.add(new AddonTest("orange", 16, 0.77));
-widget.addons.leftEdge.add(new AddonTest("darkred", 50, 0.9));
+widget.addons.add("top", new AddonTest("orange", 16, 0.77));
+widget.addons.add("top", new AddonTest("darkred", 50, 0.9));
 
-widget.addons.leftEdge.add(new AddonTest("black", 30));
-widget.addons.leftEdge.add(new AddonTest("red", 40));
-widget.addons.leftEdge.add(new AddonTest("green", 50, 0.2));
-widget.addons.leftEdge.add(new AddonTest("lightgreen", 50, 0.5));
+widget.addons.add("left", new AddonTest("black", 30));
+widget.addons.add("left", new AddonTest("red", 40));
+widget.addons.add("left", new AddonTest("green", 50, 0.2));
+widget.addons.add("left", new AddonTest("lightgreen", 50, 0.5));
 
 // scene.addGlobalSnapObject(
 //   new Grid<"x"|"y">(
