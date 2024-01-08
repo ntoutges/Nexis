@@ -1,4 +1,5 @@
 import { SmartInterval } from "./smartInterval.js";
+import { SmartTimeout } from "./smartTimeout.js";
 
 export class Listener<Types, Data> {
   listenerIds: number = 0;
@@ -8,6 +9,8 @@ export class Listener<Types, Data> {
 
   private readonly pollingCallbacks = new Map<Types, [callback: () => (Data | null), period: number]>();
   private readonly pollingIntervals = new Map<Types, SmartInterval>(); // maps an event type to a polling interval
+  
+  private readonly rateLimits = new Map<Types, {period: number, id: number, buffer: Data, hasData: boolean}>();
 
   private readonly autoResponses = new Map<Types, Data>;
 
@@ -78,6 +81,28 @@ export class Listener<Types, Data> {
     this.autoResponses.set(type, data); // update any who connect afterwards
   }
 
+  /**
+   * Used to limit the amount of triggers that can be activated in a period of time
+   * @param period A value <= 0 implies removing the rate limit
+   */
+  setRateLimit(
+    type: Types,
+    period: number
+  ) {
+    if (this.rateLimits.has(type)) {
+      if (period > 0) this.rateLimits.get(type).period = period;
+      else this.rateLimits.delete(type);
+    }
+    else if (period > 0) {
+      this.rateLimits.set(type, {
+        period,
+        buffer: null,
+        id: null,
+        hasData: false
+      });
+    }
+  }
+
   off(listenerId: number) {
     if (!this.hasListenerId(listenerId)) return false;
 
@@ -102,6 +127,17 @@ export class Listener<Types, Data> {
 
   trigger(type: Types, data: Data) {
     if (!this.listeners.has(type)) return;
+
+    // need to wait, so just update data buffer
+    if (this.rateLimits.has(type) && this.rateLimits.get(type).id !== null) {
+      const rateLimitData = this.rateLimits.get(type);
+      
+      // save new data to be sent after trigger rate-limiter has expired
+      rateLimitData.buffer = data;
+      rateLimitData.hasData = true;
+      return;
+    }
+
     const listeners = (
       Array.from(
         this.listeners.get(type).entries()
@@ -111,6 +147,24 @@ export class Listener<Types, Data> {
     );
     for (const listener of listeners) {
       listener[1](data);
+    }
+
+    // rate limit exists for this type, but no timeout in action
+    if (this.rateLimits.has(type) && this.rateLimits.get(type).id === null) {
+      const rateLimitData = this.rateLimits.get(type);
+
+      // schedule time for when trigger of this type can activate again
+      rateLimitData.id = setTimeout(() => {
+        rateLimitData.id = null;
+        if (rateLimitData.hasData) { // only run trigger if data is available (ie, trigger wass called in the mean time, but this timeout hadn't yet finished)
+          // send out trigger
+          this.trigger(type, rateLimitData.buffer);
+
+          // reset all values
+          rateLimitData.buffer = null;
+          rateLimitData.hasData = false;
+        }
+      }, rateLimitData.period);
     }
   }
 
@@ -128,4 +182,31 @@ export class Listener<Types, Data> {
 
   isListeningTo(type: Types): boolean { return this.listeners.has(type) }
   hasListenerId(id: number) { return this.reserved.has(id); }
+}
+
+export class ElementListener extends Listener<"resize", HTMLElement> {
+  private readonly elements = new Set<HTMLElement>();
+  private readonly resizeObserver = new ResizeObserver(this.triggerElementResize.bind(this));
+  
+  constructor() {
+    super();
+    this.setRateLimit("resize", 200); // non-absurd number
+  }
+
+  observe(el: HTMLElement) {
+    this.elements.add(el);
+    this.resizeObserver.observe(el);
+  }
+
+  unobserve(el: HTMLElement) {
+    this.elements.delete(el);
+    this.resizeObserver.unobserve(el);
+  }
+
+  private triggerElementResize(entries: ResizeObserverEntry[]) {
+    const context = this;
+    entries.forEach((entry: ResizeObserverEntry) => {
+      context.trigger("resize", entry.target as HTMLElement);
+    });
+  }
 }

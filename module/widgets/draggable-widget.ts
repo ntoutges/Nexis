@@ -53,6 +53,15 @@ export class DraggableWidget extends Widget {
       }
     });
 
+    const bodyHeight = style.height;
+    const bodyWidth = style.width;
+    
+    // intercept height/width data before they are sent to parent
+    if (style) {
+      delete style.height;
+      delete style.width;
+    }
+
     super({
       id,layer,positioning,pos,style,
       name,
@@ -169,6 +178,9 @@ export class DraggableWidget extends Widget {
     this.body.append(content);
     this.body.style.background = options?.bodyBackground ?? "";
 
+    body.style.height = bodyWidth ?? "";
+    body.style.width = bodyWidth ?? "";
+
     if (options?.hideOnInactivity ?? false) this.container.classList.add("framework-widgets-hide-on-inactive");
     this.container.append(this.body);
 
@@ -177,6 +189,7 @@ export class DraggableWidget extends Widget {
     }
 
     this.addSceneListener("resize", (d) => { this.draggable.scale = d.scale; }); // allow gridception to work
+    this.addons.appendTo(this.body);
   }
 
   setZoom(z: number) {

@@ -1,9 +1,10 @@
 import { Draggable } from "../draggable.js";
 import { FrameworkBase } from "../framework.js";
 import { ContextMenuEvents, ContextMenuItemInterface } from "../interfaces";
-import { Listener } from "../listener.js";
+import { ElementListener, Listener } from "../listener.js";
 import { Grid, Pos, SnapPos } from "../pos.js";
 import { Scene } from "../scene.js";
+import { AddonContainer } from "./addons.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 import { BasicWidgetInterface, ContextMenuInterface, GlobalSingleUseWidgetInterface, SceneListenerTypes, sceneListener } from "./interfaces.js";
 
@@ -21,6 +22,9 @@ export class Widget extends FrameworkBase {
   private readonly sceneListenerIds: Map<number, number[]> = new Map<number, number[]>(); // keep track of sceneListener ids
   private readonly transformations = new Map<string, string>();
   readonly contextmenus: Record<string,ContextMenu> = {};
+  readonly addons = new AddonContainer();
+
+  readonly elListener = new ElementListener();
 
   protected scene: Scene = null;
   private layer: number; // used to store layer until attached to a scene
@@ -51,6 +55,7 @@ export class Widget extends FrameworkBase {
     });
 
     this.name = name;
+    this.elListener.observe(this.el);
 
     this.positioning = positioning;
     this.doZoomScale = doZoomScale;
@@ -81,6 +86,10 @@ export class Widget extends FrameworkBase {
         trigger: contextmenu[name].el
       });
     }
+
+    this.elListener.on("resize", this.addons.updateAddonPositions.bind(this.addons));
+
+    this.addons.appendTo(this.el);
   }
 
   setPos(x: number, y: number) {
