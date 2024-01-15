@@ -1,30 +1,19 @@
 import { Grid, Pos } from "./module/pos.js";
 import { Scene } from "./module/scene.js";
-import { AddonTest } from "./module/widgets/addons.js";
+import { AddonTest } from "./module/addons/addons.js";
 import { DraggableWidget } from "./module/widgets/draggable-widget.js";
 import { GridWidget } from "./module/widgets/grid.js";
+import { ConnectorAddon } from "./module/addons/connector.js";
+import { AttachableListener } from "./module/attachableListener.js";
+import { Listener } from "./module/listener.js";
+import { BasicWire } from "./module/widgets/wire.js";
 
 const $ = document.querySelector.bind(document);
 
 const sceneHolder = document.createElement("div");
 const scene2Holder = document.createElement("div");
 
-const widget = new DraggableWidget({
-  name: "test",
-  content: document.createElement("div"),
-  style: {
-    width: "200px",
-    height: "100px"
-  },
-  options: {
-    // hideOnInactivity: true
-  },
-  doDragAll: true,
-  header: {
-    // show: false
-  }
-});
-
+const wire = new BasicWire();
 const scene = new Scene({
   parent: $("#sandbox"),
   style: {
@@ -51,17 +40,56 @@ const scene = new Scene({
       },
       doCursorDragIcon: true
     }),  
-    widget
+    new DraggableWidget({
+      name: "test",
+      content: document.createElement("div"),
+      style: {
+        width: "200px",
+        height: "100px"
+      },
+      options: {
+        // hideOnInactivity: true
+      },
+      doDragAll: true,
+      header: {
+        // show: false
+      },
+      addons: [
+        {
+          "side": "bottom",
+          "addon": new ConnectorAddon<"input" | "output" | "omni">({
+            type: "test",
+            direction: "output",
+            positioning: 0.3,
+            validator: connValidator
+          })
+        },
+        {
+          "side": "bottom",
+          "addon": new ConnectorAddon<"input" | "output" | "omni">({
+            type: "test",
+            direction: "omni",
+            validator: connValidator
+          })
+        },
+        {
+          "side": "bottom",
+          "addon": new ConnectorAddon<"input" | "output" | "omni">({
+            type: "test",
+            direction: "input",
+            positioning: 0.7,
+            validator: connValidator
+          })
+        }
+      ]
+    })
   ]
 });
 
-widget.addons.add("top", new AddonTest("orange", 16, 0.77));
-widget.addons.add("top", new AddonTest("darkred", 50, 0.9));
+function connValidator(addon1: ConnectorAddon<"input" | "output" | "omni">, addon2: ConnectorAddon<"input" | "output" | "omni">) {
+  return (addon1.direction == "input" && addon2.direction == "output") || (addon1.direction == "output" && addon2.direction == "input")
+}
 
-widget.addons.add("left", new AddonTest("black", 30));
-widget.addons.add("left", new AddonTest("red", 40));
-widget.addons.add("left", new AddonTest("green", 50, 0.2));
-widget.addons.add("left", new AddonTest("lightgreen", 50, 0.5));
 
 // scene.addGlobalSnapObject(
 //   new Grid<"x"|"y">(

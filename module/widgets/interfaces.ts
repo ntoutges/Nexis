@@ -1,8 +1,10 @@
+import { Addon } from "../addons/addons.js";
 import { CommonFrameworkInterface, draggableListener } from "../interfaces.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 
 export type SceneListenerTypes = "dragStart" | "dragEnd" | "drag" | "zoom" | "move" | "resize" | "init";
 export type sceneListener = draggableListener;
+export type sceneElListener = (event: Event) => void;
 
 export interface CommonWidgetInterface extends CommonFrameworkInterface {
   layer?: number // higher is closer to the screen
@@ -14,7 +16,8 @@ export interface CommonWidgetInterface extends CommonFrameworkInterface {
     xAlign?: "left" | "middle" | "right"
     yAlign?: "top" | "middle" | "bottom"
   },
-  contextmenu?: contextmenuType | contextmenuType[]
+  contextmenu?: contextmenuType | contextmenuType[],
+  addons?: { side: "top" | "bottom" | "left" | "right", addon: Addon }[]
 }
 
 type contextmenuType = Record<string, { el: HTMLElement | HTMLElement, options: string }>;

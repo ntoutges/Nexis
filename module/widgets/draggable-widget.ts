@@ -35,7 +35,8 @@ export class DraggableWidget extends Widget {
     name,
     resize,
     contextmenu=[],
-    doZoomScale
+    doZoomScale,
+    addons
   }: DraggableWidgetInterface) {
     const container = document.createElement("div");
     const headerEl = document.createElement("div");
@@ -68,7 +69,8 @@ export class DraggableWidget extends Widget {
       content: container,
       resize,
       doZoomScale,
-      contextmenu: contextmenu
+      contextmenu: contextmenu,
+      addons
     });
 
     this.container = container;
@@ -131,7 +133,7 @@ export class DraggableWidget extends Widget {
         this.updateButtonColor(button, type as buttonTypes, "dormant");
         button.addEventListener("mousedown", (e) => {
           e.stopPropagation(); // prevent dragging from button
-          this.scene.layers.moveToTop(this); // still do select
+          this._scene.layers.moveToTop(this); // still do select
         });
 
         // fetch svg data
@@ -188,7 +190,7 @@ export class DraggableWidget extends Widget {
       this.container.classList.add("draggable-widget-headerless");
     }
 
-    this.addSceneListener("resize", (d) => { this.draggable.scale = d.scale; }); // allow gridception to work
+    this.sceneDraggableListener.on("scroll", (d) => { this.draggable.scale = d.scale; }); // allow gridception to work
     this.addons.appendTo(this.body);
   }
 
@@ -241,7 +243,7 @@ export class DraggableWidget extends Widget {
       this.draggable.listener.on("dragInit", this.dragInit.bind(this));
       this.draggable.listener.on("drag", this.drag.bind(this));
       this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
-      this.draggable.listener.on("selected", () => { this.scene.layers.moveToTop(this); })
+      this.draggable.listener.on("selected", () => { this._scene.layers.moveToTop(this); })
     }
     else this.draggable.changeViewport(scene.element);
   }
@@ -261,7 +263,7 @@ export class DraggableWidget extends Widget {
       y: -d.pos.y
     });
 
-    this.scene?.updateIndividualWidget(this);
+    this._scene?.updateIndividualWidget(this);
   }
 
   /**
@@ -295,13 +297,13 @@ export class DraggableWidget extends Widget {
     if (this.body.classList.contains("draggable-widget-minimize")) {
       this.header.classList.add("draggable-widget-close");
       setTimeout(() => { // wait for closing animation
-        this.detachFrom(this.scene);
+        this.detachFrom(this._scene);
       }, 100);
     }
     else {
       this.minimize(); // minimizing animation first
       setTimeout(() => { // wait for closing animation
-        this.detachFrom(this.scene);
+        this.detachFrom(this._scene);
       }, 400);
       setTimeout(() => {
         this.header.classList.add("draggable-widget-close");

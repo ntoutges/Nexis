@@ -6,10 +6,11 @@ export class Listener<Types, Data> {
   private readonly listeners = new Map<Types, Map<number, (data: Data) => void>>();
   private readonly priorities = new Map<number,number>(); // gives the priority of any given id in the call stack
   private readonly reserved = new Set<number>; // stores listener ids currently in use
+  private readonly onListenCallbacks: Array<(type: Types, isNew: boolean) => void> = [];
 
   private readonly pollingCallbacks = new Map<Types, [callback: () => (Data | null), period: number]>();
   private readonly pollingIntervals = new Map<Types, SmartInterval>(); // maps an event type to a polling interval
-  
+   
   private readonly rateLimits = new Map<Types, {period: number, id: number, buffer: Data, hasData: boolean}>();
 
   private readonly autoResponses = new Map<Types, Data>;
@@ -23,7 +24,11 @@ export class Listener<Types, Data> {
    */
   on(type: Types, listener: (data: Data) => void, priority=100) {
     const newId = this.listenerIds++;
-    if (!this.listeners.has(type)) this.listeners.set(type, new Map<number, (data: Data) => void>());
+    
+    const isNewListen = !this.listeners.has(type);
+    this.onListenCallbacks.forEach(callback => { callback(type, isNewListen); });
+    
+    if (isNewListen) this.listeners.set(type, new Map<number, (data: Data) => void>());
     this.listeners.get(type).set(newId, listener);
     this.reserved.add(newId);
     this.priorities.set(newId, priority);
@@ -45,6 +50,14 @@ export class Listener<Types, Data> {
     }
 
     return newId;
+  }
+
+  onListen(callback: (type: Types, isNew: boolean) => void) {
+    this.onListenCallbacks.push(callback);
+
+    if (this.listeners.size) { // some listens already made
+      for (const type of this.listeners.keys()) { callback(type, true); }
+    }
   }
 
   /**
@@ -74,7 +87,7 @@ export class Listener<Types, Data> {
   }
 
   /**
-   * An event that triggers once, after which, sends an immediate event to any listeners that connects
+   * An event that triggers once, after which, sends an immediate event to any listeners that connect
    */
   setAutoResponse(type: Types, data: Data) {
     this.trigger(type, data); // send initial event
@@ -184,7 +197,7 @@ export class Listener<Types, Data> {
   hasListenerId(id: number) { return this.reserved.has(id); }
 }
 
-export class ElementListener extends Listener<"resize", HTMLElement> {
+export class ElementListener<ExtraTypes> extends Listener<ExtraTypes | "resize", HTMLElement> {
   private readonly elements = new Set<HTMLElement>();
   private readonly resizeObserver = new ResizeObserver(this.triggerElementResize.bind(this));
   

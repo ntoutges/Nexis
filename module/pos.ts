@@ -1,6 +1,9 @@
+import { Listener } from "./listener.js";
+
 export class Pos<Dims extends string> {
   private readonly dimensions = new Map<Dims, number>();
   private readonly bounds = new Map<Dims, [min: number, max: number]>();
+  readonly listener = new Listener<"set", Pos<Dims>>();
   constructor(
     data: Partial<Record<Dims, { val?: number, min?: number, max?: number }>>
   ) {
@@ -24,6 +27,7 @@ export class Pos<Dims extends string> {
       let newPos = Math.min(Math.max(pos[component], min), max);
       this.dimensions.set(component, newPos);
     }
+    this.listener.trigger("set", this);
   }
   
   offsetPos(pos: Partial<Record<Dims, number>>) {

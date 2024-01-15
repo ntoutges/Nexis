@@ -4,7 +4,7 @@ import { FrameworkBase } from "./framework.js";
 import { DraggableEvents, SceneInterface, draggableListener } from "./interfaces.js";
 import { Draggable } from "./draggable.js";
 import { Listener } from "./listener.js";
-import { Layers } from "./widgets/layers.js";
+import { Layers } from "./layers.js";
 import { GlobalSingleUseWidget, Widget } from "./widgets/widget.js";
 import { Grid, Pos } from "./pos.js";
 
@@ -14,7 +14,9 @@ export class Scene extends FrameworkBase {
   readonly draggable: Draggable;
   readonly identifier = sceneIdentifiers++;
 
-  private readonly elListener = new Listener<string, Event>();
+  readonly elListener = new Listener<string, Event>();
+  readonly interListener = new Listener<string, any>();
+
   private readonly widgets: Widget[] = [];
 
   private readonly snapObjects = new Map<number,Pos<"x"|"y"> | Grid<"x"|"y">>();
@@ -57,10 +59,14 @@ export class Scene extends FrameworkBase {
       this.addWidget(widget);
     }
 
-    this.onD("drag", this.updateWidgetPosition.bind(this));
-    this.onD("scroll", this.updateWidgetPositionAndScale.bind(this));
-    if (doStartCentered) this.onD("init", this.centerScene.bind(this));
-    this.onE("mousedown", () => { GlobalSingleUseWidget.unbuildType("contextmenu"); })
+    this.draggable.listener.on("drag", this.updateWidgetPosition.bind(this));
+    this.draggable.listener.on("scroll", this.updateWidgetPositionAndScale.bind(this));
+    if (doStartCentered) this.draggable.listener.on("init", this.centerScene.bind(this));
+
+    this.elListener.onListen((type, isNew) => {
+      if (isNew) this.el.addEventListener(type, this.elListener.trigger.bind(this.elListener, type));
+    });
+    this.elListener.on("mousedown", () => { GlobalSingleUseWidget.unbuildType("contextmenu"); })
   }
 
   addWidget(widget: Widget) {
@@ -79,33 +85,6 @@ export class Scene extends FrameworkBase {
     widget.detachFrom(this);
 
     for (const snapObj of this.snapObjects.values()) { widget.pos.removeSnapObject(snapObj); } // remove snap objects
-  }
-
-  /**
-   * On (E)lement event
-   */
-  onE(type: string, listener: (e: Event) => void) {
-    if (!this.elListener.isListeningTo(type)) { // trigger elListener whenever event happens
-      this.el.addEventListener(type, (e) => { this.elListener.trigger(type, e); });
-    }
-    const id = this.elListener.on(type, listener); // trigger outer listener that event has happened
-    this.elListener.doSync(this.draggable.listener);
-    return id;
-  }
-
-  /**
-   * On (D)raggable event
-   */
-  onD(type: DraggableEvents, listener: draggableListener) {
-    const id = this.draggable.listener.on(type, listener);
-    this.draggable.listener.doSync(this.elListener);
-    return id;
-  }
-
-  off(id: number) {
-    if (this.elListener.hasListenerId(id)) return this.elListener.off(id);
-    else if (this.draggable.listener.hasListenerId(id)) return this.draggable.listener.off(id);
-    return false;
   }
 
   updateIndividualWidget(widget: Widget) {
@@ -137,16 +116,16 @@ export class Scene extends FrameworkBase {
     const sY = y * widget.positioning + offY - widget.align.y * bounds.height;
       
     // outside viewable bounds
-    if (
-      sX + bounds.width <= 0
-      || sX >= this.draggable.bounds.width
-      || sY + bounds.height <= 0
-      || sY >= this.draggable.bounds.height
-    ) {
-      widget.element.classList.add("hidden"); // hide element to save on processing (I hope)
-      return;
-    }
-    else widget.element.classList.remove("hidden");
+    // if ( // TODO: fix this so it actually works (seems to randomly hide visible elements, as well...)
+    //   sX + bounds.width <= 0
+    //   || sX >= this.draggable.bounds.width
+    //   || sY + bounds.height <= 0
+    //   || sY >= this.draggable.bounds.height
+    // ) {
+    //   widget.element.classList.add("hidden"); // hide element to save on processing (I hope)
+    //   return;
+    // }
+    // else widget.element.classList.remove("hidden");
 
     widget.element.style.left = `${sX}px`;
     widget.element.style.top = `${sY}px`;

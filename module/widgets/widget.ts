@@ -1,12 +1,13 @@
 import { Draggable } from "../draggable.js";
 import { FrameworkBase } from "../framework.js";
-import { ContextMenuEvents, ContextMenuItemInterface } from "../interfaces";
+import { ContextMenuEvents, ContextMenuItemInterface, DraggableEvents } from "../interfaces";
 import { ElementListener, Listener } from "../listener.js";
 import { Grid, Pos, SnapPos } from "../pos.js";
 import { Scene } from "../scene.js";
-import { AddonContainer } from "./addons.js";
+import { AddonContainer } from "../addons/addons.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
-import { BasicWidgetInterface, ContextMenuInterface, GlobalSingleUseWidgetInterface, SceneListenerTypes, sceneListener } from "./interfaces.js";
+import { BasicWidgetInterface, ContextMenuInterface, GlobalSingleUseWidgetInterface, SceneListenerTypes, sceneElListener, sceneListener } from "./interfaces.js";
+import { AttachableListener } from "../attachableListener.js";
 
 const alignmentMap = {
   "left": 0,
@@ -18,19 +19,21 @@ const alignmentMap = {
 
 // what is put into scenes
 export class Widget extends FrameworkBase {
-  private readonly sceneListeners: Map<SceneListenerTypes, sceneListener> = new Map<SceneListenerTypes,sceneListener>(); 
-  private readonly sceneListenerIds: Map<number, number[]> = new Map<number, number[]>(); // keep track of sceneListener ids
   private readonly transformations = new Map<string, string>();
   readonly contextmenus: Record<string,ContextMenu> = {};
-  readonly addons = new AddonContainer();
+  readonly addons = new AddonContainer(this);
 
-  readonly elListener = new ElementListener();
+  readonly elListener = new ElementListener<"move">();
 
-  protected scene: Scene = null;
+  protected _scene: Scene = null;
   private layer: number; // used to store layer until attached to a scene
 
   readonly positioning: number;
   readonly doZoomScale: boolean;
+
+  readonly sceneDraggableListener = new AttachableListener<DraggableEvents, Draggable>(() => this._scene?.draggable.listener );
+  readonly sceneElementListener = new AttachableListener<string, Event>(() => this._scene?.elListener );
+  readonly sceneInterListener = new AttachableListener<string, any>(() => this._scene?.interListener );
 
   readonly pos = new SnapPos<"x"|"y">({}, 20);
   readonly align = { x:0, y:0 };
@@ -46,6 +49,7 @@ export class Widget extends FrameworkBase {
     pos = {},
     resize,
     contextmenu = [],
+    addons = []
   }: BasicWidgetInterface) {
     super({
       name: `${name}-widget widget`,
@@ -63,6 +67,8 @@ export class Widget extends FrameworkBase {
 
     this.align.x = alignmentMap[pos?.xAlign ?? "left"];
     this.align.y = alignmentMap[pos?.yAlign ?? "top"];
+
+    this.pos.listener.on("set", this.elListener.trigger.bind(this.elListener, "move", this.el));
 
     this.setPos(
       pos?.x ?? 0,
@@ -87,13 +93,17 @@ export class Widget extends FrameworkBase {
       });
     }
 
-    this.elListener.on("resize", this.addons.updateAddonPositions.bind(this.addons));
+    for (const { side, addon } of addons) { this.addons.add(side, addon); }
 
+    this.elListener.on("resize", this.addons.updateAddonPositions.bind(this.addons));
     this.addons.appendTo(this.el);
   }
 
-  setPos(x: number, y: number) {
+  get scene() { return this._scene; }
+
+  setPos(x: number, y: number, doUpdateScene=true) {
     this.pos.setPos({x,y});
+    if (doUpdateScene) this._scene?.updateIndividualWidget(this);
   }
 
   setZoom(z: number) {
@@ -107,47 +117,19 @@ export class Widget extends FrameworkBase {
     };
   }
 
-  addSceneListener(type: SceneListenerTypes, sceneListener: sceneListener) {
-    this.sceneListeners.set(type, sceneListener);
-  }
-
   attachTo(scene: Scene) {
-    const isFirstScene = this.scene == null;
-    if (!isFirstScene) this.detachFrom(this.scene);
-    this.scene = scene;
+    const isFirstScene = this._scene == null;
+    if (!isFirstScene) this.detachFrom(this._scene);
+    this._scene = scene;
+    this.sceneDraggableListener.updateValidity();
+    this.sceneElementListener.updateValidity();
+    this.sceneInterListener.updateValidity();
     this.setZoom(scene.draggable.pos.z);
-    for (const [type,listener] of this.sceneListeners.entries()) {
-      switch (type) {
-        case "init":
-          this.saveId(scene.identifier, scene.onD("init", listener));
-          break;
-        case "dragStart":
-          this.saveId(scene.identifier, scene.onD("dragInit", listener));
-          break;
-        case "dragEnd":
-          this.saveId(scene.identifier, scene.onD("dragEnd", listener));
-          break;
-        case "drag":
-          this.saveId(scene.identifier, scene.onD("drag", listener));
-          break;
-        case "zoom":
-          this.saveId(scene.identifier, scene.onD("scroll", listener));
-          break;
-        case "move":
-          this.saveId(scene.identifier, scene.onD("drag", listener));
-          this.saveId(scene.identifier, scene.onD("scroll", listener));
-          break;
-        case "resize":
-          this.saveId(scene.identifier, scene.onD("resize", listener));
-          break;
-        default:
-          console.log(`Invalid SceneListenerType ${type}`);
-      }
-    }
+    
     scene.layers.setLayer(this, this.layer);
     this.appendTo(scene.element);
     if (isFirstScene && this.resizeData.draggable) {
-      this.resizeData.draggable.listener.on("resize", this.updatePositionOnResize.bind(this))
+      this.resizeData.draggable.listener.on("resize", this.updatePositionOnResize.bind(this));;
     }
     for (const name in this.contextmenus) {
       scene.addWidget(this.contextmenus[name]);
@@ -155,20 +137,15 @@ export class Widget extends FrameworkBase {
   }
 
   detachFrom(scene: Scene) {
-    if (this.scene != scene) return; // scenes don't match
-    this.scene = null;
-    if (this.sceneListenerIds.has(scene.identifier)) {
-      for (const listenerId of this.sceneListenerIds.get(scene.identifier)) {
-        scene.off(listenerId);
-      }
-    }
+    if (this._scene != scene) return; // scenes don't match
+    this._scene = null;
+    
     this.el.remove();
     scene.removeWidget(this);
-  }
-
-  private saveId(sceneIdentifier: number, callbackId: number) {
-    if (!this.sceneListenerIds.has(sceneIdentifier)) this.sceneListenerIds.set(sceneIdentifier, []);
-    this.sceneListenerIds.get(sceneIdentifier).push(callbackId);
+ 
+    this.sceneDraggableListener.updateValidity();
+    this.sceneElementListener.updateValidity();
+    this.sceneInterListener.updateValidity();
   }
 
   setTransformation(property: string, value: string = "") {
@@ -211,14 +188,16 @@ export abstract class GlobalSingleUseWidget extends Widget {
     name,content,
     id,layer,pos,positioning,resize,style,
     options,
-    doZoomScale
+    doZoomScale,
+    addons
   }: GlobalSingleUseWidgetInterface) {
     super({
       name,content,
       id,layer,
       pos,positioning,resize,
       style,
-      doZoomScale
+      doZoomScale,
+      addons
     });
     this._isBuilt = false;
 
@@ -311,9 +290,9 @@ export class ContextMenu extends GlobalSingleUseWidget {
       el.addEventListener("contextmenu", (e) => {
         if (this.sections.length > 0) e.preventDefault(); // if empty, allow standard contextmenu through (but still close previous contextmenu)
         e.stopPropagation();
-        if (!this.scene) return; // don't continue unless attached to something
+        if (!this._scene) return; // don't continue unless attached to something
         this.build();
-        this.scene.setWidgetPos(this, e.pageX, e.pageY);
+        this._scene.setWidgetPos(this, e.pageX, e.pageY);
         this.listener.trigger("open", null);
       });
     }

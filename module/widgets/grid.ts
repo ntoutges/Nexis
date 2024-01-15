@@ -26,7 +26,8 @@ export class GridWidget extends Widget {
     doIndependentCenter = false,
     gridChangeScaleFactor = 0.4,
     resize,
-    contextmenu=[]
+    contextmenu=[],
+    addons
   }: GridWidgetInterface) {
     const canvas = document.createElement("canvas");
     
@@ -45,7 +46,8 @@ export class GridWidget extends Widget {
       id,style,
       layer,
       resize,
-      contextmenu
+      contextmenu,
+      addons
     });
 
     this.step = Math.max(options?.grid?.size, 10) || 50;
@@ -64,19 +66,20 @@ export class GridWidget extends Widget {
 
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
-    this.addSceneListener("move", this.drag.bind(this));
-    this.addSceneListener("resize", this.resize.bind(this));
-    this.addSceneListener("init", this.init.bind(this));
-    this.addSceneListener("dragStart", this.dragStart.bind(this));
-    this.addSceneListener("dragEnd", this.dragEnd.bind(this));
+    this.sceneDraggableListener.on("drag", this.drag.bind(this));
+    this.sceneDraggableListener.on("resize", this.resize.bind(this));
+    this.sceneDraggableListener.on("scroll", this.drag.bind(this));
+    this.sceneDraggableListener.on("init", this.init.bind(this));
+    this.sceneDraggableListener.on("dragInit", this.dragStart.bind(this));
+    this.sceneDraggableListener.on("dragEnd", this.dragEnd.bind(this));
 
     this.contextmenus.menu.listener.on("click", item => {
       switch (item.value) {
         case "reset":
-          this.scene.draggable.setZoom(1);
+          this._scene.draggable.setZoom(1);
           // nobreak;
         case "center":
-          this.scene.draggable.center(true);
+          this._scene.draggable.center(true);
       }
     })
   }

@@ -1,19 +1,23 @@
+import { AttachableListener } from "../attachableListener.js";
 import { Group } from "../group.js";
 import { Ids } from "../ids.js";
 import { Listener } from "../listener.js";
+import { Widget } from "../widgets/widget.js";
 
 // this class can easily add 
 export class AddonContainer {
-  protected readonly el: HTMLElement = document.createElement("div");
-  protected leftEdge = new AddonEdge(this.el, "left");
-  protected rightEdge = new AddonEdge(this.el, "right");
-  protected topEdge = new AddonEdge(this.el, "top");
-  protected bottomEdge = new AddonEdge(this.el, "bottom");
+  readonly el: HTMLElement = document.createElement("div");
+  protected readonly leftEdge = new AddonEdge(this, "left");
+  protected readonly rightEdge = new AddonEdge(this, "right");
+  protected readonly topEdge = new AddonEdge(this, "top");
+  protected readonly bottomEdge = new AddonEdge(this, "bottom");
 
   protected readonly addonIdEdgeMap = new Map<number, AddonEdge>();
+  readonly widget: Widget;
   
-  constructor() {
+  constructor(widget: Widget) {
     this.el.classList.add("framework-addon-containers");
+    this.widget = widget;
   }
 
   appendTo(parent: HTMLElement) {
@@ -24,6 +28,9 @@ export class AddonContainer {
     const width = this.el.offsetWidth;
     
     this.leftEdge.setSize(width);
+    this.rightEdge.setSize(width);
+    this.topEdge.setSize(width);
+    this.bottomEdge.setSize(width);
   }
 
   add(side: "top" | "bottom" | "left" | "right", addon: Addon) {
@@ -65,21 +72,26 @@ export class AddonContainer {
 
 // TODO: make items overflow into custom "overflow addon"
 export class AddonEdge {
-  private readonly el = document.createElement("div");
+  readonly el = document.createElement("div");
   private readonly ids = new Ids();
   private readonly addons = new Map<number, Addon>();
   private readonly addonListeners = new Map<number, number[]>();
   private size: number = 0;
+  readonly direction: "top" | "bottom" | "left" | "right";
+  
+  readonly addonContainer: AddonContainer;
 
-  constructor(parent: HTMLElement, name: string) {
-    this.el.classList.add("framework-addon-edges", `framework-addon-edges-${name}`);
-    parent.append(this.el);
+  constructor(addonContainer: AddonContainer, direction: "top" | "bottom" | "left" | "right") {
+    this.el.classList.add("framework-addon-edges", `framework-addon-edges-${direction}`);
+    this.addonContainer = addonContainer;
+    addonContainer.el.append(this.el);
+    this.direction = direction;
   }
 
   add(addon: Addon): number {
     const id = this.ids.generateId();
     this.addons.set(id, addon);
-    addon.appendTo(this.el);
+    addon.attachTo(this);
     
     const listenerIds: number[] = [];
     listenerIds.push(addon.listener.on("positioning", this.updatePosition.bind(this)));
@@ -288,7 +300,12 @@ export class Addon {
   private _size: number;
   protected el = document.createElement("div"); 
 
-  readonly listener = new Listener<"positioning" | "weight" | "size", Addon>();
+  readonly listener = new Listener<"positioning" | "weight" | "size" | "move", Addon>();
+  protected addonEdge: AddonEdge;
+  protected moveId: number;
+
+  protected interWidgetListener = new AttachableListener<string, any>(() => this.addonContainer?.widget.sceneInterListener );
+  protected sceneElListener = new AttachableListener<string, Event>(() => this.addonContainer?.widget?.sceneElementListener );
   
   constructor({
     content,
@@ -306,9 +323,18 @@ export class Addon {
     this.el.append(content);
   }
 
-  appendTo(el: HTMLElement) {
-    el.append(this.el);
+  attachTo(addonEdge: AddonEdge) {
+    addonEdge.el.append(this.el);
+
+    if (this.addonEdge) this.addonEdge.addonContainer.widget.elListener.off(this.moveId); // remove old listener
+    this.addonEdge = addonEdge;
+    if (this.addonEdge) this.moveId = this.addonEdge.addonContainer.widget.elListener.on("move", this.listener.trigger.bind(this.listener, "move", this)); // add new listener
+
+    this.interWidgetListener.updateValidity();
+    this.sceneElListener.updateValidity();
   }
+
+  get addonContainer() { return this.addonEdge?.addonContainer; }
 
   get size() { return this._size; }
   get circleness() { return this._circleness; }
@@ -337,6 +363,7 @@ export class Addon {
   set position(newPos) {
     this._position = newPos;
     this.el.style.left = `${newPos}px`;
+    this.listener.trigger("move", this);
   }
 
   intersectsRegion(pos: number, size: number) {
@@ -345,6 +372,17 @@ export class Addon {
   }
   intersectsAddon(other: Addon) {
     return this.intersectsRegion(other.position, other.size);
+  }
+
+  getPositionInScene() {
+    const draggable = this.addonContainer?.widget?.scene?.draggable;
+    if (!draggable) return null;
+
+    const { x: screenX, y: screenY } = this.el.getBoundingClientRect();
+    return draggable.toSceneSpace(
+      screenX + this._size/2, // add size/2 to get centered x
+      screenY + this._size/2 // add size/2 to get centered y
+    );
   }
 }
 

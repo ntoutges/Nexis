@@ -53,7 +53,7 @@ export class FrameworkBase {
   appendTo(parent: HTMLElement) {
     parent.append(this.el);
     if (this.resizeData.dragEl) {
-      if (!this.resizeData.draggable) { // buld new draggable
+      if (!this.resizeData.draggable) { // build new draggable
         this.resizeData.draggable = new Draggable({
           viewport: parent,
           element: this.resizeData.dragEl,
