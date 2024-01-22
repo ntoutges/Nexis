@@ -1,8 +1,10 @@
 import { Listener } from "../listener.js";
-import { BasicWire } from "../widgets/wire.js";
+import { BasicWire, WirePoint } from "../widgets/wire.js";
 import { Addon } from "./addons.js";
 
-export class ConnectorAddon<Direction> extends Addon {
+const styles = new Map<string, Record<string, string>>();
+
+export class ConnectorAddon<Direction extends string> extends Addon {
   readonly connListener = new Listener<"move", "">();
   readonly type: string;
   readonly direction: Direction;
@@ -11,7 +13,10 @@ export class ConnectorAddon<Direction> extends Addon {
   private sceneMouseupId: number = null;
 
   private wireInProgress: BasicWire = null;
-  readonly validator: (addon1: ConnectorAddon<Direction>, addon2: ConnectorAddon<Direction>) => boolean
+  readonly validator: (addon1: Direction, addon2: Direction) => boolean
+
+  private readonly points: {point: WirePoint, listener: number }[] = [];
+  readonly sender = new Listener<"send" | "receive" | "connect" | "disconnect", any>();
 
   /**
    * @param validator This is a function that, when called, should return true if the connection is valid, and false otherwise. If unset, this will act as a function that always returns true 
@@ -25,10 +30,15 @@ export class ConnectorAddon<Direction> extends Addon {
     positioning?: number
     type: string
     direction: Direction
-    validator?: (addon1: ConnectorAddon<Direction>, addon2: ConnectorAddon<Direction>) => boolean
+    validator?: (addon1: Direction, addon2: Direction) => boolean
   }) {
     const el = document.createElement("div");
     el.classList.add("framework-addon-connectors", `framework-addon-connectors-${direction}`);
+
+    const style = ConnectorAddon.getStyle(type, direction);
+    for (const styleProperty in style) {
+      el.style[styleProperty] = style[styleProperty];
+    }
 
     super({
       content: el,
@@ -80,15 +90,24 @@ export class ConnectorAddon<Direction> extends Addon {
     this.interWidgetListener.on(`${type}::mouseup`, other => {
       if (!this.wireInProgress) return;
       
-      if ((this.validator == null) ? true : this.validator(this, other as ConnectorAddon<Direction>)) {
+      if ((this.validator == null) ? true : this.validator(this.direction, (other as ConnectorAddon<Direction>).direction)) {
         this.disconnectSceneMouseListeners();
         this.wireInProgress.point2.attachToAddon(other as ConnectorAddon<Direction>);
+        
+        this.setPoint(this.wireInProgress.point1);
+        (other as ConnectorAddon<Direction>).setPoint(this.wireInProgress.point2);
+        
+        this.wireInProgress.setIsEditing(false);
         this.wireInProgress = null;
       }
       else { // invalid wire, remove it
-      this.disconnectSceneMouseListeners();
-      this.removeWireInProgress();
+        this.disconnectSceneMouseListeners();
+        this.removeWireInProgress();
       }
+    });
+
+    this.sender.on("send", data => {
+      this.points.forEach(pointData => { pointData.point.listener.trigger("send", data); });
     });
   }
 
@@ -105,5 +124,48 @@ export class ConnectorAddon<Direction> extends Addon {
     if (!this.wireInProgress) return;
     this.addonContainer.widget.scene.removeWidget(this.wireInProgress);
     this.wireInProgress = null;
+  }
+
+  protected setPoint(point: WirePoint) {
+    this.points.push({
+      point,
+      listener: point.listener.on("receive", data => { this.sender.trigger("receive", data); })
+    });
+    this.sender.trigger("connect", "");
+
+    point.listener.on("disconnect", this.removePoint.bind(this));
+  }
+
+  protected removePoint(point: WirePoint) {
+    const index = this.points.findIndex(val => val.point == point);
+    if (index == -1) return; // invalid point
+    
+    point.listener.off(this.points[index].listener); // stop listening to point
+    this.points.splice(index,1); // remove point altogether
+    this.sender.trigger("disconnect", "");
+  }
+
+  static createStyle(
+    type: string,
+    direction: string,
+    style: Record<string,string>
+  ) {
+    styles.set(
+      type + ":" + direction,
+      style
+    );
+  }
+
+  static getStyle(
+    type: string,
+    direction: string
+  ) {
+    const key = type + ":" + direction;
+    return styles.has(key) ? styles.get(key) : {};
+  }
+
+  // each wire generates a point, which is put into this array
+  get wireCount() {
+    return this.points.length;
   }
 }

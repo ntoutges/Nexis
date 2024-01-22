@@ -67,17 +67,5 @@
 .framework-addon-connectors:hover,
 .framework-addon-connectors.selected {
   cursor: pointer;
-  background: grey;
-}
-
-.framework-addon-connectors-input {
-  background: white;
-}
-
-.framework-addon-connectors-output {
-  background: black;
-}
-
-.framework-addon-connectors-omni {
-  background: radial-gradient(black, black 50%, white 50%, white)
+  background: grey !important;
 }

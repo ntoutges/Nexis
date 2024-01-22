@@ -23,7 +23,7 @@ export class Widget extends FrameworkBase {
   readonly contextmenus: Record<string,ContextMenu> = {};
   readonly addons = new AddonContainer(this);
 
-  readonly elListener = new ElementListener<"move">();
+  readonly elListener = new ElementListener<"move" | "detach">();
 
   protected _scene: Scene = null;
   private layer: number; // used to store layer until attached to a scene
@@ -49,7 +49,7 @@ export class Widget extends FrameworkBase {
     pos = {},
     resize,
     contextmenu = [],
-    addons = []
+    addons = {}
   }: BasicWidgetInterface) {
     super({
       name: `${name}-widget widget`,
@@ -93,7 +93,10 @@ export class Widget extends FrameworkBase {
       });
     }
 
-    for (const { side, addon } of addons) { this.addons.add(side, addon); }
+    for (const id in addons) {
+      const { side, addon } = addons[id];
+      this.addons.add(id, side, addon);
+    }
 
     this.elListener.on("resize", this.addons.updateAddonPositions.bind(this.addons));
     this.addons.appendTo(this.el);
@@ -146,6 +149,8 @@ export class Widget extends FrameworkBase {
     this.sceneDraggableListener.updateValidity();
     this.sceneElementListener.updateValidity();
     this.sceneInterListener.updateValidity();
+
+    this.elListener.trigger("detach", this.el);
   }
 
   setTransformation(property: string, value: string = "") {

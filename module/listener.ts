@@ -1,5 +1,4 @@
 import { SmartInterval } from "./smartInterval.js";
-import { SmartTimeout } from "./smartTimeout.js";
 
 export class Listener<Types, Data> {
   listenerIds: number = 0;

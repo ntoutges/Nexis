@@ -2,6 +2,7 @@ import { AttachableListener } from "../attachableListener.js";
 import { Group } from "../group.js";
 import { Ids } from "../ids.js";
 import { Listener } from "../listener.js";
+import { DraggableWidget } from "../widgets/draggable-widget.js";
 import { Widget } from "../widgets/widget.js";
 
 // this class can easily add 
@@ -13,6 +14,7 @@ export class AddonContainer {
   protected readonly bottomEdge = new AddonEdge(this, "bottom");
 
   protected readonly addonIdEdgeMap = new Map<number, AddonEdge>();
+  protected readonly addonStringIdToNumberMap = new Map<string, number>();
   readonly widget: Widget;
   
   constructor(widget: Widget) {
@@ -33,18 +35,28 @@ export class AddonContainer {
     this.bottomEdge.setSize(width);
   }
 
-  add(side: "top" | "bottom" | "left" | "right", addon: Addon) {
+  add(id: string, side: "top" | "bottom" | "left" | "right", addon: Addon) {
     const edge = this.getEdge(side);
     if (!edge) return;
-    const id = edge.add(addon);
-    this.addonIdEdgeMap.set(id, edge);
+    const numericalId = edge.add(addon);
+    this.addonIdEdgeMap.set(numericalId, edge);
+    this.addonStringIdToNumberMap.set(id, numericalId);
     return id;
   }
 
-  pop(id: number) {
-    if (!this.addonIdEdgeMap.has(id)) return; // addon with this id doesn't exist
-    this.addonIdEdgeMap.get(id).pop(id);
-    this.addonIdEdgeMap.delete(id);
+  pop(id: string) {
+    if (!this.addonStringIdToNumberMap.has(id)) return; // addon with this id doesn't exist
+
+    const numericId = this.addonStringIdToNumberMap.get(id);
+    this.addonIdEdgeMap.get(numericId).pop(numericId);
+    this.addonIdEdgeMap.delete(numericId);
+    this.addonStringIdToNumberMap.delete(id);
+  }
+
+  get(id: string) {
+    if (!this.addonStringIdToNumberMap.has(id)) return null; // addon with this id doesn't exist
+    const numericId = this.addonStringIdToNumberMap.get(id);
+    return this.addonIdEdgeMap.get(numericId).get(numericId);
   }
 
   private getEdge(side: "top" | "bottom" | "left" | "right") {
@@ -116,6 +128,10 @@ export class AddonEdge {
     this.addons.delete(id);
     this.updatePosition();
     return true;
+  }
+
+  get(id: number) {
+    return this.addons.has(id) ? this.addons.get(id) : null;
   }
 
   setSize(size: number) {
@@ -300,9 +316,10 @@ export class Addon {
   private _size: number;
   protected el = document.createElement("div"); 
 
-  readonly listener = new Listener<"positioning" | "weight" | "size" | "move", Addon>();
+  readonly listener = new Listener<"positioning" | "weight" | "size" | "move" | "close", Addon>();
   protected addonEdge: AddonEdge;
   protected moveId: number;
+  protected closeId: number;
 
   protected interWidgetListener = new AttachableListener<string, any>(() => this.addonContainer?.widget.sceneInterListener );
   protected sceneElListener = new AttachableListener<string, Event>(() => this.addonContainer?.widget?.sceneElementListener );
@@ -326,9 +343,17 @@ export class Addon {
   attachTo(addonEdge: AddonEdge) {
     addonEdge.el.append(this.el);
 
-    if (this.addonEdge) this.addonEdge.addonContainer.widget.elListener.off(this.moveId); // remove old listener
+    if (this.addonEdge) { // remove old listeners
+      const newWidget = this.addonEdge.addonContainer.widget;
+      newWidget.elListener.off(this.moveId);
+      newWidget.elListener.off(this.closeId);
+    }
     this.addonEdge = addonEdge;
-    if (this.addonEdge) this.moveId = this.addonEdge.addonContainer.widget.elListener.on("move", this.listener.trigger.bind(this.listener, "move", this)); // add new listener
+    if (this.addonEdge) { // add new listeners
+      const newWidget = this.addonEdge.addonContainer.widget;
+      this.moveId = newWidget.elListener.on("move", this.listener.trigger.bind(this.listener, "move", this)); // add new listener
+      this.closeId = newWidget.elListener.on("detach", this.listener.trigger.bind(this.listener, "close"));
+    }
 
     this.interWidgetListener.updateValidity();
     this.sceneElListener.updateValidity();

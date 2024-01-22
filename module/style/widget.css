@@ -373,7 +373,7 @@
   display: none;
 }
 
-.framework-basic-wire-widget {
+.framework-basic-wire-widget > .framework-basic-wire-body {
   height: 3px;
   background: black;
 

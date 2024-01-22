@@ -17,7 +17,7 @@ export interface CommonWidgetInterface extends CommonFrameworkInterface {
     yAlign?: "top" | "middle" | "bottom"
   },
   contextmenu?: contextmenuType | contextmenuType[],
-  addons?: { side: "top" | "bottom" | "left" | "right", addon: Addon }[]
+  addons?: Record<string, { side: "top" | "bottom" | "left" | "right", addon: Addon }>
 }
 
 type contextmenuType = Record<string, { el: HTMLElement | HTMLElement, options: string }>;
