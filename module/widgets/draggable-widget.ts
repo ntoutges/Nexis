@@ -54,8 +54,8 @@ export class DraggableWidget extends Widget {
       }
     });
 
-    const bodyHeight = style.height;
-    const bodyWidth = style.width;
+    const bodyHeight = style?.height;
+    const bodyWidth = style?.width;
     
     // intercept height/width data before they are sent to parent
     if (style) {
@@ -180,7 +180,7 @@ export class DraggableWidget extends Widget {
     this.body.append(content);
     this.body.style.background = options?.bodyBackground ?? "";
 
-    body.style.height = bodyWidth ?? "";
+    body.style.height = bodyHeight ?? "";
     body.style.width = bodyWidth ?? "";
 
     if (options?.hideOnInactivity ?? false) this.container.classList.add("framework-widgets-hide-on-inactive");

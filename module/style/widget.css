@@ -374,7 +374,7 @@
 }
 
 .framework-basic-wire-widget > .framework-basic-wire-body {
-  height: 3px;
+  height: 2px;
   background: black;
 
   transform-origin: 0% 50%;

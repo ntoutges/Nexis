@@ -21,6 +21,8 @@ export class SmartInterval {
     }
   }
 
+  getInterval() { return this.timeout; }
+
   setCallback(callback: () => void) {
     this.callback = callback;
   }

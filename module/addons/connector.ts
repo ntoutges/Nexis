@@ -3,6 +3,7 @@ import { BasicWire, WirePoint } from "../widgets/wire.js";
 import { Addon } from "./addons.js";
 
 const styles = new Map<string, Record<string, string>>();
+const styleUsers = new Map<string, ConnectorAddon<any>[]>();
 
 export class ConnectorAddon<Direction extends string> extends Addon {
   readonly connListener = new Listener<"move", "">();
@@ -35,11 +36,6 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     const el = document.createElement("div");
     el.classList.add("framework-addon-connectors", `framework-addon-connectors-${direction}`);
 
-    const style = ConnectorAddon.getStyle(type, direction);
-    for (const styleProperty in style) {
-      el.style[styleProperty] = style[styleProperty];
-    }
-
     super({
       content: el,
       circleness: 1,
@@ -47,9 +43,15 @@ export class ConnectorAddon<Direction extends string> extends Addon {
       size: 14
     });
 
+    const styleName = ConnectorAddon.getStyleName(type,direction);
+    if (!styleUsers.has(styleName)) styleUsers.set(styleName, []);
+    styleUsers.get(styleName).push(this);
+
     this.type = type;
     this.direction = direction;
     this.validator = validator;
+
+    this.updateStyle();
 
     // prevent mousedown from propagating to some future draggable
     this.el.addEventListener("mousedown", e => {
@@ -111,6 +113,13 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     });
   }
 
+  updateStyle() {
+    const style = ConnectorAddon.getStyle(this.type, this.direction);
+    for (const styleProperty in style) {
+      this.contentEl.style[styleProperty] = style[styleProperty];
+    }
+  }
+
   private disconnectSceneMouseListeners() {
     if (this.sceneMousemoveId == null) return false;
     this.sceneElListener.off(this.sceneMousemoveId);
@@ -145,23 +154,37 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     this.sender.trigger("disconnect", "");
   }
 
-  static createStyle(
+  static setStyle(
     type: string,
     direction: string,
     style: Record<string,string>
   ) {
+    const name = ConnectorAddon.getStyleName(type,direction);
     styles.set(
-      type + ":" + direction,
+      name,
       style
     );
+    if (!styleUsers.has(name)) styleUsers.set(name, []);
+    else {
+      for (const styleUser of styleUsers.get(name)) {
+        styleUser.updateStyle();
+      }
+    }
+  }
+
+  static getStyleName(
+    type: string,
+    direction: string
+  ) {
+    return type + ":" + direction;
   }
 
   static getStyle(
     type: string,
     direction: string
   ) {
-    const key = type + ":" + direction;
-    return styles.has(key) ? styles.get(key) : {};
+    const name = ConnectorAddon.getStyleName(type,direction);
+    return styles.has(name) ? styles.get(name) : {};
   }
 
   // each wire generates a point, which is put into this array

@@ -13,8 +13,7 @@ export class AddonContainer {
   protected readonly topEdge = new AddonEdge(this, "top");
   protected readonly bottomEdge = new AddonEdge(this, "bottom");
 
-  protected readonly addonIdEdgeMap = new Map<number, AddonEdge>();
-  protected readonly addonStringIdToNumberMap = new Map<string, number>();
+  protected readonly addonIdEdgeMap = new Map<string, {edge: AddonEdge, id: number}>();
   readonly widget: Widget;
   
   constructor(widget: Widget) {
@@ -28,9 +27,10 @@ export class AddonContainer {
 
   updateAddonPositions() {
     const width = this.el.offsetWidth;
+    const height = this.el.offsetHeight;
     
-    this.leftEdge.setSize(width);
-    this.rightEdge.setSize(width);
+    this.leftEdge.setSize(height);
+    this.rightEdge.setSize(height);
     this.topEdge.setSize(width);
     this.bottomEdge.setSize(width);
   }
@@ -39,24 +39,26 @@ export class AddonContainer {
     const edge = this.getEdge(side);
     if (!edge) return;
     const numericalId = edge.add(addon);
-    this.addonIdEdgeMap.set(numericalId, edge);
-    this.addonStringIdToNumberMap.set(id, numericalId);
+    this.addonIdEdgeMap.set(id, {
+      edge,
+      id: numericalId
+    });
     return id;
   }
 
   pop(id: string) {
-    if (!this.addonStringIdToNumberMap.has(id)) return; // addon with this id doesn't exist
+    if (!this.addonIdEdgeMap.has(id)) return; // addon with this id doesn't exist
 
-    const numericId = this.addonStringIdToNumberMap.get(id);
-    this.addonIdEdgeMap.get(numericId).pop(numericId);
-    this.addonIdEdgeMap.delete(numericId);
-    this.addonStringIdToNumberMap.delete(id);
+    const data = this.addonIdEdgeMap.get(id);
+    // this.addonIdEdgeMap.get(numericId).pop(numericId);
+    data.edge.pop(data.id);
+    this.addonIdEdgeMap.delete(id);
   }
 
   get(id: string) {
-    if (!this.addonStringIdToNumberMap.has(id)) return null; // addon with this id doesn't exist
-    const numericId = this.addonStringIdToNumberMap.get(id);
-    return this.addonIdEdgeMap.get(numericId).get(numericId);
+    if (!this.addonIdEdgeMap.has(id)) return null; // addon with this id doesn't exist
+    const data = this.addonIdEdgeMap.get(id);
+    return data.edge.get(data.id);
   }
 
   private getEdge(side: "top" | "bottom" | "left" | "right") {
@@ -136,6 +138,7 @@ export class AddonEdge {
 
   setSize(size: number) {
     this.size = size;
+    this.el.style.width = size + "px";
     this.updatePosition();
   }
 
@@ -314,7 +317,8 @@ export class Addon {
   // private _weight: number;
   private _circleness: number;
   private _size: number;
-  protected el = document.createElement("div"); 
+  protected el = document.createElement("div");
+  protected contentEl: HTMLElement;
 
   readonly listener = new Listener<"positioning" | "weight" | "size" | "move" | "close", Addon>();
   protected addonEdge: AddonEdge;
@@ -338,6 +342,7 @@ export class Addon {
 
     this.el.classList.add("framework-addons");
     this.el.append(content);
+    this.contentEl = content;
   }
 
   attachTo(addonEdge: AddonEdge) {
