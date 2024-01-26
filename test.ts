@@ -9,6 +9,7 @@ import { Listener } from "./module/listener.js";
 import { BasicWire } from "./module/widgets/wire.js";
 import { ConnDisplay, ConnInput, ConnWidget } from "./module/widgets/connWidget.js";
 import { PeerConnection } from "./module/conn/distros/peer.js";
+import { FAnimation } from "./module/animation.js";
 
 ConnectorAddon.setStyle("data", "input", { background: "white" });
 ConnectorAddon.setStyle("data", "output", { background: "black" });
@@ -30,6 +31,7 @@ client.listener.on("disconnect", (data) => { console.log("disconnect:",data) });
 
 const channel = client.buildChannel("default");
 
+const connW = new ConnWidget(channel);
 const scene = new Scene({
   parent: $("#sandbox"),
   style: {
@@ -56,11 +58,16 @@ const scene = new Scene({
       },
       doCursorDragIcon: true
     }),
-    new ConnWidget(channel),
+    connW,
     new ConnDisplay(),
     new ConnInput()
   ]
 });
+
+connW.pos.animatePos(
+  new FAnimation({ time: 5000 }),
+  { "x": 100, "y": 100 }
+)
 
 // setInterval(() => {
 //   (widget2.addons.get("main") as ConnectorAddon<"output" | "input" | "omni">).sender.trigger("send", "clock pulse");

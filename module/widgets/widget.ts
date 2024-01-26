@@ -68,7 +68,10 @@ export class Widget extends FrameworkBase {
     this.align.x = alignmentMap[pos?.xAlign ?? "left"];
     this.align.y = alignmentMap[pos?.yAlign ?? "top"];
 
-    this.pos.listener.on("set", this.elListener.trigger.bind(this.elListener, "move", this.el));
+    this.pos.listener.on("set", () => {
+      this.elListener.trigger("move", this.el)
+      this.scene?.updateIndividualWidget(this);
+    });
 
     this.setPos(
       pos?.x ?? 0,
@@ -104,9 +107,8 @@ export class Widget extends FrameworkBase {
 
   get scene() { return this._scene; }
 
-  setPos(x: number, y: number, doUpdateScene=true) {
+  setPos(x: number, y: number) {
     this.pos.setPos({x,y});
-    if (doUpdateScene) this._scene?.updateIndividualWidget(this);
   }
 
   setZoom(z: number) {

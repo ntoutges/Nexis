@@ -1,9 +1,12 @@
+import { FAnimation } from "./animation.js";
 import { Listener } from "./listener.js";
 
 export class Pos<Dims extends string> {
   private readonly dimensions = new Map<Dims, number>();
   private readonly bounds = new Map<Dims, [min: number, max: number]>();
   readonly listener = new Listener<"set", Pos<Dims>>();
+  private animation: FAnimation<Dims> = null;
+
   constructor(
     data: Partial<Record<Dims, { val?: number, min?: number, max?: number }>>
   ) {
@@ -21,13 +24,18 @@ export class Pos<Dims extends string> {
     }
   }
 
-  setPos(pos: Partial<Record<Dims, number>>) {
+  setPos(pos: Partial<Record<Dims, number>>, stopAnimation: boolean = true) {
     for (const component in pos) {
       const [min,max] = this.bounds.has(component) ? this.bounds.get(component) : [-Number.MAX_VALUE,Number.MAX_VALUE];
       let newPos = Math.min(Math.max(pos[component], min), max);
       this.dimensions.set(component, newPos);
     }
     this.listener.trigger("set", this);
+
+    if (stopAnimation && this.animation) { // sets current animation to null
+      this.animation.stop();
+      this.animation = null;
+    }
   }
   
   offsetPos(pos: Partial<Record<Dims, number>>) {
@@ -35,6 +43,20 @@ export class Pos<Dims extends string> {
       pos[component] += this.getPosComponent(component); // do offset
     });
     this.setPos(pos);
+  }
+
+  animatePos(animation: FAnimation<Dims> = null, finalPos: Partial<Record<Dims, number>> = {}) {
+    if (this.animation) this.animation.stop(); // animation ongoing, delete it
+    this.animation = animation;
+    if (!this.animation) return; // no new animation
+
+    // set start/end
+    for (const dim in finalPos) { this.animation.setValEnd(dim, finalPos[dim]); }
+    for (const dim in this.dimensions) { this.animation.setValStart(dim as Dims, this.dimensions[dim]); }
+
+    this.animation.start(); // start new animation
+    this.animation.listener.on("animate", (newPos) => { this.setPos(newPos, false); });
+    this.animation.listener.on("stop", this.setPos.bind(this, finalPos, false));
   }
 
   getPosComponent(component: Dims) {
@@ -179,8 +201,8 @@ export class SnapPos<Dims extends string> extends Pos<Dims> {
     return this.removeSnapPoint(id) || this.removeSnapGrid(id);
   }
 
-  setPos(pos: Partial<Record<Dims, number>>) {
-    super.setPos(pos);
+  setPos(pos: Partial<Record<Dims, number>>, stopAnimation: boolean = true) {
+    super.setPos(pos, stopAnimation);
     
     this.snapPoint = null; // prevent current snap point from interfering
     let minDist: number = Infinity;
