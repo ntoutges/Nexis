@@ -48,6 +48,10 @@ export interface DraggableWidgetInterface extends BasicWidgetInterface {
     acceptableMouseButtons?: number[]
     bodyBackground?: string
     hideOnInactivity?: boolean
+    draggable?: {
+      scrollX?: boolean
+      scrollY?: boolean
+    }
   }
   header?: {
     title?: string

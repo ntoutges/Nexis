@@ -24,6 +24,7 @@ export class DraggableWidget extends Widget {
   }>();
 
   private isClosing: boolean = false;
+  private readonly draggableInfo = { scrollX: true, scrollY: true };
 
   constructor({
     id,layer,positioning,pos,style,
@@ -56,11 +57,13 @@ export class DraggableWidget extends Widget {
 
     const bodyHeight = style?.height;
     const bodyWidth = style?.width;
+    const bodyBackground = style?.background;
     
     // intercept height/width data before they are sent to parent
     if (style) {
       delete style.height;
       delete style.width;
+      delete style.background;
     }
 
     super({
@@ -154,6 +157,9 @@ export class DraggableWidget extends Widget {
       }
     }
 
+    if (options?.draggable?.hasOwnProperty("scrollX")) this.draggableInfo.scrollX = options.draggable.scrollX;
+    if (options?.draggable?.hasOwnProperty("scrollY")) this.draggableInfo.scrollY = options.draggable.scrollY;
+
     title.append(buttons);
     this.acceptableMouseButtons = options?.acceptableMouseButtons ?? [];
 
@@ -182,6 +188,7 @@ export class DraggableWidget extends Widget {
 
     body.style.height = bodyHeight ?? "";
     body.style.width = bodyWidth ?? "";
+    body.style.background = bodyBackground ?? "";
 
     if (options?.hideOnInactivity ?? false) this.container.classList.add("framework-widgets-hide-on-inactive");
     this.container.append(this.body);
@@ -216,7 +223,9 @@ export class DraggableWidget extends Widget {
           blockScroll: false,
           input: {
             acceptableMouseButtons: this.acceptableMouseButtons
-          }
+          },
+          scrollX: this.draggableInfo.scrollX,
+          scrollY: this.draggableInfo.scrollY
         });
       }
       else {
@@ -231,7 +240,9 @@ export class DraggableWidget extends Widget {
           blockScroll: false,
           input: {
             acceptableMouseButtons: this.acceptableMouseButtons
-          }
+          },
+          scrollX: this.draggableInfo.scrollX,
+          scrollY: this.draggableInfo.scrollY
         });
       }
 
@@ -258,9 +269,9 @@ export class DraggableWidget extends Widget {
   }
 
   protected drag(d: Draggable) {
-    this.pos.setPos({
-      x: -d.pos.x,
-      y: -d.pos.y
+    this.pos.offsetPos({
+      x: -d.delta.x,
+      y: d.delta.y
     });
 
     this._scene?.updateIndividualWidget(this);

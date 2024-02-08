@@ -74,6 +74,7 @@ export class Scene extends FrameworkBase {
     this.widgets.push(widget);
     this.layers.add(widget);
 
+    this.updateIndividualWidget(widget);
     for (const snapObj of this.snapObjects.values()) { widget.pos.addSnapObject(snapObj); } // add snap objects
   }
 
@@ -90,6 +91,7 @@ export class Scene extends FrameworkBase {
   updateIndividualWidget(widget: Widget) {
     if (!this.widgets.includes(widget)) return; // don't try to update invalid widget
     this.updateIndividualWidgetPosition(widget);
+    this.updateIndividualWidgetScale(widget);
   }
 
   protected updateIndividualWidgetPosition(widget: Widget) {
@@ -111,9 +113,10 @@ export class Scene extends FrameworkBase {
     const offX = cX - x*widget.positioning;
     const offY = cY - y*widget.positioning;
     
-    const bounds = widget.calculateBounds(this.draggable.pos.z);
-    const sX = x * widget.positioning + offX - widget.align.x * bounds.width;
-    const sY = y * widget.positioning + offY - widget.align.y * bounds.height;
+    const bounds = widget.bounds;
+    const scale = this.draggable.pos.z;
+    const sX = x * widget.positioning + offX - widget.align.x * bounds.getPosComponent("x") * scale;
+    const sY = y * widget.positioning + offY - widget.align.y * bounds.getPosComponent("y") * scale;
       
     // outside viewable bounds
     // if ( // TODO: fix this so it actually works (seems to randomly hide visible elements, as well...)
@@ -131,21 +134,28 @@ export class Scene extends FrameworkBase {
     widget.element.style.top = `${sY}px`;
   }
 
+  protected updateIndividualWidgetScale(widget: Widget) {
+    if (widget.positioning == 0) return; // no point in trying to multiply by 0
+      const scale = (this.draggable.pos.z * widget.positioning) + 1 * (1-widget.positioning);
+      widget.setTransformation("scale", scale.toString());
+      widget.setZoom(this.draggable.pos.z);
+  }
+
   protected updateWidgetPosition() {
     for (const widget of this.widgets) {
       this.updateIndividualWidgetPosition(widget);
     }
   }
 
+  protected updateWidgetScale() {
+    for (const widget of this.widgets) {
+      this.updateIndividualWidgetScale(widget);
+    }
+  }
+
   protected updateWidgetPositionAndScale() {
     this.updateWidgetPosition();
-
-    for (const widget of this.widgets) {
-      if (widget.positioning == 0) continue; // no point in trying to multiply by 0
-      const scale = (this.draggable.pos.z * widget.positioning) + 1 * (1-widget.positioning);
-      widget.setTransformation("scale", scale.toString());
-      widget.setZoom(this.draggable.pos.z);
-    }
+    this.updateWidgetScale();
   }
 
   setWidgetPos(

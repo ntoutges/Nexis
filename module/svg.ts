@@ -46,5 +46,5 @@ export async function getSvg(src: string): Promise<SVGSVGElement> {
 }
 
 export async function getIcon(src: string): Promise<SVGSVGElement> {
-  return getSvg(`/module/icons/${src}`);
+  return getSvg(`/framework/module/icons/${src}`);
 } 

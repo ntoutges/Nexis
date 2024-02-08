@@ -3,6 +3,7 @@ import { SmartInterval } from "./smartInterval.js";
 export class Listener<Types, Data> {
   listenerIds: number = 0;
   private readonly listeners = new Map<Types, Map<number, (data: Data) => void>>();
+  private readonly allListeners = new Map<number, ((type: Types, data: Data) => void)>;
   private readonly priorities = new Map<number,number>(); // gives the priority of any given id in the call stack
   private readonly reserved = new Set<number>; // stores listener ids currently in use
   private readonly onListenCallbacks: Array<(type: Types, isNew: boolean) => void> = [];
@@ -48,6 +49,12 @@ export class Listener<Types, Data> {
       );
     }
 
+    return newId;
+  }
+
+  onAll(listener: (type: Types, data: Data) => void) {
+    const newId = this.listenerIds++;
+    this.allListeners.set(newId, listener);
     return newId;
   }
 
@@ -118,6 +125,11 @@ export class Listener<Types, Data> {
   off(listenerId: number) {
     if (!this.hasListenerId(listenerId)) return false;
 
+    if (this.allListeners.has(listenerId)) {
+      this.allListeners.delete(listenerId);
+      return true;
+    }
+    
     for (const type of this.listeners.keys()) {
       if (this.listeners.get(type).has(listenerId)) {
         this.listeners.get(type).delete(listenerId);
@@ -138,45 +150,54 @@ export class Listener<Types, Data> {
   }
 
   trigger(type: Types, data: Data) {
-    if (!this.listeners.has(type)) return;
+    // only try to trigger if type is being listened to
+    if (this.listeners.has(type)) {
 
-    // need to wait, so just update data buffer
-    if (this.rateLimits.has(type) && this.rateLimits.get(type).id !== null) {
-      const rateLimitData = this.rateLimits.get(type);
-      
-      // save new data to be sent after trigger rate-limiter has expired
-      rateLimitData.buffer = data;
-      rateLimitData.hasData = true;
-      return;
+      // need to wait, so just update data buffer
+      if (this.rateLimits.has(type) && this.rateLimits.get(type).id !== null) {
+        const rateLimitData = this.rateLimits.get(type);
+        
+        // save new data to be sent after trigger rate-limiter has expired
+        rateLimitData.buffer = data;
+        rateLimitData.hasData = true;
+        return;
+      }
+
+      const listeners = (
+        Array.from(
+          this.listeners.get(type).entries()
+        ).sort(
+          (a,b) => this.priorities.get(b[0]) - this.priorities.get(a[0])
+        )
+      );
+      for (const listener of listeners) {
+        listener[1](data);
+      }
+
+      // rate limit exists for this type, but no timeout in action
+      if (this.rateLimits.has(type) && this.rateLimits.get(type).id === null) {
+        const rateLimitData = this.rateLimits.get(type);
+
+        // schedule time for when trigger of this type can activate again
+        rateLimitData.id = setTimeout(() => {
+          rateLimitData.id = null;
+          if (rateLimitData.hasData) { // only run trigger if data is available (ie, trigger wass called in the mean time, but this timeout hadn't yet finished)
+            // send out trigger
+            this.trigger(type, rateLimitData.buffer);
+
+            // reset all values
+            rateLimitData.buffer = null;
+            rateLimitData.hasData = false;
+          }
+        }, rateLimitData.period);
+      }
     }
 
-    const listeners = (
-      Array.from(
-        this.listeners.get(type).entries()
-      ).sort(
-        (a,b) => this.priorities.get(b[0]) - this.priorities.get(a[0])
-      )
-    );
-    for (const listener of listeners) {
-      listener[1](data);
-    }
-
-    // rate limit exists for this type, but no timeout in action
-    if (this.rateLimits.has(type) && this.rateLimits.get(type).id === null) {
-      const rateLimitData = this.rateLimits.get(type);
-
-      // schedule time for when trigger of this type can activate again
-      rateLimitData.id = setTimeout(() => {
-        rateLimitData.id = null;
-        if (rateLimitData.hasData) { // only run trigger if data is available (ie, trigger wass called in the mean time, but this timeout hadn't yet finished)
-          // send out trigger
-          this.trigger(type, rateLimitData.buffer);
-
-          // reset all values
-          rateLimitData.buffer = null;
-          rateLimitData.hasData = false;
-        }
-      }, rateLimitData.period);
+    // allListeners listens to everything, so run it
+    if (this.allListeners.size > 0) {
+      for (const listener of this.allListeners.values()) {
+        listener(type, data);
+      }
     }
   }
 

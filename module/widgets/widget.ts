@@ -36,6 +36,7 @@ export class Widget extends FrameworkBase {
   readonly sceneInterListener = new AttachableListener<string, any>(() => this._scene?.interListener );
 
   readonly pos = new SnapPos<"x"|"y">({}, 20);
+  readonly bounds = new Pos<"x"|"y">({})
   readonly align = { x:0, y:0 };
 
   readonly name: string;
@@ -101,7 +102,12 @@ export class Widget extends FrameworkBase {
       this.addons.add(id, side, addon);
     }
 
-    this.elListener.on("resize", this.addons.updateAddonPositions.bind(this.addons));
+    this.elListener.on("resize", () => {
+      this.addons.updateAddonPositions.bind(this.addons);
+      this.updateBounds();
+      this._scene?.updateIndividualWidget(this);
+    });
+
     this.addons.appendTo(this.el);
   }
 
@@ -111,16 +117,28 @@ export class Widget extends FrameworkBase {
     this.pos.setPos({x,y});
   }
 
+  offsetPos(x: number, y: number) {
+    this.pos.offsetPos({ x,y });
+  }
+
   setZoom(z: number) {
     if (!this.doZoomScale) this.setTransformation("scale", "1"); // force scale to not change
   }
 
-  calculateBounds(scale: number = 1) {
-    return {
-      width: this.el.offsetWidth * scale,
-      height: this.el.offsetHeight * scale
-    };
+  private updateBounds() {
+    // const scale = this._scene?.draggable.pos.z ?? 1; // undo transformations
+    const x = this.el.offsetWidth;
+    const y = this.el.offsetHeight;
+    this.bounds.setPos({ x,y });
   }
+
+  // calculateBounds() {
+  //   const scale = this._scene?.draggable.pos.z ?? 1; // no scene means no size
+  //   return {
+  //     "x": this.el.offsetWidth * scale,
+  //     "y": this.el.offsetHeight * scale
+  //   }
+  // }
 
   attachTo(scene: Scene) {
     const isFirstScene = this._scene == null;
