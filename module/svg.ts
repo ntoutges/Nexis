@@ -54,8 +54,7 @@ export async function getSvg(srcString: string): Promise<SVGSVGElement> {
 
   const category = srcArr[0];
   const name = srcArr[1];
-  console.log(category,name)
-
+  
   if (!maps.has(category)) {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.style.height = "0px";

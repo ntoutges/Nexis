@@ -93,5 +93,10 @@ export class BasicWire extends Widget {
         this.point2.attachToAddon(null);
         this._scene?.removeWidget(this); // wire no longer connects anything, so remove it
     }
+    // override updateBounds with different dimensions
+    updateBounds() {
+        const bounds = this.wireEl.getBoundingClientRect();
+        super.updateBounds(bounds);
+    }
 }
 //# sourceMappingURL=wire.js.map

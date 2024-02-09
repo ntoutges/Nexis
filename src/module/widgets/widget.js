@@ -90,11 +90,13 @@ export class Widget extends FrameworkBase {
         if (!this.doZoomScale)
             this.setTransformation("scale", "1"); // force scale to not change
     }
-    updateBounds() {
-        // const scale = this._scene?.draggable.pos.z ?? 1; // undo transformations
-        const x = this.el.offsetWidth;
-        const y = this.el.offsetHeight;
-        this.bounds.setPos({ x, y });
+    updateBounds(bounds = null) {
+        if (bounds === null)
+            bounds = this.el.getBoundingClientRect();
+        this.bounds.setPos({
+            x: bounds.width,
+            y: bounds.height
+        });
     }
     // calculateBounds() {
     //   const scale = this._scene?.draggable.pos.z ?? 1; // no scene means no size

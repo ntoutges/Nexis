@@ -7,12 +7,12 @@ export class Draggable {
     mouseOffset = { x: 0, y: 0 };
     pos = { x: 0, y: 0, z: 1 }; // z represents (z)oom
     delta = { x: 0, y: 0, z: 0 };
-    bounds = {
-        width: 0,
-        height: 0,
-        sWidth: 0,
-        sHeight: 0
-    };
+    // readonly bounds = {
+    //   width: 0,
+    //   height: 0,
+    //   sWidth: 0,
+    //   sHeight: 0
+    // };
     scrollX;
     scrollY;
     zoomable;
@@ -64,7 +64,7 @@ export class Draggable {
                 if (this.blockScroll)
                     el.addEventListener("wheel", (e) => { e.stopPropagation(); });
             }
-            this.updateBounds();
+            // this.updateBounds();
             this.listener.setAutoResponse("init", this);
         }, 40);
         this.scrollX = scrollX;
@@ -82,7 +82,7 @@ export class Draggable {
         else
             this.acceptableMouseButtons.add(0); // by default, only listen to left-click
         this.elements = Array.isArray(element) ? element : [element];
-        this.listener.setPollingOptions("resize", this.updateBounds.bind(this), 10); // initially go at HYPER SPEED to detect the smallest change
+        // this.listener.setPollingOptions("resize", this.updateBounds.bind(this), 10); // initially go at HYPER SPEED to detect the smallest change
     }
     initDrag(e) {
         if (this.blockDrag)
@@ -147,19 +147,20 @@ export class Draggable {
         this.pos.y -= localY / this.pos.z;
         this.listener.trigger("scroll", this);
     }
-    updateBounds() {
-        const bounds = this.getBoundingClientRect();
-        if (bounds.width == this.bounds.width
-            && bounds.height == this.bounds.height
-            && bounds.sWidth == this.bounds.sWidth
-            && bounds.sHeight == this.bounds.sHeight)
-            return null; // no difference
-        this.bounds.width = bounds.width;
-        this.bounds.height = bounds.height;
-        this.bounds.sWidth = bounds.sWidth;
-        this.bounds.sHeight = bounds.sHeight;
-        return this; // truthy/there *was* a difference
-    }
+    // protected updateBounds() {
+    //   const bounds = this.getBoundingClientRect();
+    //   if (
+    //     bounds.width == this.bounds.width
+    //     && bounds.height == this.bounds.height
+    //     && bounds.sWidth == this.bounds.sWidth
+    //     && bounds.sHeight == this.bounds.sHeight
+    //   ) return null; // no difference
+    //   this.bounds.width = bounds.width;
+    //   this.bounds.height = bounds.height;
+    //   this.bounds.sWidth = bounds.sWidth;
+    //   this.bounds.sHeight = bounds.sHeight;
+    //   return this; // truthy/there *was* a difference
+    // }
     getBoundingClientRect() {
         let minX = null;
         let maxX = null;
@@ -213,10 +214,9 @@ export class Draggable {
             this.listener.trigger("drag", this);
     }
     center(triggerDrag = true) {
-        this.pos.x = -this.bounds.width / (2 * this.pos.z);
-        this.pos.y = -this.bounds.height / (2 * this.pos.z);
-        if (triggerDrag)
-            this.listener.trigger("drag", this);
+        // this.pos.x = -this.bounds.width / (2 * this.pos.z);
+        // this.pos.y = -this.bounds.height / (2 * this.pos.z);
+        // if (triggerDrag) this.listener.trigger("drag", this);
     }
     setZoom(z) {
         this.pos.z = Math.min(Math.max(z, this.minZoom), this.maxZoom);
@@ -229,12 +229,18 @@ export class Draggable {
             y / this.pos.z + this.pos.y
         ];
     }
+    scaleIntoSceneSpace(dim) {
+        return dim / this.pos.z;
+    }
     // convert x,y in scene out to to x,y without scene transformations
     toScreenSpace(x, y) {
         return [
             (x - this.pos.x) * this.pos.z,
             (y - this.pos.y) * this.pos.z
         ];
+    }
+    scaleIntoScreenSpace(dim) {
+        return dim * this.pos.z;
     }
     changeViewport(viewport) {
         if (this.viewport) { // remove old listeners

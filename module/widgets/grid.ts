@@ -67,11 +67,11 @@ export class GridWidget extends Widget {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.sceneDraggableListener.on("drag", this.drag.bind(this));
-    this.sceneDraggableListener.on("resize", this.resize.bind(this));
     this.sceneDraggableListener.on("scroll", this.drag.bind(this));
     this.sceneDraggableListener.on("init", this.init.bind(this));
     this.sceneDraggableListener.on("dragInit", this.dragStart.bind(this));
     this.sceneDraggableListener.on("dragEnd", this.dragEnd.bind(this));
+    this.sceneElementListener.on("resize", this.resize.bind(this));
 
     this.contextmenus.menu.listener.on("click", item => {
       switch (item.value) {
@@ -85,45 +85,47 @@ export class GridWidget extends Widget {
   }
 
   protected drag(d: Draggable) {
+    if (!this.scene) return;
+    
+    const sWidth = this.scene.bounds.getPosComponent("x");
+    const sHeight = this.scene.bounds.getPosComponent("y");
+
     this.drawGrid(
       d.pos.x,
       d.pos.y,
-      d.bounds.width,
-      d.bounds.height,
+      sWidth,
+      sHeight,
       d.pos.z
     );
   }
   
-  protected resize(d: Draggable) {
-    // this.canvas.setAttribute("width", `${d.bounds.width}px`);
-    // this.canvas.setAttribute("height", `${d.bounds.height}px`);
-    
-    // align with real pixels
-    this.canvas.setAttribute("width", `${d.bounds.sWidth}px`);
-    this.canvas.setAttribute("height", `${d.bounds.sHeight}px`);
+  protected resize() {
+    if (!this.scene) return;
+    // actual screen dimensions (unscaled)
+    const sWidth = this.scene.bounds.getPosComponent("x");
+    const sHeight = this.scene.bounds.getPosComponent("y");
+
     // set width based on DOM
-    this.canvas.style.width = `${d.bounds.width}px`;
-    this.canvas.style.height = `${d.bounds.height}px`;
+    this.canvas.style.width = `${sWidth}px`;
+    this.canvas.style.height = `${sHeight}px`;
+    this.canvas.setAttribute("width", `${sWidth}px`);
+    this.canvas.setAttribute("height", `${sHeight}px`);
     
-    if (d.bounds.width != 0 && d.bounds.height != 0) { // only resize if non-NaN scale-factor
-      // const scaleX = d.bounds.sWidth / d.bounds.width;
-      const scaleY = d.bounds.sHeight / d.bounds.height;
-      
+    if (sWidth != 0 && sHeight != 0) { // only resize if non-NaN scale-factor
       // set canvas scale (now, 1px on canvs doesn't exactly correspond to 1px on screen)
       this.ctx.setTransform(1, 0, 0, 1, 0, 0); // reset scaling (apparently?)
       this.ctx.scale(
-        d.scale,
-        scaleY
+        this.scene.draggable.scale,
+        this.scene.draggable.scale
       );
     }
-
     
     this.drawGrid(
-      d.pos.x,
-      d.pos.y,
-      d.bounds.width,
-      d.bounds.height,
-      d.pos.z
+      this.scene.draggable.pos.x,
+      this.scene.draggable.pos.y,
+      sWidth,
+      sHeight,
+      this.scene.draggable.pos.z
     );
   }
 
@@ -207,12 +209,13 @@ export class GridWidget extends Widget {
     this.ctx.lineTo(width,y);
   }
 
-  protected init(d: Draggable) {
+  protected init() {
     if (this.doInitCenter) {
-      this.offset.x = d.bounds.width / 2;
-      this.offset.y = d.bounds.height / 2;
+      const bounds = this.scene.bounds.getPosData(["x","y"]);
+      this.offset.x = bounds.x / 2;
+      this.offset.y = bounds.y / 2;
     }
-    this.resize(d);
+    this.resize();
   }
 
   protected dragStart() {

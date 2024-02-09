@@ -1,15 +1,18 @@
 // containers of everything--imagine this as the viewport
 import { FrameworkBase } from "./framework.js";
 import { Draggable } from "./draggable.js";
-import { Listener } from "./listener.js";
+import { ElementListener, Listener } from "./listener.js";
 import { Layers } from "./layers.js";
 import { GlobalSingleUseWidget } from "./widgets/widget.js";
+import { Pos } from "./pos.js";
 var sceneIdentifiers = 0;
 export class Scene extends FrameworkBase {
     draggable;
     identifier = sceneIdentifiers++;
     elListener = new Listener();
+    resizeListener = new ElementListener();
     interListener = new Listener();
+    bounds = new Pos({});
     widgets = [];
     snapObjects = new Map();
     nextSnapObjectId = 0;
@@ -41,12 +44,18 @@ export class Scene extends FrameworkBase {
         this.draggable.listener.on("drag", this.updateWidgetPosition.bind(this));
         this.draggable.listener.on("scroll", this.updateWidgetPositionAndScale.bind(this));
         if (doStartCentered)
-            this.draggable.listener.on("init", this.centerScene.bind(this));
+            this.draggable.listener.on("init", this.center.bind(this));
         this.elListener.onListen((type, isNew) => {
             if (isNew)
                 this.el.addEventListener(type, this.elListener.trigger.bind(this.elListener, type));
         });
         this.elListener.on("mousedown", () => { GlobalSingleUseWidget.unbuildType("contextmenu"); });
+        this.resizeListener.observe(this.el);
+        this.resizeListener.on("resize", () => {
+            const boundingRect = this.el.getBoundingClientRect();
+            this.bounds.setPos({ x: boundingRect.width, y: boundingRect.height });
+            this.elListener.trigger("resize", new Event("resize", {}));
+        });
     }
     addWidget(widget) {
         widget.attachTo(this);
@@ -75,31 +84,25 @@ export class Scene extends FrameworkBase {
         this.updateIndividualWidgetScale(widget);
     }
     updateIndividualWidgetPosition(widget) {
-        if (!widget.isBuilt)
-            return;
-        const widgetX = widget.pos.getPosComponent("x");
-        const widgetY = widget.pos.getPosComponent("y");
-        const [cX1, cY1] = this.draggable.toScreenSpace(widgetX, widgetY);
-        const cX = widgetX * (1 - widget.positioning) + cX1 * widget.positioning;
-        const cY = widgetY * (1 - widget.positioning) + cY1 * widget.positioning;
-        const [x, y] = this.draggable.toScreenSpace(0, 0);
-        const offX = cX - x * widget.positioning;
-        const offY = cY - y * widget.positioning;
-        const bounds = widget.bounds;
-        const scale = this.draggable.pos.z;
-        const sX = x * widget.positioning + offX - widget.align.x * bounds.getPosComponent("x") * scale;
-        const sY = y * widget.positioning + offY - widget.align.y * bounds.getPosComponent("y") * scale;
+        if (!widget.isBuilt || widget.positioning === 0)
+            return; // if positioning is 0 (doesn't move), then ignore
+        const { x, y } = widget.pos.getPosData(["x", "y"]);
+        const sWidth = widget.bounds.getPosComponent("x");
+        const sHeight = widget.bounds.getPosComponent("y");
+        const width = this.draggable.scaleIntoScreenSpace(sWidth);
+        const height = this.draggable.scaleIntoScreenSpace(sHeight);
+        const [sX, sY] = this.draggable.toScreenSpace(x, y);
+        const viewWidth = this.bounds.getPosComponent("x");
+        const viewHeight = this.bounds.getPosComponent("y");
         // outside viewable bounds
-        // if ( // TODO: fix this so it actually works (seems to randomly hide visible elements, as well...)
-        //   sX + bounds.width <= 0
-        //   || sX >= this.draggable.bounds.width
-        //   || sY + bounds.height <= 0
-        //   || sY >= this.draggable.bounds.height
-        // ) {
-        //   widget.element.classList.add("hidden"); // hide element to save on processing (I hope)
-        //   return;
-        // }
-        // else widget.element.classList.remove("hidden");
+        if (sX + width < 0
+            || sX > viewWidth
+            || sY + height < 0
+            || sY > viewHeight) {
+            widget.element.classList.add("hidden"); // hide element to save on processing (I hope)
+        }
+        else
+            widget.element.classList.remove("hidden");
         widget.element.style.left = `${sX}px`;
         widget.element.style.top = `${sY}px`;
     }
@@ -131,8 +134,9 @@ export class Scene extends FrameworkBase {
         widget.setPos(sX, sY);
         this.updateIndividualWidget(widget);
     }
-    centerScene(d) {
-        this.draggable.offsetBy(d.bounds.width / 2, d.bounds.height / 2);
+    center(d) {
+        const bounds = this.bounds.getPosData(["x", "y"]);
+        this.draggable.offsetBy(bounds.x / 2, bounds.y / 2);
     }
     addGlobalSnapObject(obj) {
         for (const widget of this.widgets) {

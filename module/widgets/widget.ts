@@ -36,7 +36,7 @@ export class Widget extends FrameworkBase {
   readonly sceneInterListener = new AttachableListener<string, any>(() => this._scene?.interListener );
 
   readonly pos = new SnapPos<"x"|"y">({}, 20);
-  readonly bounds = new Pos<"x"|"y">({})
+  readonly bounds = new Pos<"x"|"y">({});
   readonly align = { x:0, y:0 };
 
   readonly name: string;
@@ -126,11 +126,12 @@ export class Widget extends FrameworkBase {
     if (!this.doZoomScale) this.setTransformation("scale", "1"); // force scale to not change
   }
 
-  private updateBounds() {
-    // const scale = this._scene?.draggable.pos.z ?? 1; // undo transformations
-    const x = this.el.offsetWidth;
-    const y = this.el.offsetHeight;
-    this.bounds.setPos({ x,y });
+  protected updateBounds(bounds: DOMRect = null) {
+    if (bounds === null) bounds = this.el.getBoundingClientRect();
+    this.bounds.setPos({
+      x: bounds.width,
+      y: bounds.height
+    });
   }
 
   // calculateBounds() {
