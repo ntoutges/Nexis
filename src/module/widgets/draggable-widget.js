@@ -24,7 +24,7 @@ export class DraggableWidget extends Widget {
         contextmenu.push({
             "header": {
                 el: headerEl,
-                options: "close/close/x.svg;collapse/collapse/minus.svg"
+                options: "close/close/icons.x;collapse/collapse/icons.minus"
             },
             "body": {
                 el: body,
@@ -135,7 +135,7 @@ export class DraggableWidget extends Widget {
                 case "collapse":
                     const isMinimized = this.minimize();
                     this.contextmenus.header.getSection(0).getItem("collapse").name = isMinimized ? "expand" : "collapse";
-                    this.contextmenus.header.getSection(0).getItem("collapse").icon = isMinimized ? "plus.svg" : "minus.svg";
+                    this.contextmenus.header.getSection(0).getItem("collapse").icon = isMinimized ? "icons.plus" : "icons.minus";
                     break;
             }
         });

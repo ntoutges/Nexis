@@ -48,6 +48,7 @@ export class Widget extends FrameworkBase {
             this.scene?.updateIndividualWidget(this);
         });
         this.setPos(pos?.x ?? 0, pos?.y ?? 0);
+        // console.log(contextmenu)
         if (Array.isArray(contextmenu)) {
             if (contextmenu.length == 0)
                 contextmenu = {};

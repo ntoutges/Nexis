@@ -46,6 +46,7 @@ export async function getSvg(srcString) {
     }
     const category = srcArr[0];
     const name = srcArr[1];
+    console.log(category, name);
     if (!maps.has(category)) {
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.style.height = "0px";
@@ -75,5 +76,5 @@ export async function loadSvgMap(src, category) {
     maps.set(category, src); // map between category name and src
     await getSvgCache(src); // load in svg, and save into cache
 }
-loadSvgMap("/module/icons/icons.min.svg", "icons");
+loadSvgMap("/module/icons/icons.min.svg", "icons"); // default icon map, always loaded
 //# sourceMappingURL=svg.js.map

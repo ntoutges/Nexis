@@ -19,7 +19,7 @@ export class GridWidget extends Widget {
         contextmenu.push({
             "menu": {
                 el: canvas,
-                options: "center/Center Grid/home.svg;reset/Reset Positioning/action-undo.svg~"
+                options: "center/Center Grid/icons.home;reset/Reset Positioning/icons.action-undo"
             }
         });
         super({

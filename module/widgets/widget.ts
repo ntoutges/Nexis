@@ -79,6 +79,7 @@ export class Widget extends FrameworkBase {
       pos?.y ?? 0
     );
 
+    // console.log(contextmenu)
     if (Array.isArray(contextmenu)) {
       if (contextmenu.length == 0) contextmenu = {};
       else if (contextmenu.length == 1) contextmenu = contextmenu[0];

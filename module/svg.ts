@@ -54,6 +54,7 @@ export async function getSvg(srcString: string): Promise<SVGSVGElement> {
 
   const category = srcArr[0];
   const name = srcArr[1];
+  console.log(category,name)
 
   if (!maps.has(category)) {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -89,4 +90,4 @@ export async function loadSvgMap(src: string, category: string): Promise<void> {
   await getSvgCache(src); // load in svg, and save into cache
 }
 
-loadSvgMap("/module/icons/icons.min.svg", "icons");
+loadSvgMap("/module/icons/icons.min.svg", "icons"); // default icon map, always loaded

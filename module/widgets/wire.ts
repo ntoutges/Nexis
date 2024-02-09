@@ -63,7 +63,7 @@ export class BasicWire extends Widget {
       contextmenu: {
         "conn": {
           el: wireEl,
-          options: "delete/Remove Connection/trash.svg"
+          options: "delete/Remove Connection/icons.trash"
         }
       }
     });
