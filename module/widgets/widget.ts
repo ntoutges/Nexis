@@ -103,7 +103,7 @@ export class Widget extends FrameworkBase {
     }
 
     this.elListener.on("resize", () => {
-      this.addons.updateAddonPositions.bind(this.addons);
+      this.addons.updateAddonPositions();
       this.updateBounds();
       this._scene?.updateIndividualWidget(this);
     });

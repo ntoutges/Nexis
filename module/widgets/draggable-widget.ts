@@ -1,6 +1,6 @@
 import { Draggable } from "../draggable.js";
 import { Scene } from "../scene.js";
-import { getIcon, getSvg } from "../svg.js";
+import { getSvg } from "../svg.js";
 import { buttonDefaults } from "./defaults.js";
 import { DraggableWidgetInterface, buttonTypes, headerOption } from "./interfaces.js";
 import { ContextMenu, GlobalSingleUseWidget, Widget } from "./widget.js";
@@ -140,7 +140,7 @@ export class DraggableWidget extends Widget {
         });
 
         // fetch svg data
-        getIcon(options?.icon ?? defOptions.icon).then(svg => {
+        getSvg(options?.icon ?? defOptions.icon).then(svg => {
           button.append(svg);
           svg.style.width = options?.size ?? defOptions.size;
           svg.style.height = options?.size ?? defOptions.size;

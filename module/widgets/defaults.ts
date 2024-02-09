@@ -11,7 +11,7 @@ export const buttonDefaults: Record<buttonTypes, headerOption> = {
       fill: "black",
       highlight: "yellow"
     },
-    icon: "minus.svg",
+    icon: "icons.minus",
     size: "11px",
     padding: "2px",
   },
@@ -25,7 +25,7 @@ export const buttonDefaults: Record<buttonTypes, headerOption> = {
       fill: "black",
       highlight: "red"
     },
-    icon: "x.svg",
+    icon: "icons.x",
     size: "11px",
     padding: "2px"
   }

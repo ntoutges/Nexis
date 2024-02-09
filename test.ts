@@ -64,10 +64,10 @@ const scene = new Scene({
   ]
 });
 
-connW.pos.animatePos(
-  new FAnimation({ time: 5000 }),
-  { "x": 100, "y": 100 }
-)
+// connW.pos.animatePos(
+//   new FAnimation({ time: 5000 }),
+//   { "x": 100, "y": 100 }
+// )
 
 // setInterval(() => {
 //   (widget2.addons.get("main") as ConnectorAddon<"output" | "input" | "omni">).sender.trigger("send", "clock pulse");

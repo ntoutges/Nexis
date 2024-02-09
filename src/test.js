@@ -3,7 +3,6 @@ import { GridWidget } from "./module/widgets/grid.js";
 import { ConnectorAddon } from "./module/addons/connector.js";
 import { ConnDisplay, ConnInput, ConnWidget } from "./module/widgets/connWidget.js";
 import { PeerConnection } from "./module/conn/distros/peer.js";
-import { FAnimation } from "./module/animation.js";
 ConnectorAddon.setStyle("data", "input", { background: "white" });
 ConnectorAddon.setStyle("data", "output", { background: "black" });
 ConnectorAddon.setStyle("data", "omni", { background: "radial-gradient(black, black 50%, white 50%, white)" });
@@ -49,7 +48,10 @@ const scene = new Scene({
         new ConnInput()
     ]
 });
-connW.pos.animatePos(new FAnimation({ time: 5000 }), { "x": 100, "y": 100 });
+// connW.pos.animatePos(
+//   new FAnimation({ time: 5000 }),
+//   { "x": 100, "y": 100 }
+// )
 // setInterval(() => {
 //   (widget2.addons.get("main") as ConnectorAddon<"output" | "input" | "omni">).sender.trigger("send", "clock pulse");
 // }, 100);

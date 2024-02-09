@@ -1,4 +1,4 @@
-import { getIcon } from "../svg.js";
+import { getSvg } from "../svg.js";
 export class ContextMenuItem {
     _value;
     _name;
@@ -22,7 +22,7 @@ export class ContextMenuItem {
         const icon = document.createElement("div");
         icon.classList.add("framework-contextmenu-icons");
         if (this._icon) {
-            getIcon(this._icon).then(svg => {
+            getSvg(this._icon).then(svg => {
                 icon.append(svg);
             });
         }

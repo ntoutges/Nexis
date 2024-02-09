@@ -1,4 +1,5 @@
 const cache = new Map();
+const maps = new Map();
 export class SVGCache {
     _data = null;
     awaitListeners = [];
@@ -21,25 +22,58 @@ export class SVGCache {
         });
     }
     get data() { return this._data; }
+    get parsedData() {
+        const doc = new DOMParser();
+        return doc.parseFromString(this._data, "image/svg+xml");
+    }
 }
-export async function getSvg(src) {
-    let response;
+async function getSvgCache(src) {
     if (!cache.has(src)) {
+        // create new cache item
         const cacheItem = new SVGCache(fetch(src));
         cache.set(src, cacheItem);
-        await cacheItem.await();
-        response = cacheItem.data;
     }
-    else {
-        const cacheItem = cache.get(src);
-        await cacheItem.await();
-        response = cacheItem.data;
+    // wait for cacheitem to get data
+    const cacheItem = cache.get(src);
+    await cacheItem.await();
+    return cacheItem;
+}
+// in the form of <category>.<name> or <uri>
+export async function getSvg(srcString) {
+    const srcArr = srcString.split(".");
+    if (srcArr.length < 2) { // no category given
+        return (await getSvgCache(srcString)).parsedData;
     }
-    const doc = new DOMParser();
-    const svg = doc.parseFromString(response, "image/svg+xml").querySelector("svg");
+    const category = srcArr[0];
+    const name = srcArr[1];
+    if (!maps.has(category)) {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.style.height = "0px";
+        svg.style.width = "0px";
+        return svg;
+    }
+    // load from map
+    const mapSrc = maps.get(category);
+    const cacheItem = cache.get(mapSrc);
+    await cacheItem.await();
+    const symbol = cacheItem.parsedData.querySelector("#" + name);
+    const attributes = symbol.attributes;
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    for (let i = 0; i < attributes.length; i++) {
+        const name = attributes[i].name;
+        if (name == "id")
+            continue; // ignore id
+        svg.setAttribute(name, attributes[i].value);
+    }
+    svg.append(...symbol.childNodes); // append all children
     return svg;
 }
-export async function getIcon(src) {
-    return getSvg(`/framework/module/icons/${src}`);
+// loads in a single file containing all the svgs
+export async function loadSvgMap(src, category) {
+    if (maps.has(category))
+        return; // no need to load anything in!
+    maps.set(category, src); // map between category name and src
+    await getSvgCache(src); // load in svg, and save into cache
 }
+loadSvgMap("/module/icons/icons.min.svg", "icons");
 //# sourceMappingURL=svg.js.map

@@ -1,6 +1,6 @@
 import { ContextMenuEvents, ContextMenuItemInterface, ContextMenuSectionInterface } from "../interfaces.js";
 import { Listener } from "../listener.js";
-import { getIcon } from "../svg.js"
+import { getSvg } from "../svg.js";
 
 export class ContextMenuItem {
   private _value: string;
@@ -36,7 +36,7 @@ export class ContextMenuItem {
     const icon = document.createElement("div");
     icon.classList.add("framework-contextmenu-icons");
     if (this._icon) {
-      getIcon(this._icon).then(svg => {
+      getSvg(this._icon).then(svg => {
         icon.append(svg);
       });
     }
