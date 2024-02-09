@@ -76,10 +76,10 @@ export class GridWidget extends Widget {
     this.contextmenus.menu.listener.on("click", item => {
       switch (item.value) {
         case "reset":
-          this._scene.draggable.setZoom(1);
+          this.scene.draggable.setZoom(1);
           // nobreak;
         case "center":
-          this._scene.draggable.center(true);
+          this.scene.center();
       }
     })
   }

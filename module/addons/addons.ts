@@ -91,7 +91,9 @@ export class AddonEdge {
   private readonly addons = new Map<number, Addon>();
   private readonly addonListeners = new Map<number, number[]>();
   private size: number = 0;
+  
   readonly direction: "top" | "bottom" | "left" | "right";
+  readonly normal: { x: -1 | 0 | 1, y: -1 | 0 | 1 } = { x:0, y:0 };
   
   readonly addonContainer: AddonContainer;
 
@@ -100,6 +102,21 @@ export class AddonEdge {
     this.addonContainer = addonContainer;
     addonContainer.el.append(this.el);
     this.direction = direction;
+
+    switch (this.direction) {
+      case "top":
+        this.normal.y = 1;
+        break;
+      case "bottom":
+        this.normal.y = -1;
+        break;
+      case "left":
+        this.normal.x = -1;
+        break;
+      case "right":
+        this.normal.x = 1;
+        break;
+    }
   }
 
   add(addon: Addon): number {
@@ -364,6 +381,8 @@ export class Addon {
     this.sceneElListener.updateValidity();
   }
 
+  get normal() { return this.addonEdge ? this.addonEdge.normal : { x:0, y:0 }; }
+
   get addonContainer() { return this.addonEdge?.addonContainer; }
 
   get size() { return this._size; }
@@ -380,7 +399,7 @@ export class Addon {
   }
   set circleness(newCircleness) {
     this._circleness = Math.max(0,Math.min(1,newCircleness));
-    this.el.style.borderRadius = `${100*this._circleness}%`;
+    this.el.style.borderRadius = `${50*this._circleness}%`;
   }
   set positioning(newPositioning) {
     this._positioning = Math.max(0,Math.min(1,newPositioning));
@@ -408,10 +427,18 @@ export class Addon {
     const draggable = this.addonContainer?.widget?.scene?.draggable;
     if (!draggable) return null;
 
-    const { x: screenX, y: screenY } = this.el.getBoundingClientRect();
+    const bounds = this.el.getBoundingClientRect();
+    if (bounds.width == 0 && bounds.height == 0) { // invalid bounds--return mid-left corner of widget
+      const bounds = this.addonContainer.widget.element.getBoundingClientRect();
+      return draggable.toSceneSpace(
+        bounds.left,
+        bounds.top + bounds.height/2
+      );
+    }
+
     return draggable.toSceneSpace(
-      screenX + this._size/2, // add size/2 to get centered x
-      screenY + this._size/2 // add size/2 to get centered y
+      bounds.left + bounds.width/2, // add size/2 to get centered x
+      bounds.top + bounds.height/2 // add size/2 to get centered y
     );
   }
 }

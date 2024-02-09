@@ -233,6 +233,16 @@ export class Draggable {
     }
   }
 
+  setOffsetTo(
+    x: number,
+    y: number,
+    triggerDrag: boolean = true
+  ) {
+    this.pos.x = -Math.round(x);
+    this.pos.y = -Math.round(y);
+    if (triggerDrag) this.listener.trigger("drag", this);
+  }
+
   offsetBy(
     x: number,
     y: number,
@@ -241,14 +251,6 @@ export class Draggable {
     this.pos.x -= Math.round(x);
     this.pos.y -= Math.round(y);
     if (triggerDrag) this.listener.trigger("drag", this);
-  }
-
-  center(
-    triggerDrag: boolean = true
-  ) {
-    // this.pos.x = -this.bounds.width / (2 * this.pos.z);
-    // this.pos.y = -this.bounds.height / (2 * this.pos.z);
-    // if (triggerDrag) this.listener.trigger("drag", this);
   }
 
   setZoom(z: number) {

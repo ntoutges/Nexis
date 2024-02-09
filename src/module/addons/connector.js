@@ -70,6 +70,8 @@ export class ConnectorAddon extends Addon {
                 this.wireInProgress.point2.attachToAddon(other);
                 this.setPoint(this.wireInProgress.point1);
                 other.setPoint(this.wireInProgress.point2);
+                // wire finished, register
+                this.addonEdge?.addonContainer.widget?.scene?.registerWire(this.wireInProgress);
                 this.wireInProgress.setIsEditing(false);
                 this.wireInProgress = null;
             }

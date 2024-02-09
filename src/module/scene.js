@@ -5,6 +5,7 @@ import { ElementListener, Listener } from "./listener.js";
 import { Layers } from "./layers.js";
 import { GlobalSingleUseWidget } from "./widgets/widget.js";
 import { Pos } from "./pos.js";
+import { BasicWire } from "./widgets/wire.js";
 var sceneIdentifiers = 0;
 export class Scene extends FrameworkBase {
     draggable;
@@ -17,6 +18,7 @@ export class Scene extends FrameworkBase {
     snapObjects = new Map();
     nextSnapObjectId = 0;
     layers = new Layers();
+    wires = new Set();
     constructor({ id = null, parent = null, options = {}, style, widgets = [], doStartCentered = false, resize }) {
         super({
             name: "scene",
@@ -73,6 +75,8 @@ export class Scene extends FrameworkBase {
         this.widgets.splice(index, 1); // remove widget from list
         this.layers.remove(widget);
         widget.detachFrom(this);
+        if (widget instanceof BasicWire && this.wires.has(widget))
+            this.wires.delete(widget); // stop tracking wire
         for (const snapObj of this.snapObjects.values()) {
             widget.pos.removeSnapObject(snapObj);
         } // remove snap objects
@@ -134,9 +138,9 @@ export class Scene extends FrameworkBase {
         widget.setPos(sX, sY);
         this.updateIndividualWidget(widget);
     }
-    center(d) {
+    center() {
         const bounds = this.bounds.getPosData(["x", "y"]);
-        this.draggable.offsetBy(bounds.x / 2, bounds.y / 2);
+        this.draggable.setOffsetTo(bounds.x / 2, bounds.y / 2);
     }
     addGlobalSnapObject(obj) {
         for (const widget of this.widgets) {
@@ -163,6 +167,9 @@ export class Scene extends FrameworkBase {
             return false; // doesn't exist
         this.snapObjects.delete(id);
         return true; // exists
+    }
+    registerWire(wire) {
+        this.wires.add(wire); // track wire
     }
 }
 //# sourceMappingURL=scene.js.map

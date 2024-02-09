@@ -381,8 +381,14 @@
   background: black;
 
   transform-origin: 0% 50%;
+  position: relative;
 }
 
-.framework-basic-wire-widget.framework-wire-is-editing {
+.framework-basic-wire-widget {
   pointer-events: none;
+  position: absolute;
+}
+
+.framework-basic-wire-widget:not(.framework-wire-is-editing) > .framework-basic-wire-body {
+  pointer-events: all;
 }

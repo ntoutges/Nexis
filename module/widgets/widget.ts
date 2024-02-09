@@ -126,11 +126,11 @@ export class Widget extends FrameworkBase {
     if (!this.doZoomScale) this.setTransformation("scale", "1"); // force scale to not change
   }
 
-  protected updateBounds(bounds: DOMRect = null) {
+  protected updateBounds(bounds: DOMRect = null, padding: { x: number, y: number } = null) {
     if (bounds === null) bounds = this.el.getBoundingClientRect();
     this.bounds.setPos({
-      x: bounds.width,
-      y: bounds.height
+      x: bounds.width + (padding?.x ?? 0),
+      y: bounds.height + (padding?.y ?? 0)
     });
   }
 

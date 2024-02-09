@@ -18,6 +18,8 @@ export class WirePoint {
         this.addonListener.updateValidity();
         this.updatePosition();
     }
+    get normal() { return this.addon ? this.addon.normal : { x: 0, y: 0 }; }
+    get radius() { return this.addon ? this.addon.size / 2 : 0; }
     updatePosition() {
         const pos = this.addon?.getPositionInScene();
         if (!pos)
@@ -78,11 +80,23 @@ export class BasicWire extends Widget {
         return { mag, rot };
     }
     updateElementTransformations() {
-        const { mag, rot } = this.getPolar();
-        const pos = this.point1.getPos();
-        this.setPos(pos.x, pos.y);
+        if (!this.scene)
+            return;
+        let { mag, rot } = this.getPolar();
+        // this allows the wire to not overlap addon
+        const r1 = this.point1.radius;
+        const r2 = this.point2.radius;
+        mag = Math.max(mag - (r1 + r2), 0);
+        const pos1 = this.point1.getPos();
+        const pos2 = this.point2.getPos();
+        // ensure x/y is always at top-left
+        const minX = Math.min(pos1.x, pos2.x);
+        const minY = Math.min(pos1.y, pos2.y);
+        this.setPos(minX, minY);
+        this.wireEl.style.top = `${pos1.y - minY}px`;
+        this.wireEl.style.left = `${pos1.x - minX}px`;
         this.wireEl.style.width = `${mag}px`;
-        this.wireEl.style.transform = `translateY(-50%) rotate(${rot}rad)`;
+        this.wireEl.style.transform = `translateY(-50%) rotate(${rot}rad) translateX(${r1}px)`;
     }
     setIsEditing(isEditing) {
         // changes styling slightly to make editing wire easier
@@ -96,7 +110,8 @@ export class BasicWire extends Widget {
     // override updateBounds with different dimensions
     updateBounds() {
         const bounds = this.wireEl.getBoundingClientRect();
-        super.updateBounds(bounds);
+        const padding = this.point1.radius + this.point2.radius;
+        super.updateBounds(bounds, { x: padding, y: padding });
     }
 }
 //# sourceMappingURL=wire.js.map

@@ -99,6 +99,9 @@ export class ConnectorAddon<Direction extends string> extends Addon {
         this.setPoint(this.wireInProgress.point1);
         (other as ConnectorAddon<Direction>).setPoint(this.wireInProgress.point2);
         
+        // wire finished, register
+        this.addonEdge?.addonContainer.widget?.scene?.registerWire(this.wireInProgress);
+
         this.wireInProgress.setIsEditing(false);
         this.wireInProgress = null;
       }
