@@ -1,12 +1,12 @@
 import { ConnectorAddon } from "../addons/connector.js";
-import { ChannelBase, ClientBase, ConnectionBase } from "../conn/connBase.js";
+import { ChannelBase, ClientBase, ConnectionBase } from "../../connection/lib/connBase.js";
 import { DraggableWidget } from "./draggable-widget.js";
 
 export class ConnWidget extends DraggableWidget {
-  readonly channel: ChannelBase<any, any>;
+  readonly channel: ChannelBase<any>;
 
   constructor(
-    channel: ChannelBase<any, any>
+    channel: ChannelBase<any>
   ) {
     super({
       content: document.createElement("div"),

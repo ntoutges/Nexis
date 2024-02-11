@@ -8,7 +8,7 @@ import { AttachableListener } from "./module/attachableListener.js";
 import { Listener } from "./module/listener.js";
 import { BasicWire } from "./module/widgets/wire.js";
 import { ConnDisplay, ConnInput, ConnWidget } from "./module/widgets/connWidget.js";
-import { PeerConnection } from "./module/conn/distros/peer.js";
+import { PeerConnection } from "./connection/lib/distros/peer.js";
 import { FAnimation } from "./module/animation.js";
 
 ConnectorAddon.setStyle("data", "input", { background: "white" });
