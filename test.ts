@@ -19,40 +19,17 @@ const $ = document.querySelector.bind(document);
 
 declare const Peer: any;
 
-// const clientId = location.search.substring(1).split(":")[0];
-// const routerId = location.search.substring(1).split(":")[1] ?? null;
+const clientId = location.search.substring(1).split(":")[0];
+const routerId = location.search.substring(1).split(":")[1] ?? null;
 
-// const conn = new PeerConnection(Peer, "fw");
-// const client = conn.buildClient(clientId);
-// if (routerId) client.routerId = routerId;
+const conn = new PeerConnection(Peer, "fw");
+const client = conn.buildClient(clientId);
+if (routerId) client.routerId = routerId;
 
-// client.listener.on("connect", (data) => { console.log("connect:",data) });
-// client.listener.on("disconnect", (data) => { console.log("disconnect:",data) });
+client.listener.on("connect", (data) => { console.log("connect:",data) });
+client.listener.on("disconnect", (data) => { console.log("disconnect:",data) });
 
-// const channel = client.buildChannel("default");
-
-const widget1 = new DraggableWidget({
-  content: document.createElement("div"),
-  name: "syncs",
-  header: {
-    title: "Getter"
-  },
-  addons: {
-    main: {
-      side: "left",
-      addon: new ConnectorAddon<"output" | "input" | "omni">({
-        direction: "input",
-        type: "data",
-        validator: connValidator
-      })
-    }
-  },
-  style: {
-    "width": "100px",
-    "height": "50px"
-  },
-  doDragAll: true
-});
+const channel = client.buildChannel("default");
 
 const widget2 = new DraggableWidget({
   content: document.createElement("div"),
@@ -103,8 +80,10 @@ const scene = new Scene({
       },
       doCursorDragIcon: true
     }),
-    widget1,
-    widget2
+    
+    new ConnDisplay(),
+    new ConnInput(),
+    new ConnWidget(channel)
   ]
 });
 
@@ -113,13 +92,13 @@ const scene = new Scene({
 //   { "x": 100, "y": 100 }
 // )
 
-setInterval(() => {
+// setInterval(() => {
   // (widget2.addons.get("main") as ConnectorAddon<"output" | "input" | "omni">).sender.trigger("send", "clock pulse");
-}, 100);
+// }, 100);
 
-(widget1.addons.get("main") as ConnectorAddon<"output" | "input" | "omni">).sender.on("connect", (data) => { console.log(data, "connect") });
-(widget1.addons.get("main") as ConnectorAddon<"output" | "input" | "omni">).sender.on("receive", (data) => { console.log(data) });
-(widget1.addons.get("main") as ConnectorAddon<"output" | "input" | "omni">).sender.on("disconnect", (data) => { console.log(data, "disconencted") });
+// (widget1.addons.get("main") as ConnectorAddon<"output" | "input" | "omni">).sender.on("connect", (data) => { console.log(data, "connect") });
+// (widget1.addons.get("main") as ConnectorAddon<"output" | "input" | "omni">).sender.on("receive", (data) => { console.log(data) });
+// (widget1.addons.get("main") as ConnectorAddon<"output" | "input" | "omni">).sender.on("disconnect", (data) => { console.log(data, "disconencted") });
 
 function connValidator(dir1: "input" | "output" | "omni", dir2: "input" | "output" | "omni") {
   return (dir1 == "input" && dir2 == "output") || (dir1 == "output" && dir2 == "input") || (dir1 == "omni") || (dir2 == "omni")
