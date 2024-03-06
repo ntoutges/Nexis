@@ -136,8 +136,8 @@ export class Draggable {
             e.stopPropagation();
         // exact position of cursor actually matters here, rather than just difference in position
         const bounds = this.getBoundingClientRect();
-        const localX = (e.pageX - bounds.left) / this.scale;
-        const localY = (e.pageY - bounds.top) / this.scale;
+        const localX = (e.pageX - bounds.left);
+        const localY = (e.pageY - bounds.top);
         const dir = (e.deltaY > 0) ? 1 : -1;
         this.pos.x += localX / this.pos.z;
         this.pos.y += localY / this.pos.z;
@@ -197,7 +197,6 @@ export class Draggable {
         // width taking into account scaling (use for canvas dim decisions); SIZE ON SCREEN
         const sWidth = maxScaledX - minX;
         const sHeight = maxScaledY - minY;
-        this.scale = sWidth / width;
         return {
             top: minY,
             bottom: minBottom,
@@ -207,6 +206,11 @@ export class Draggable {
             sWidth, sHeight
         };
     }
+    // recalculateScale() {
+    //   const baseZoom = this.getBaseScale()
+    //   this.scale = baseZoom[0];
+    //   this.scale.y = baseZoom[1];
+    // }
     setOffsetTo(x, y, triggerDrag = true) {
         this.pos.x = -Math.round(x);
         this.pos.y = -Math.round(y);
@@ -226,8 +230,8 @@ export class Draggable {
     // convert x,y in screen to x,y within transformations of scene
     toSceneSpace(x, y) {
         return [
-            x / this.pos.z + this.pos.x,
-            y / this.pos.z + this.pos.y
+            x / (this.pos.z) + this.pos.x,
+            y / (this.pos.z) + this.pos.y
         ];
     }
     scaleIntoSceneSpace(dim) {
@@ -236,8 +240,8 @@ export class Draggable {
     // convert x,y in scene out to to x,y without scene transformations
     toScreenSpace(x, y) {
         return [
-            (x - this.pos.x) * this.pos.z,
-            (y - this.pos.y) * this.pos.z
+            (x - this.pos.x) * (this.pos.z),
+            (y - this.pos.y) * (this.pos.z)
         ];
     }
     scaleIntoScreenSpace(dim) {
@@ -252,6 +256,18 @@ export class Draggable {
         viewport.addEventListener("mousemove", this.doDragBound);
         viewport.addEventListener("mouseup", this.endDragBound);
         this.viewport = viewport;
+    }
+    // get zoom based on parent transformations
+    getBaseScale() {
+        if (!this.elements[0])
+            return [1, 1]; // no elements, default
+        const untransformedWidth = this.elements[0].offsetWidth;
+        const untransformedHeight = this.elements[0].offsetHeight;
+        const { width, height } = this.elements[0].getBoundingClientRect();
+        return [
+            width / untransformedWidth,
+            height / untransformedHeight
+        ];
     }
 }
 //# sourceMappingURL=draggable.js.map

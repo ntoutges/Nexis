@@ -6,9 +6,9 @@ import { DraggableWidgetInterface, buttonTypes, headerOption } from "./interface
 import { ContextMenu, GlobalSingleUseWidget, Widget } from "./widget.js";
 
 export class DraggableWidget extends Widget {
-  private readonly container: HTMLDivElement;
-  private readonly header: HTMLDivElement = null;
-  private readonly body: HTMLDivElement;
+  readonly container: HTMLDivElement;
+  readonly header: HTMLDivElement = null;
+  readonly body: HTMLDivElement;
 
   private draggable: Draggable = null;
   private doCursorDrag: boolean;
@@ -197,7 +197,6 @@ export class DraggableWidget extends Widget {
       this.container.classList.add("draggable-widget-headerless");
     }
 
-    this.sceneDraggableListener.on("scroll", (d) => { this.draggable.scale = d.scale; }); // allow gridception to work
     this.addons.appendTo(this.body);
   }
 
@@ -255,6 +254,8 @@ export class DraggableWidget extends Widget {
       this.draggable.listener.on("drag", this.drag.bind(this));
       this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
       this.draggable.listener.on("selected", () => { this._scene.layers.moveToTop(this); })
+
+      this.trackDraggables(this.draggable);
     }
     else this.draggable.changeViewport(scene.element);
   }
@@ -355,5 +356,19 @@ export class DraggableWidget extends Widget {
   private updateButtonColor(button: HTMLDivElement, type: buttonTypes, set: "dormant" | "active") {
     button.style.background = this.buttonColors.get(type)[set].highlight;
     button.style.fill = this.buttonColors.get(type)[set].fill;
+  }
+
+  setTitle(title: string) {
+    const titleEl = this.header.querySelector(".framework-draggable-widget-titles") as HTMLElement;
+    if (!titleEl) return;
+    
+    const children = Array.from(titleEl.children);
+    titleEl.innerText = title;
+    titleEl.append(...children);
+  }
+
+  resetBounds() {
+    this.body.style.width = "";
+    this.body.style.height = "";
   }
 }

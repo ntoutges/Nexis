@@ -16,11 +16,12 @@ export class Scene extends FrameworkBase {
   readonly identifier = sceneIdentifiers++;
 
   readonly elListener = new Listener<string, Event>();
-  readonly resizeListener = new ElementListener<void>();
+  readonly resizeListener = new ElementListener<"scale", number>();
   readonly interListener = new Listener<string, any>();
   readonly bounds = new Pos<"x"|"y">({});
 
   private readonly widgets: Widget[] = [];
+  private readonly nestedScenes: Scene[] = [];
 
   private readonly snapObjects = new Map<number,Pos<"x"|"y"> | Grid<"x"|"y">>();
   private nextSnapObjectId: number = 0;
@@ -64,7 +65,7 @@ export class Scene extends FrameworkBase {
     }
 
     this.draggable.listener.on("drag", this.updateWidgetPosition.bind(this));
-    this.draggable.listener.on("scroll", this.updateWidgetPositionAndScale.bind(this));
+    this.draggable.listener.on("scroll", this.onScroll.bind(this));
     if (doStartCentered) this.draggable.listener.on("init", this.center.bind(this));
 
     this.elListener.onListen((type, isNew) => {
@@ -74,11 +75,20 @@ export class Scene extends FrameworkBase {
 
     this.resizeListener.observe(this.el);
     this.resizeListener.on("resize", () => {
-      const boundingRect = this.el.getBoundingClientRect();
-      this.bounds.setPos({ x: boundingRect.width, y: boundingRect.height });
+      const width = this.el.offsetWidth;
+      const height = this.el.offsetHeight;
+      this.bounds.setPos({ x: width, y: height });
 
       this.elListener.trigger("resize", new Event("resize", {}));
     });
+    this.resizeListener.on("scale", (scale: number) => {
+      this.updateTrackedDraggableScale(scale);
+      for (const widget of this.widgets) {
+        widget.updateTrackedDraggableScale(scale);
+      }
+    });
+
+    this.trackDraggables(this.draggable);
   }
 
   addWidget(widget: Widget) {
@@ -157,6 +167,13 @@ export class Scene extends FrameworkBase {
     }
   }
 
+  protected onScroll() {
+    this.updateWidgetPositionAndScale();
+    for (const nestedScene of this.nestedScenes) {
+      nestedScene.resizeListener.trigger("scale", this.draggable.pos.z);
+    }
+  }
+
   protected updateWidgetPositionAndScale() {
     this.updateWidgetPosition();
     this.updateWidgetScale();
@@ -168,7 +185,14 @@ export class Scene extends FrameworkBase {
     y: number
   ) {
     if (!this.widgets.includes(widget)) return;
-    const [sX, sY] = this.draggable.toSceneSpace(x,y);
+
+    const bounds = this.el.getBoundingClientRect();
+
+    // include x/y position of scene
+    const [sX, sY] = this.draggable.toSceneSpace(
+      x - bounds.left,
+      y - bounds.top
+    );
     widget.setPos( sX, sY );
     this.updateIndividualWidget(widget);
   }
@@ -210,5 +234,17 @@ export class Scene extends FrameworkBase {
 
   registerWire(wire: BasicWire) {
     this.wires.add(wire); // track wire
+  }
+  
+  addNestedScene(scene: Scene) {
+    this.nestedScenes.push(scene);
+    scene.resizeListener.trigger("scale", this.draggable.pos.z);
+  }
+
+  removeNestedScene(scene: Scene) {
+    const i = this.nestedScenes.indexOf(scene);
+    if (i == -1) return false; // scene isn't nested
+    this.nestedScenes.splice(i,1);
+    return true; // successfully removed
   }
 }

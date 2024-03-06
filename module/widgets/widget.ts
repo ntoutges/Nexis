@@ -20,7 +20,7 @@ const alignmentMap = {
 // what is put into scenes
 export class Widget extends FrameworkBase {
   private readonly transformations = new Map<string, string>();
-  readonly contextmenus: Record<string,ContextMenu> = {};
+  readonly contextmenus: Record<string, ContextMenu> = {};
   readonly addons = new AddonContainer(this);
 
   readonly elListener = new ElementListener<"move" | "detach">();
@@ -31,18 +31,18 @@ export class Widget extends FrameworkBase {
   readonly positioning: number;
   readonly doZoomScale: boolean;
 
-  readonly sceneDraggableListener = new AttachableListener<DraggableEvents, Draggable>(() => this._scene?.draggable.listener );
-  readonly sceneElementListener = new AttachableListener<string, Event>(() => this._scene?.elListener );
-  readonly sceneInterListener = new AttachableListener<string, any>(() => this._scene?.interListener );
+  readonly sceneDraggableListener = new AttachableListener<DraggableEvents, Draggable>(() => this._scene?.draggable.listener);
+  readonly sceneElementListener = new AttachableListener<string, Event>(() => this._scene?.elListener);
+  readonly sceneInterListener = new AttachableListener<string, any>(() => this._scene?.interListener);
 
-  readonly pos = new SnapPos<"x"|"y">({}, 20);
-  readonly bounds = new Pos<"x"|"y">({});
-  readonly align = { x:0, y:0 };
+  readonly pos = new SnapPos<"x" | "y">({}, 20);
+  readonly bounds = new Pos<"x" | "y">({});
+  readonly align = { x: 0, y: 0 };
 
   readonly name: string;
 
   constructor({
-    id,name,style,
+    id, name, style,
     content,
     positioning = 1,
     doZoomScale = true,
@@ -55,7 +55,7 @@ export class Widget extends FrameworkBase {
     super({
       name: `${name}-widget widget`,
       children: [content],
-      style,id,
+      style, id,
       resize,
     });
 
@@ -79,14 +79,13 @@ export class Widget extends FrameworkBase {
       pos?.y ?? 0
     );
 
-    // console.log(contextmenu)
     if (Array.isArray(contextmenu)) {
       if (contextmenu.length == 0) contextmenu = {};
       else if (contextmenu.length == 1) contextmenu = contextmenu[0];
       else {
-        const base = contextmenu[contextmenu.length-1]; // fill list back-to-front
-        for (let i = contextmenu.length-2; i >= 0; i--) {
-          ContextMenu.combineContextMenus( base, contextmenu[i] );
+        const base = contextmenu[contextmenu.length - 1]; // fill list back-to-front
+        for (let i = contextmenu.length - 2; i >= 0; i--) {
+          ContextMenu.combineContextMenus(base, contextmenu[i]);
         }
         contextmenu = base;
       }
@@ -115,11 +114,11 @@ export class Widget extends FrameworkBase {
   get scene() { return this._scene; }
 
   setPos(x: number, y: number) {
-    this.pos.setPos({x,y});
+    this.pos.setPos({ x, y });
   }
 
   offsetPos(x: number, y: number) {
-    this.pos.offsetPos({ x,y });
+    this.pos.offsetPos({ x, y });
   }
 
   setZoom(z: number) {
@@ -150,7 +149,7 @@ export class Widget extends FrameworkBase {
     this.sceneElementListener.updateValidity();
     this.sceneInterListener.updateValidity();
     this.setZoom(scene.draggable.pos.z);
-    
+
     scene.layers.setLayer(this, this.layer);
     this.appendTo(scene.element);
     if (isFirstScene && this.resizeData.draggable) {
@@ -164,10 +163,10 @@ export class Widget extends FrameworkBase {
   detachFrom(scene: Scene) {
     if (this._scene != scene) return; // scenes don't match
     this._scene = null;
-    
+
     this.el.remove();
     scene.removeWidget(this);
- 
+
     this.sceneDraggableListener.updateValidity();
     this.sceneElementListener.updateValidity();
     this.sceneInterListener.updateValidity();
@@ -184,7 +183,7 @@ export class Widget extends FrameworkBase {
 
   protected updateTransformations() {
     let transformations: string[] = [];
-    for (const [property,value] of this.transformations.entries()) {
+    for (const [property, value] of this.transformations.entries()) {
       transformations.push(`${property}(${value})`);
     }
     this.el.style.transform = transformations.join(",");
@@ -205,6 +204,11 @@ export class Widget extends FrameworkBase {
   }
 
   get isBuilt(): boolean { return true; } // used by types like GlobalSingleUseWidget for scene optimization
+
+  protected manualResizeTo(d: Draggable) {
+    if (this.scene) d.scale = this.scene.draggable.pos.z; // update scale if this.scene exists
+    super.manualResizeTo(d);
+  }
 }
 
 const globalSingleUseWidgetMap = new Map<string, GlobalSingleUseWidget>();
@@ -212,16 +216,16 @@ const globalSingleUseWidgetMap = new Map<string, GlobalSingleUseWidget>();
 export abstract class GlobalSingleUseWidget extends Widget {
   private _isBuilt: boolean;
   constructor({
-    name,content,
-    id,layer,pos,positioning,resize,style,
+    name, content,
+    id, layer, pos, positioning, resize, style,
     options,
     doZoomScale,
     addons
   }: GlobalSingleUseWidgetInterface) {
     super({
-      name,content,
-      id,layer,
-      pos,positioning,resize,
+      name, content,
+      id, layer,
+      pos, positioning, resize,
       style,
       doZoomScale,
       addons
@@ -233,7 +237,7 @@ export abstract class GlobalSingleUseWidget extends Widget {
     }
     this.el.style.display = "none";
   }
-  
+
   build() {
     if (globalSingleUseWidgetMap.has(this.name)) { // get rid of old
       const oldWidget = globalSingleUseWidgetMap.get(this.name);
@@ -243,7 +247,7 @@ export abstract class GlobalSingleUseWidget extends Widget {
     this._isBuilt = true;
     this.el.style.display = "";
   }
-  
+
   unbuild() {
     this._isBuilt = false;
     this.el.style.display = "none";
@@ -270,15 +274,15 @@ export class ContextMenu extends GlobalSingleUseWidget {
   private doAutoClose: boolean;
 
   constructor({
-    id,pos,positioning,resize,style,
-    layer=999999,
+    id, pos, positioning, resize, style,
+    layer = 999999,
     items,
     trigger
   }: ContextMenuInterface) {
     const container = document.createElement("div");
 
     super({
-      id,layer,pos,positioning,resize,style,
+      id, layer, pos, positioning, resize, style,
       name: "contextmenu",
       content: container,
       options: {
@@ -305,7 +309,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
     else this.sections = [];
 
     this.container = container;
-    
+
     this.listener.on("add", () => { if (this.isBuilt) this.rebuild(); });
     this.listener.on("click", () => {
       if (this.doAutoClose) this.unbuild();
@@ -346,15 +350,21 @@ export class ContextMenu extends GlobalSingleUseWidget {
   }
 
   addSection(section: ContextMenuSection) {
+    section.setListener(this.listener);
     this.sections.push(section);
   }
   removeSection(name: string | number) {
     const section = this.getSection(name);
     if (section == null) return;
     const index = this.sections.indexOf(section);
-    
+
     section.unbuild()?.remove();
-    this.sections.splice(index,1);
+    this.sections.splice(index, 1);
+  }
+  clear() {
+    for (let i = this.sections.length; i >= 0; i--) {
+      this.removeSection(i);
+    }
   }
 
   getSection(name: string | number): ContextMenuSection {
@@ -391,16 +401,16 @@ export class ContextMenu extends GlobalSingleUseWidget {
   // format: <value>/<name>/<icon>/<shortcut>
   static itemBuilder(input: string): ContextMenuItem {
     const parts = input.split("/");
-    
+
     const buildData: ContextMenuItemInterface = { value: "" };
-  
+
     if (parts.length == 1 && parts[0].length == 0) return null;
     buildData.value = parts[0];
-    
+
     if (parts.length > 1 && parts[1].trim()) buildData.name = parts[1];
     if (parts.length > 2 && parts[2].trim()) buildData.icon = parts[2];
     if (parts.length > 3 && parts[3].trim()) buildData.shortcut = parts[3];
-  
+
     return new ContextMenuItem(buildData);
   }
 
@@ -410,17 +420,17 @@ export class ContextMenu extends GlobalSingleUseWidget {
   static sectionBuilder(input: string): ContextMenuSection {
     const sectionData = sectionPattern.exec(input);
     if (!sectionData) return null;
-  
+
     const name = (sectionData[1]?.trim()) || null;
     const items: ContextMenuItem[] = [];
-    
+
     const itemsData = (sectionData[2] ?? "").split(";");
     for (const itemInput of itemsData) {
       const item = ContextMenu.itemBuilder(itemInput);
       if (item == null) continue; // throw out
       items.push(item);
     }
-  
+
     if (items.length == 0) return null;
     return new ContextMenuSection({
       items,
@@ -431,14 +441,14 @@ export class ContextMenu extends GlobalSingleUseWidget {
   // format: <section>~<section>~...
   static sectionsBuilder(input: string): ContextMenuSection[] {
     const sectionsData = input.split("~");
-  
+
     const sections: ContextMenuSection[] = [];
     for (const sectionData of sectionsData) {
       const section = ContextMenu.sectionBuilder(sectionData);
       if (section == null) continue; // throw out
       sections.push(section);
     }
-  
+
     return sections;
   }
 

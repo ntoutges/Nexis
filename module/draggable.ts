@@ -157,8 +157,8 @@ export class Draggable {
     // exact position of cursor actually matters here, rather than just difference in position
 
     const bounds = this.getBoundingClientRect();
-    const localX = (e.pageX - bounds.left) / this.scale;
-    const localY = (e.pageY - bounds.top) / this.scale;
+    const localX = (e.pageX - bounds.left);
+    const localY = (e.pageY - bounds.top);
     
     const dir = (e.deltaY > 0) ? 1 : -1;
 
@@ -221,8 +221,6 @@ export class Draggable {
     const sWidth = maxScaledX - minX;
     const sHeight = maxScaledY - minY;
 
-    this.scale = sWidth / width;
-
     return {
       top: minY,
       bottom: minBottom,
@@ -232,6 +230,12 @@ export class Draggable {
       sWidth,sHeight
     }
   }
+
+  // recalculateScale() {
+  //   const baseZoom = this.getBaseScale()
+  //   this.scale = baseZoom[0];
+  //   this.scale.y = baseZoom[1];
+  // }
 
   setOffsetTo(
     x: number,
@@ -264,8 +268,8 @@ export class Draggable {
     y: number
   ): [x: number, y: number] {
     return [
-      x/this.pos.z + this.pos.x,
-      y/this.pos.z + this.pos.y
+      x/(this.pos.z) + this.pos.x,
+      y/(this.pos.z) + this.pos.y
     ];
   }
 
@@ -279,8 +283,8 @@ export class Draggable {
     y: number
   ): [x: number, y: number] {
     return [
-      (x - this.pos.x) * this.pos.z,
-      (y - this.pos.y) * this.pos.z
+      (x - this.pos.x) * (this.pos.z),
+      (y - this.pos.y) * (this.pos.z)
     ];
   }
 
@@ -298,4 +302,24 @@ export class Draggable {
     viewport.addEventListener("mouseup", this.endDragBound);
     this.viewport = viewport;
   }
+
+  // get zoom based on parent transformations
+  protected getBaseScale() {
+    if (!this.elements[0]) return [1,1]; // no elements, default
+    const untransformedWidth = this.elements[0].offsetWidth;
+    const untransformedHeight = this.elements[0].offsetHeight;
+
+    const { width,height } = this.elements[0].getBoundingClientRect();
+    return [ // zoomX, zoomY
+      width / untransformedWidth,
+      height / untransformedHeight
+    ];
+  }
+
+  // get scaledZoom() {
+  //   return {
+  //     x: this.pos.z * this.scale.x,
+  //     y: this.pos.z * this.scale.y
+  //   }
+  // }
 }

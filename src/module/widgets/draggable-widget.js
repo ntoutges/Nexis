@@ -152,7 +152,6 @@ export class DraggableWidget extends Widget {
         if (!(header.show ?? true)) {
             this.container.classList.add("draggable-widget-headerless");
         }
-        this.sceneDraggableListener.on("scroll", (d) => { this.draggable.scale = d.scale; }); // allow gridception to work
         this.addons.appendTo(this.body);
     }
     setZoom(z) {
@@ -202,6 +201,7 @@ export class DraggableWidget extends Widget {
             this.draggable.listener.on("drag", this.drag.bind(this));
             this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
             this.draggable.listener.on("selected", () => { this._scene.layers.moveToTop(this); });
+            this.trackDraggables(this.draggable);
         }
         else
             this.draggable.changeViewport(scene.element);
@@ -298,6 +298,18 @@ export class DraggableWidget extends Widget {
     updateButtonColor(button, type, set) {
         button.style.background = this.buttonColors.get(type)[set].highlight;
         button.style.fill = this.buttonColors.get(type)[set].fill;
+    }
+    setTitle(title) {
+        const titleEl = this.header.querySelector(".framework-draggable-widget-titles");
+        if (!titleEl)
+            return;
+        const children = Array.from(titleEl.children);
+        titleEl.innerText = title;
+        titleEl.append(...children);
+    }
+    resetBounds() {
+        this.body.style.width = "";
+        this.body.style.height = "";
     }
 }
 //# sourceMappingURL=draggable-widget.js.map

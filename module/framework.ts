@@ -2,6 +2,8 @@
 
 import { Draggable } from "./draggable.js";
 import { FrameworkBaseInterface, resizeType } from "./interfaces.js";
+import * as svg from "./svg.js"
+
 
 export class FrameworkBase {
   protected el: HTMLDivElement = document.createElement("div");
@@ -10,10 +12,11 @@ export class FrameworkBase {
     dragEl: HTMLDivElement,
     draggable: Draggable
   } = {
-    option: null,
-    dragEl: null,
-    draggable: null
-  }
+      option: null,
+      dragEl: null,
+      draggable: null
+    };
+  private trackedDraggables: Draggable[] = [];
 
   constructor({
     name,
@@ -34,13 +37,20 @@ export class FrameworkBase {
     if (id) this.el.setAttribute("id", id);
 
     for (const child of children) { this.el.append(child); }
-    
+
     if (this.resizeData.option != "none") {
       this.resizeData.dragEl = document.createElement("div");
       this.resizeData.dragEl.classList.add("framework-resize-drag-element", `framework-dir-${this.resizeData.option}`);
       this.el.append(this.resizeData.dragEl);
+
+      let resizeTypeName = "both";
+      if (resize == "horizontal") resizeTypeName = "width";
+      else if (resize == "vertical") resizeTypeName = "height";
+      svg.getSvg(`icons.resize-${resizeTypeName}`).then(svg => {
+        this.resizeData.dragEl.append(svg);
+      });
     }
-    
+
     if (parent) this.appendTo(parent);
     if (style) {
       for (const property in style) { this.el.style[property] = style[property]; }
@@ -65,7 +75,7 @@ export class FrameworkBase {
         });
 
         this.resizeData.draggable.listener.on("drag", this.manualResizeTo.bind(this));
-        this.resizeData.draggable.listener.on("resize", () => {}); // force constant resize/scale calculation
+        this.trackDraggables(this.resizeData.draggable);
       }
       else this.resizeData.draggable.changeViewport(parent); // modify old draggable
     }
@@ -75,7 +85,7 @@ export class FrameworkBase {
     return this.el;
   }
 
-  private manualResizeTo(d: Draggable) {
+  private manualResizeTo(d: Draggable, scale=1) {
     const newWidth = this.el.offsetWidth - d.delta.x;
     const newHeight = this.el.offsetHeight + d.delta.y;
 
@@ -83,5 +93,28 @@ export class FrameworkBase {
     this.el.style.height = `${newHeight}px`;
 
     d.listener.trigger("resize", d);
+
+    // remove set width/height
+    this.resetBounds();
+  }
+
+  resetBounds() {
+    this.el.style.width = "";
+    this.el.style.height = "";
+  }
+
+  protected trackDraggables(...draggables: Draggable[]) {
+    this.trackedDraggables.push(...draggables);
+  }
+  protected untrackDraggable(draggable: Draggable) {
+    const index = this.trackedDraggables.indexOf(draggable);
+    if (index === -1) return false;
+    this.trackedDraggables.splice(index,1);
+    return true;
+  }
+  updateTrackedDraggableScale(scale: number) {
+    for (const draggable of this.trackedDraggables) {
+      draggable.scale = scale;
+    }
   }
 }

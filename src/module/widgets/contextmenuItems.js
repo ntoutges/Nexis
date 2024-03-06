@@ -107,8 +107,10 @@ export class ContextMenuSection {
     }
     addItem(item) {
         this.items.push(item);
-        if (this.listener)
+        if (this.listener) {
             this.listener.trigger("add", item);
+            item.setListener(this.listener);
+        }
     }
     removeItem(value) {
         const item = this.getItem(value);

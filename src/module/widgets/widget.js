@@ -48,7 +48,6 @@ export class Widget extends FrameworkBase {
             this.scene?.updateIndividualWidget(this);
         });
         this.setPos(pos?.x ?? 0, pos?.y ?? 0);
-        // console.log(contextmenu)
         if (Array.isArray(contextmenu)) {
             if (contextmenu.length == 0)
                 contextmenu = {};
@@ -161,6 +160,11 @@ export class Widget extends FrameworkBase {
         });
     }
     get isBuilt() { return true; } // used by types like GlobalSingleUseWidget for scene optimization
+    manualResizeTo(d) {
+        if (this.scene)
+            d.scale = this.scene.draggable.pos.z; // update scale if this.scene exists
+        super.manualResizeTo(d);
+    }
 }
 const globalSingleUseWidgetMap = new Map();
 export class GlobalSingleUseWidget extends Widget {
@@ -280,6 +284,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
         super.unbuild();
     }
     addSection(section) {
+        section.setListener(this.listener);
         this.sections.push(section);
     }
     removeSection(name) {
@@ -289,6 +294,11 @@ export class ContextMenu extends GlobalSingleUseWidget {
         const index = this.sections.indexOf(section);
         section.unbuild()?.remove();
         this.sections.splice(index, 1);
+    }
+    clear() {
+        for (let i = this.sections.length; i >= 0; i--) {
+            this.removeSection(i);
+        }
     }
     getSection(name) {
         if (typeof name == "number") { // given exact index

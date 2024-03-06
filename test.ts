@@ -31,28 +31,29 @@ client.listener.on("disconnect", (data) => { console.log("disconnect:",data) });
 
 const channel = client.buildChannel("default");
 
-const widget2 = new DraggableWidget({
-  content: document.createElement("div"),
-  name: "syncs",
-  header: {
-    title: "Sender"
-  },
-  addons: {
-    main: {
-      side: "right",
-      addon: new ConnectorAddon<"output" | "input" | "omni">({
-        direction: "output",
-        type: "data",
-        validator: connValidator
-      })
-    }
-  },
-  style: {
-    "width": "100px",
-    "height": "50px"
-  },
-  doDragAll: true
-})
+const scene2Holder = document.createElement("div");
+// const widget2 = new DraggableWidget({
+//   content: document.createElement("div"),
+//   name: "syncs",
+//   header: {
+//     title: "Sender"
+//   },
+//   addons: {
+//     main: {
+//       side: "right",
+//       addon: new ConnectorAddon<"output" | "input" | "omni">({
+//         direction: "output",
+//         type: "data",
+//         validator: connValidator
+//       })
+//     }
+//   },
+//   style: {
+//     "width": "100px",
+//     "height": "50px"
+//   },
+//   doDragAll: true
+// })
 
 const scene = new Scene({
   parent: $("#sandbox"),
@@ -81,9 +82,21 @@ const scene = new Scene({
       doCursorDragIcon: true
     }),
     
-    new ConnDisplay(),
-    new ConnInput(),
-    new ConnWidget(channel)
+    // new ConnDisplay(),
+    // new ConnInput(),
+    // new ConnWidget(channel),
+    new DraggableWidget({
+      content: scene2Holder,
+      name: "scene-holders",
+      header: {
+        "title": "Scene Holder"
+      },
+      style: {
+        width: "50vw",
+        height: "50vh"
+      },
+      resize: "both"
+    })
   ]
 });
 
@@ -129,7 +142,7 @@ function connValidator(dir1: "input" | "output" | "omni", dir2: "input" | "outpu
 //       }
 //     }),
 //     new DraggableWidget({
-//       content: scene2Holder,
+//       // content: scene2Holder,
 //       name: "Top b",
 //       header: {
 //         title: "Top",
@@ -148,29 +161,31 @@ function connValidator(dir1: "input" | "output" | "omni", dir2: "input" | "outpu
 //   doStartCentered: true
 // })
 
-// // scene2Holder.style.width = "100%";
-// // scene2Holder.style.height = "100%";
+scene2Holder.style.width = "100%";
+scene2Holder.style.height = "100%";
 
-// // new Scene({
-// //   parent: scene2Holder,
-// //   widgets: [
-// //     new GridWidget({
-// //       doCursorDragIcon: true,
-// //       doIndependentCenter: false,
-// //       style: {
-// //       }
-// //     }),
-// //     new DraggableWidget({
-// //       content: document.createElement("div"),
-// //       name: "Top b",
-// //       header: {
-// //         title: "Top",
-// //       },
-// //       style: {
-// //         width: "200px"
-// //       },
-// //       positioning: 1
-// //     })
-// //   ],
-// //   doStartCentered: true
-// // })
+scene.addNestedScene(
+  new Scene({
+    parent: scene2Holder,
+    widgets: [
+      new GridWidget({
+        doCursorDragIcon: true,
+        doIndependentCenter: false,
+        style: {
+        }
+      }),
+      new DraggableWidget({
+        content: document.createElement("div"),
+        name: "Top b",
+        header: {
+          title: "Top",
+        },
+        style: {
+          width: "200px"
+        },
+        positioning: 1
+      })
+    ],
+    doStartCentered: true
+  })
+);

@@ -114,10 +114,10 @@ export class GridWidget extends Widget {
     if (sWidth != 0 && sHeight != 0) { // only resize if non-NaN scale-factor
       // set canvas scale (now, 1px on canvs doesn't exactly correspond to 1px on screen)
       this.ctx.setTransform(1, 0, 0, 1, 0, 0); // reset scaling (apparently?)
-      this.ctx.scale(
-        this.scene.draggable.scale,
-        this.scene.draggable.scale
-      );
+      // this.ctx.scale(
+      //   this.scene.draggable.scale,
+      //   this.scene.draggable.scale
+      // );
     }
     
     this.drawGrid(

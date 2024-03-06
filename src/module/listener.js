@@ -180,7 +180,7 @@ export class ElementListener extends Listener {
     resizeObserver = new ResizeObserver(this.triggerElementResize.bind(this));
     constructor() {
         super();
-        this.setRateLimit("resize", 200); // non-absurd number
+        this.setRateLimit("resize", 100); // non-absurd rate-limit number
     }
     observe(el) {
         this.elements.add(el);

@@ -19,9 +19,19 @@
 
   z-index: 99999;
 
-  background-image: url(/module/icons/tag.svg);
+  /* background-image: url(/module/icons/tag.svg);
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size: cover; */
+  /* border: solid black 1px; */
+}
+
+.framework-resize-drag-element > svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .framework-resize-drag-element:hover {

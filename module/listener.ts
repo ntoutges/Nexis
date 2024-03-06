@@ -217,13 +217,13 @@ export class Listener<Types, Data> {
   hasListenerId(id: number) { return this.reserved.has(id); }
 }
 
-export class ElementListener<ExtraTypes> extends Listener<ExtraTypes | "resize", HTMLElement> {
+export class ElementListener<ExtraTypes, ExtraData=void> extends Listener<ExtraTypes | "resize", HTMLElement | ExtraData> {
   private readonly elements = new Set<HTMLElement>();
   private readonly resizeObserver = new ResizeObserver(this.triggerElementResize.bind(this));
   
   constructor() {
     super();
-    this.setRateLimit("resize", 200); // non-absurd number
+    this.setRateLimit("resize", 100); // non-absurd rate-limit number
   }
 
   observe(el: HTMLElement) {

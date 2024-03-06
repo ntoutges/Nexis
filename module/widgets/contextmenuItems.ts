@@ -134,7 +134,10 @@ export class ContextMenuSection {
 
   addItem(item: ContextMenuItem) {
     this.items.push(item);
-    if (this.listener) this.listener.trigger("add", item);
+    if (this.listener) {
+      this.listener.trigger("add", item);
+      item.setListener(this.listener);
+    }
   }
   
   removeItem(value: string | number) {

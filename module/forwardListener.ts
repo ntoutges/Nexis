@@ -1,5 +1,5 @@
-import { Ids } from "./module/ids.js";
-import { Listener } from "./module/listener.js";
+import { Ids } from "./ids.js";
+import { Listener } from "./listener.js";
 
 export class ForwardListener<Types, Data> extends Listener<Types, Data> {
   private readonly listenerObjects = new Map<number, { obj: Listener<Partial<Types>, Data>, id: number }>();
