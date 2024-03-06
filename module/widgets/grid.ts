@@ -18,7 +18,7 @@ export class GridWidget extends Widget {
   private readonly offset = { x: 0, y: 0 };
 
   constructor({
-    id,style,
+    style,
     options = {},
     layer=-1, // default: behind everything
     positioning = 0,
@@ -43,7 +43,7 @@ export class GridWidget extends Widget {
       name: "grid",
       content: canvas,
       positioning,
-      id,style,
+      style,
       layer,
       resize,
       contextmenu,

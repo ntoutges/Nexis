@@ -21,7 +21,6 @@ export class FrameworkBase {
   constructor({
     name,
     parent = null,
-    id = null,
     children = [],
     style,
     resize = "none"
@@ -33,8 +32,6 @@ export class FrameworkBase {
     for (const partialName of names) {
       this.el.classList.add(`framework-${partialName}`);
     }
-
-    if (id) this.el.setAttribute("id", id);
 
     for (const child of children) { this.el.append(child); }
 
@@ -85,7 +82,7 @@ export class FrameworkBase {
     return this.el;
   }
 
-  private manualResizeTo(d: Draggable, scale=1) {
+  protected manualResizeTo(d: Draggable) {
     const newWidth = this.el.offsetWidth - d.delta.x;
     const newHeight = this.el.offsetHeight + d.delta.y;
 

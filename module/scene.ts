@@ -28,19 +28,20 @@ export class Scene extends FrameworkBase {
 
   readonly layers = new Layers<Widget>();
   private readonly wires = new Set<BasicWire>();
+  protected encapsulator = null;
 
   constructor({
-    id = null,
     parent = null,
     options = {},
     style,
     widgets = [],
     doStartCentered = false,
-    resize
+    resize,
+    encapsulator = null
   }: SceneInterface) {
     super({
       name: "scene",
-      id, parent,
+      parent,
       style,
       resize
     });
@@ -89,6 +90,7 @@ export class Scene extends FrameworkBase {
     });
 
     this.trackDraggables(this.draggable);
+    if (encapsulator !== null) encapsulator.addNestedScene(this);
   }
 
   addWidget(widget: Widget) {
@@ -237,6 +239,7 @@ export class Scene extends FrameworkBase {
   }
   
   addNestedScene(scene: Scene) {
+    scene.encapsulator = this;
     this.nestedScenes.push(scene);
     scene.resizeListener.trigger("scale", this.draggable.pos.z);
   }
@@ -244,6 +247,7 @@ export class Scene extends FrameworkBase {
   removeNestedScene(scene: Scene) {
     const i = this.nestedScenes.indexOf(scene);
     if (i == -1) return false; // scene isn't nested
+    scene.encapsulator = null;
     this.nestedScenes.splice(i,1);
     return true; // successfully removed
   }

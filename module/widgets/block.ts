@@ -3,7 +3,7 @@ import { Widget } from "./widget.js";
 
 export class BlockWidget extends Widget {
   constructor({
-    id,layer,style,
+    layer,style,
     positioning = 1,
     pos,
     resize
@@ -11,7 +11,7 @@ export class BlockWidget extends Widget {
     const el = document.createElement("div");
 
     super({
-      id,layer,style,
+      layer,style,
       name: "block",
       positioning,
       pos,

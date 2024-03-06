@@ -42,7 +42,7 @@ export class Widget extends FrameworkBase {
   readonly name: string;
 
   constructor({
-    id, name, style,
+    name, style,
     content,
     positioning = 1,
     doZoomScale = true,
@@ -55,8 +55,7 @@ export class Widget extends FrameworkBase {
     super({
       name: `${name}-widget widget`,
       children: [content],
-      style, id,
-      resize,
+      style, resize
     });
 
     this.name = name;
@@ -219,14 +218,14 @@ export abstract class GlobalSingleUseWidget extends Widget {
   private _isBuilt: boolean;
   constructor({
     name, content,
-    id, layer, pos, positioning, resize, style,
+    layer, pos, positioning, resize, style,
     options,
     doZoomScale,
     addons
   }: GlobalSingleUseWidgetInterface) {
     super({
       name, content,
-      id, layer,
+      layer,
       pos, positioning, resize,
       style,
       doZoomScale,
@@ -280,7 +279,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
   private doAutoClose: boolean;
 
   constructor({
-    id, pos, positioning, resize, style,
+    pos, positioning, resize, style,
     layer = 999999,
     items,
     trigger
@@ -288,7 +287,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
     const container = document.createElement("div");
 
     super({
-      id, layer, pos, positioning, resize, style,
+      layer, pos, positioning, resize, style,
       name: "contextmenu",
       content: container,
       options: {

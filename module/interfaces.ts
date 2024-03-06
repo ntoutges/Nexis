@@ -5,7 +5,6 @@ import { Widget } from "./widgets/widget.js";
 
 export type resizeType = "none" | "vertical" | "horizontal" | "both";
 export interface CommonFrameworkInterface {
-  id?: string
   style?: { // this mainly intended for debugging
     width?: string
     height?: string
@@ -35,7 +34,8 @@ export interface SceneInterface extends CommonFrameworkInterface{
   },
   parent?: HTMLElement
   widgets?: Widget[]
-  doStartCentered?: boolean
+  doStartCentered?: boolean,
+  encapsulator?: Scene
 }
 
 export interface ScrollableInterface {

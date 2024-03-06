@@ -89,7 +89,12 @@ const scene = new Scene({
       content: scene2Holder,
       name: "scene-holders",
       header: {
-        "title": "Scene Holder"
+        "title": "Scene Holder",
+        buttons: {
+          maximize: {
+            show: true
+          }
+        }
       },
       style: {
         width: "50vw",
@@ -117,75 +122,3 @@ function connValidator(dir1: "input" | "output" | "omni", dir2: "input" | "outpu
   return (dir1 == "input" && dir2 == "output") || (dir1 == "output" && dir2 == "input") || (dir1 == "omni") || (dir2 == "omni")
 }
 
-// scene.addGlobalSnapObject(
-//   new Grid<"x"|"y">(
-//     new Pos<"x"|"y">({
-//       x: {val: 50},
-//       y: {val: 50}
-//     }),
-//     new Pos<"x"|"y">({})
-//   )
-// )
-
-
-// sceneHolder.style.width = "100%";
-// sceneHolder.style.height = "100%";
-
-// new Scene({
-//   parent: sceneHolder,
-//   widgets: [
-//     new GridWidget({
-//       doCursorDragIcon: true,
-//       doIndependentCenter: false,
-//       style: {
-
-//       }
-//     }),
-//     new DraggableWidget({
-//       // content: scene2Holder,
-//       name: "Top b",
-//       header: {
-//         title: "Top",
-//       },
-//       style: {
-//         width: "200px",
-//         height: "200px"
-//       },
-//       positioning: 1,
-//       pos: {
-//         xAlign: "middle",
-//         yAlign: "middle"
-//       }
-//     })
-//   ],
-//   doStartCentered: true
-// })
-
-scene2Holder.style.width = "100%";
-scene2Holder.style.height = "100%";
-
-scene.addNestedScene(
-  new Scene({
-    parent: scene2Holder,
-    widgets: [
-      new GridWidget({
-        doCursorDragIcon: true,
-        doIndependentCenter: false,
-        style: {
-        }
-      }),
-      new DraggableWidget({
-        content: document.createElement("div"),
-        name: "Top b",
-        header: {
-          title: "Top",
-        },
-        style: {
-          width: "200px"
-        },
-        positioning: 1
-      })
-    ],
-    doStartCentered: true
-  })
-);

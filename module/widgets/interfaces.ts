@@ -41,7 +41,7 @@ export interface headerOption {
   padding: string
 }
 
-export type buttonTypes = "collapse" | "close";
+export type buttonTypes = "collapse" | "close" | "maximize";
 
 export interface DraggableWidgetInterface extends BasicWidgetInterface {
   options?: {
@@ -55,7 +55,7 @@ export interface DraggableWidgetInterface extends BasicWidgetInterface {
   }
   header?: {
     title?: string
-    buttons?: Record<buttonTypes, Partial<headerOption>>
+    buttons?: Partial<Record<buttonTypes, Partial<headerOption>>>
     background?: string
     color?: string
     show?: boolean

@@ -34,6 +34,7 @@ export class Draggable {
   private readonly acceptableMouseButtons = new Set<number>();
 
   scale: number = 1;
+  private enabled: boolean = true;
 
   readonly listener = new Listener<DraggableEvents, Draggable>();
 
@@ -112,8 +113,10 @@ export class Draggable {
 
   protected initDrag(e: MouseEvent) {
     if (this.blockDrag) e.stopPropagation();
+    if (!this.enabled) return; // disabled
     if (!this.acceptableMouseButtons.has(e.button)) return;
     e.preventDefault();
+    
     this.isDragging = true;
     this.mouseOffset.x = e.pageX;
     this.mouseOffset.y = e.pageY;
@@ -153,6 +156,7 @@ export class Draggable {
   protected onScroll(e: WheelEvent) {
     if (!this.zoomable || e.deltaY == 0) return; // don't zoom if not zoomable
     if (this.blockScroll) e.stopPropagation();
+    if (!this.enabled) return; // disabled
 
     // exact position of cursor actually matters here, rather than just difference in position
 
@@ -322,4 +326,7 @@ export class Draggable {
   //     y: this.pos.z * this.scale.y
   //   }
   // }
+
+  enable() { this.enabled = true; }
+  disable() { this.enabled = false; }
 }

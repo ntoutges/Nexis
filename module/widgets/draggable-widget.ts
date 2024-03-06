@@ -3,7 +3,7 @@ import { Scene } from "../scene.js";
 import { getSvg } from "../svg.js";
 import { buttonDefaults } from "./defaults.js";
 import { DraggableWidgetInterface, buttonTypes, headerOption } from "./interfaces.js";
-import { ContextMenu, GlobalSingleUseWidget, Widget } from "./widget.js";
+import { GlobalSingleUseWidget, Widget } from "./widget.js";
 
 export class DraggableWidget extends Widget {
   readonly container: HTMLDivElement;
@@ -24,10 +24,11 @@ export class DraggableWidget extends Widget {
   }>();
 
   private isClosing: boolean = false;
+  private isExpanding: boolean = false;
   private readonly draggableInfo = { scrollX: true, scrollY: true };
 
   constructor({
-    id,layer,positioning,pos,style,
+    layer,positioning,pos,style,
     header = {},
     doCursorDragIcon=true,
     doDragAll=false,
@@ -67,7 +68,7 @@ export class DraggableWidget extends Widget {
     }
 
     super({
-      id,layer,positioning,pos,style,
+      layer,positioning,pos,style,
       name,
       content: container,
       resize,
@@ -152,6 +153,9 @@ export class DraggableWidget extends Widget {
             break;
           case "collapse":
             button.addEventListener("click", this.minimize.bind(this));
+            break;
+          case "maximize":
+            button.addEventListener("click", this.maximize.bind(this))
             break;
         }
       }
@@ -285,6 +289,7 @@ export class DraggableWidget extends Widget {
   protected minimize() {
     this.body.classList.toggle("draggable-widget-minimize");
     if (this.body.classList.contains("draggable-widget-minimize")) {
+      if (this.container.classList.contains("draggable-widget-fullscreen")) this.maximize(); // unmaximize if maximized
       this.showButtons();
       if (this.minimizeTimeout != null) return; // timeout already in progress
       this.minimizeTimeout = setTimeout(() => {
@@ -322,6 +327,29 @@ export class DraggableWidget extends Widget {
       }, 200);
     }
     this.isClosing = true;
+  }
+
+  protected maximize() {
+    console.log("maximize")
+    if (this.isExpanding) return; // don't do anything while expanding
+    this.isExpanding = true;
+    this.container.classList.toggle("draggable-widget-fullscreen");
+    if (this.container.classList.contains("draggable-widget-fullscreen")) {
+      if (this.body.classList.contains("draggable-widget-minimize")) this.minimize(); // unminimize if minimized
+
+      this.draggable.disable();
+      setTimeout(() => {
+        this.isExpanding = false;
+      }, 200);
+    }
+    else {
+      this.container.classList.add("draggable-widget-fullscreen-exit"); // retain transitions while unexpanding
+      setTimeout(() => {
+        this.draggable.enable();
+        this.isExpanding = false;
+        this.container.classList.remove("draggable-widget-fullscreen-exit"); // remove fancy transitions
+      }, 200);
+    }
   }
 
   private showButtons() {

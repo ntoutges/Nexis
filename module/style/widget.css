@@ -138,8 +138,8 @@
   clip-path: polygon(0 0, 2px 0, 100% 100%, 0% 100%);
   margin-bottom: -4px; /* remove strange gap between bottom of inline-block element and the parent */
 
-  transition: transform 200ms;
-  transition-delay: 100ms;
+  transition: transform 200ms, clip-path 200ms 200ms;
+  transition-delay: 100ms, 100ms;
 }
 
 .framework-draggable-widget-containers:has(> .framework-draggable-widget-bodies.draggable-widget-minimize) > .framework-draggable-widget-headers > .framework-draggable-widget-title-ends {
@@ -202,11 +202,6 @@
   box-shadow: 0px 0px 1px black;
   /* overflow: hidden; */
 }
-
-/* .framework-draggable-widget-bodies:has(> :empty) {
-  padding: 20px;
-} */
-
 .framework-draggable-widget-bodies.draggable-widget-minimize {
   animation: minimize-bodies-forward 300ms;
 }
@@ -232,6 +227,45 @@
 .framework-widget.is-minimized {
   width: min-content !important;
   height: unset !important;
+}
+
+.framework-scene-holders-widget:has(.framework-draggable-widget-containers:is(.draggable-widget-fullscreen, .draggable-widget-fullscreen-exit)) {
+  transition: top 200ms, left 200ms, width 200ms, height 200ms, transform 200ms;
+}
+
+.framework-scene-holders-widget:has(.framework-draggable-widget-containers.draggable-widget-fullscreen) {
+  top: 0px !important;
+  left: 0px !important;
+  width: 100% !important;
+  height: 100% !important;
+
+  transform: none !important;
+}
+
+.framework-draggable-widget-containers.draggable-widget-fullscreen {
+  & > .framework-draggable-widget-headers {
+    position: absolute;
+    z-index: 1;
+    top: 0px;
+    left: 0px;
+
+    & > .framework-draggable-widget-title-ends {
+      clip-path: polygon(0 0, 100% 0, 2px 100%, 0 100%);
+    }
+  }
+
+  & > .framework-draggable-widget-bodies {
+    width: unset !important;
+    height: unset !important;
+
+    & > .framework-addon-containers {
+      display: none;
+    }
+  }
+}
+
+.framework-scene-holders-widget:has(.framework-draggable-widget-containers.draggable-widget-fullscreen) > .framework-resize-drag-element {
+  display: none;
 }
 
 .framework-draggable-widget-button-holder > .framework-draggable-widget-buttons:hover {
