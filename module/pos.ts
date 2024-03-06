@@ -120,7 +120,7 @@ export class Grid<Dims extends string> {
       const gap = this.gaps.getPosComponent(component);
       const offset = this.offsets.getPosComponent(component);
       data[component] = {
-        val: Math.round((pos.getPosComponent(component) - offset) / gap) * gap + offset
+        val: ((pos.getPosComponent(component) - offset) / gap) * gap + offset
       };
     }
     return new Pos(data);

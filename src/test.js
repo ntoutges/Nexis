@@ -17,6 +17,7 @@ client.listener.on("connect", (data) => { console.log("connect:", data); });
 client.listener.on("disconnect", (data) => { console.log("disconnect:", data); });
 const channel = client.buildChannel("default");
 const scene2Holder = document.createElement("div");
+const scene3Holder = document.createElement("div");
 // const widget2 = new DraggableWidget({
 //   content: document.createElement("div"),
 //   name: "syncs",
@@ -100,4 +101,39 @@ const scene = new Scene({
 function connValidator(dir1, dir2) {
     return (dir1 == "input" && dir2 == "output") || (dir1 == "output" && dir2 == "input") || (dir1 == "omni") || (dir2 == "omni");
 }
+const scene2 = new Scene({
+    parent: scene2Holder,
+    encapsulator: scene,
+    doStartCentered: true,
+    widgets: [
+        new GridWidget({
+            doCursorDragIcon: true
+        }),
+        new DraggableWidget({
+            content: scene3Holder,
+            name: "scene-holders",
+            header: {
+                "title": "Scene Holder",
+                buttons: {
+                    maximize: {
+                        show: true
+                    }
+                }
+            },
+            style: {
+                width: "40vw",
+                height: "20vh"
+            },
+            resize: "both"
+        })
+    ]
+});
+new Scene({
+    parent: scene3Holder,
+    encapsulator: scene2,
+    doStartCentered: true,
+    widgets: [
+        new GridWidget({})
+    ]
+});
 //# sourceMappingURL=test.js.map

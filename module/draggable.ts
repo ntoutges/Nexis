@@ -246,8 +246,8 @@ export class Draggable {
     y: number,
     triggerDrag: boolean = true
   ) {
-    this.pos.x = -Math.round(x);
-    this.pos.y = -Math.round(y);
+    this.pos.x = -x;
+    this.pos.y = -y;
     if (triggerDrag) this.listener.trigger("drag", this);
   }
 
@@ -256,8 +256,8 @@ export class Draggable {
     y: number,
     triggerDrag: boolean = true
   ) {
-    this.pos.x -= Math.round(x);
-    this.pos.y -= Math.round(y);
+    this.pos.x -= x;
+    this.pos.y -= y;
     if (triggerDrag) this.listener.trigger("drag", this);
   }
 

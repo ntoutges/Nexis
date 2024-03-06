@@ -90,7 +90,7 @@ export class Widget extends FrameworkBase {
     }
     updateBounds(bounds = null, padding = null) {
         if (bounds === null)
-            bounds = this.el.getBoundingClientRect();
+            bounds = { width: this.el.offsetWidth, height: this.el.offsetHeight };
         this.bounds.setPos({
             x: bounds.width + (padding?.x ?? 0),
             y: bounds.height + (padding?.y ?? 0)

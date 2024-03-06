@@ -140,7 +140,7 @@ export class BasicWire extends Widget {
 
   // override updateBounds with different dimensions
   updateBounds() {
-    const bounds = this.wireEl.getBoundingClientRect();
+    const bounds = { width: this.wireEl.offsetWidth, height: this.wireEl.offsetHeight };
     const padding = this.point1.radius + this.point2.radius;
     super.updateBounds(bounds, { x: padding, y: padding });
   }

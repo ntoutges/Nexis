@@ -217,14 +217,14 @@ export class Draggable {
     //   this.scale.y = baseZoom[1];
     // }
     setOffsetTo(x, y, triggerDrag = true) {
-        this.pos.x = -Math.round(x);
-        this.pos.y = -Math.round(y);
+        this.pos.x = -x;
+        this.pos.y = -y;
         if (triggerDrag)
             this.listener.trigger("drag", this);
     }
     offsetBy(x, y, triggerDrag = true) {
-        this.pos.x -= Math.round(x);
-        this.pos.y -= Math.round(y);
+        this.pos.x -= x;
+        this.pos.y -= y;
         if (triggerDrag)
             this.listener.trigger("drag", this);
     }

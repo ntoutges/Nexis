@@ -57,13 +57,11 @@ export class DraggableWidget extends Widget {
     });
 
     const bodyHeight = style?.height;
-    const bodyWidth = style?.width;
     const bodyBackground = style?.background;
     
     // intercept height/width data before they are sent to parent
     if (style) {
       delete style.height;
-      delete style.width;
       delete style.background;
     }
 
@@ -191,7 +189,6 @@ export class DraggableWidget extends Widget {
     this.body.style.background = options?.bodyBackground ?? "";
 
     body.style.height = bodyHeight ?? "";
-    body.style.width = bodyWidth ?? "";
     body.style.background = bodyBackground ?? "";
 
     if (options?.hideOnInactivity ?? false) this.container.classList.add("framework-widgets-hide-on-inactive");
@@ -330,9 +327,16 @@ export class DraggableWidget extends Widget {
   }
 
   protected maximize() {
-    console.log("maximize")
     if (this.isExpanding) return; // don't do anything while expanding
     this.isExpanding = true;
+    
+    // going to expand, and height not yet set
+    if (!this.container.classList.contains("draggable-widget-fullscreen") && this.element.style.height == "") {
+      this.element.style.height = `${this.element.clientHeight}px`; // set height for nice animation
+      this.element.classList.add("draggable-autoset-height");
+      this.element.clientHeight; // trigger CSS reflow
+    }
+
     this.container.classList.toggle("draggable-widget-fullscreen");
     if (this.container.classList.contains("draggable-widget-fullscreen")) {
       if (this.body.classList.contains("draggable-widget-minimize")) this.minimize(); // unminimize if minimized
@@ -348,6 +352,10 @@ export class DraggableWidget extends Widget {
         this.draggable.enable();
         this.isExpanding = false;
         this.container.classList.remove("draggable-widget-fullscreen-exit"); // remove fancy transitions
+        if (this.element.classList.contains("draggable-autoset-height")) { // height set automatically by expanding; remove this
+          this.element.classList.remove("draggable-autoset-height");
+          this.element.style.height = ""; // reset to original
+        }
       }, 200);
     }
   }
