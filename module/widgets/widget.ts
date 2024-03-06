@@ -151,7 +151,7 @@ export class Widget extends FrameworkBase {
     this.setZoom(scene.draggable.pos.z);
 
     scene.layers.setLayer(this, this.layer);
-    this.appendTo(scene.element);
+    if (this.doImmediateSceneAppend) this.appendTo(scene.element);
     if (isFirstScene && this.resizeData.draggable) {
       this.resizeData.draggable.listener.on("resize", this.updatePositionOnResize.bind(this));;
     }
@@ -209,6 +209,8 @@ export class Widget extends FrameworkBase {
     if (this.scene) d.scale = this.scene.draggable.pos.z; // update scale if this.scene exists
     super.manualResizeTo(d);
   }
+
+  get doImmediateSceneAppend() { return true; }
 }
 
 const globalSingleUseWidgetMap = new Map<string, GlobalSingleUseWidget>();
@@ -245,12 +247,14 @@ export abstract class GlobalSingleUseWidget extends Widget {
     }
     globalSingleUseWidgetMap.set(this.name, this);
     this._isBuilt = true;
+    if (this.scene) this.scene.element.append(this.el); // add element to scene if being used
     this.el.style.display = "";
   }
 
   unbuild() {
     this._isBuilt = false;
     this.el.style.display = "none";
+    this.el.remove(); // remove element from scene when no longer used
     if (globalSingleUseWidgetMap.has(this.name)) {
       globalSingleUseWidgetMap.delete(this.name); // remove current entry
     }
@@ -263,6 +267,8 @@ export abstract class GlobalSingleUseWidget extends Widget {
       globalSingleUseWidgetMap.get(type).unbuild();
     }
   }
+
+  get doImmediateSceneAppend() { return false; }
 }
 
 const sectionPattern = /^(?:;([^;]+))?(.+?)$/;
