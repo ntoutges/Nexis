@@ -235,8 +235,9 @@ export class Draggable {
     // convert x,y in screen to x,y within transformations of scene
     toSceneSpace(x, y) {
         return [
-            x / (this.pos.z) + this.pos.x,
-            y / (this.pos.z) + this.pos.y
+            // for some reason, only multiplying by `this.scale` here works...
+            x / (this.pos.z * this.scale) + this.pos.x,
+            y / (this.pos.z * this.scale) + this.pos.y
         ];
     }
     scaleIntoSceneSpace(dim) {
@@ -274,12 +275,7 @@ export class Draggable {
             height / untransformedHeight
         ];
     }
-    // get scaledZoom() {
-    //   return {
-    //     x: this.pos.z * this.scale.x,
-    //     y: this.pos.z * this.scale.y
-    //   }
-    // }
+    get scaledZoom() { return this.pos.z * this.scale; }
     enable() { this.enabled = true; }
     disable() { this.enabled = false; }
 }

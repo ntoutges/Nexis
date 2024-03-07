@@ -87,6 +87,7 @@ export class Scene extends FrameworkBase {
       for (const widget of this.widgets) {
         widget.updateTrackedDraggableScale(scale);
       }
+      this.updateNestedSceneScale();
     });
 
     this.trackDraggables(this.draggable);
@@ -171,8 +172,11 @@ export class Scene extends FrameworkBase {
 
   protected onScroll() {
     this.updateWidgetPositionAndScale();
+    this.updateNestedSceneScale();
+  }
+  private updateNestedSceneScale() {
     for (const nestedScene of this.nestedScenes) {
-      nestedScene.resizeListener.trigger("scale", this.draggable.pos.z);
+      nestedScene.resizeListener.trigger("scale", this.draggable.scaledZoom);
     }
   }
 
