@@ -10,6 +10,7 @@ export const buttonDefaults = {
             highlight: "lightgrey"
         },
         icon: "icons.minus",
+        altIcon: "icons.plus",
         size: "11px",
         padding: "2px",
     },
@@ -24,6 +25,7 @@ export const buttonDefaults = {
             highlight: "lightgrey"
         },
         icon: "icons.fullscreen-enter",
+        altIcon: "icons.fullscreen-exit",
         padding: "2px",
         size: "11px"
     },
@@ -38,6 +40,7 @@ export const buttonDefaults = {
             highlight: "red"
         },
         icon: "icons.x",
+        altIcon: null,
         size: "11px",
         padding: "2px"
     }

@@ -1,3 +1,8 @@
+@font-face {
+  font-family: "Terminal";
+  src: url(CourierPrime-Regular.ttf);
+}
+
 .framework-widget {
   position: absolute;
   
@@ -115,6 +120,15 @@
   transition-delay: 0ms, 0ms;
 
   border-radius: 0px;
+  font-family: 'Terminal';
+}
+
+.framework-draggable-widget-title-texts {
+  font-weight: normal;
+  margin: 0px;
+  padding: 0px;
+  font-size: 1em;
+  font-family: inherit;
 }
 
 .framework-draggable-widget-containers:has(> .framework-draggable-widget-bodies.draggable-widget-minimize) > .framework-draggable-widget-headers > .framework-draggable-widget-titles {
@@ -229,11 +243,11 @@
   height: unset !important;
 }
 
-.framework-scene-holders-widget:has(.framework-draggable-widget-containers:is(.draggable-widget-fullscreen, .draggable-widget-fullscreen-exit)) {
+.framework-scene-holders-widget:has(> .framework-draggable-widget-containers:is(.draggable-widget-fullscreen, .draggable-widget-fullscreen-exit)) {
   transition: top 200ms, left 200ms, width 200ms, height 200ms, transform 200ms;
 }
 
-.framework-scene-holders-widget:has(.framework-draggable-widget-containers.draggable-widget-fullscreen) {
+.framework-scene-holders-widget:has(> .framework-draggable-widget-containers.draggable-widget-fullscreen) {
   top: 0px !important;
   left: 0px !important;
   width: 100% !important;
@@ -264,7 +278,7 @@
   }
 }
 
-.framework-scene-holders-widget:has(.framework-draggable-widget-containers.draggable-widget-fullscreen) > .framework-resize-drag-element {
+.framework-scene-holders-widget:has(> .framework-draggable-widget-containers.draggable-widget-fullscreen) > .framework-resize-drag-element {
   display: none;
 }
 
@@ -281,12 +295,29 @@
 }
 
 .framework-draggable-widget-buttons > svg {
-  /*width: 100%;
-  height: 100%;*/
-
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
+}
+
+.framework-draggable-widget-buttons:not(.framework-draggable-widget-button-alts) {
+  &> svg.framework-header-buttons-alt {
+    display: none;
+  }
+
+  &> svg.framework-header-buttons-main {
+    display: block;
+  }
+}
+
+.framework-draggable-widget-buttons.framework-draggable-widget-button-alts {
+  &> svg.framework-header-buttons-alt {
+    display: block;
+  }
+
+  &> svg.framework-header-buttons-main {
+    display: none;
+  }
 }
 
 .draggable-widget-minimize {

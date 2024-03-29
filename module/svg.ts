@@ -45,7 +45,11 @@ async function getSvgCache(src: string): Promise<SVGCache> {
 }
 
 // in the form of <category>.<name> or <uri>
-export async function getSvg(srcString: string): Promise<SVGSVGElement> {
+export async function getSvg(srcString: string): Promise<SVGSVGElement>
+export async function getSvg(srcStrings: string[]): Promise<SVGSVGElement[]>
+export async function getSvg(srcString: string | string[]): Promise<SVGSVGElement | SVGSVGElement[]> {
+  if (Array.isArray(srcString)) return Promise.all(srcString.map(src => getSvg(src)));
+
   const srcArr = srcString.split(".");
 
   if (srcArr.length < 2) { // no category given

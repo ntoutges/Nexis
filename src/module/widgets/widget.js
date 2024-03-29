@@ -166,6 +166,7 @@ export class Widget extends FrameworkBase {
         super.manualResizeTo(d);
     }
     get doImmediateSceneAppend() { return true; }
+    get isMovementExempt() { return !this.isBuilt || this.positioning === 0; }
 }
 const globalSingleUseWidgetMap = new Map();
 export class GlobalSingleUseWidget extends Widget {

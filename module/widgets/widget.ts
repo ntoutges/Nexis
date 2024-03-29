@@ -210,6 +210,8 @@ export class Widget extends FrameworkBase {
   }
 
   get doImmediateSceneAppend() { return true; }
+
+  get isMovementExempt() { return !this.isBuilt || this.positioning === 0; }
 }
 
 const globalSingleUseWidgetMap = new Map<string, GlobalSingleUseWidget>();

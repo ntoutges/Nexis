@@ -37,6 +37,7 @@ export interface headerOption {
     highlight: string
   }
   icon: string
+  altIcon: string | null
   size: string
   padding: string
 }

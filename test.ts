@@ -123,6 +123,24 @@ function connValidator(dir1: "input" | "output" | "omni", dir2: "input" | "outpu
   return (dir1 == "input" && dir2 == "output") || (dir1 == "output" && dir2 == "input") || (dir1 == "omni") || (dir2 == "omni")
 }
 
+const widget = new DraggableWidget({
+  content: scene3Holder,
+  name: "scene-holders",
+  header: {
+    "title": "Scene Holder",
+    buttons: {
+      maximize: {
+        show: true
+      }
+    }
+  },
+  style: {
+    width: "40vw",
+    height: "20vh"
+  },
+  resize: "both"
+});
+
 const scene2 = new Scene({
   parent: scene2Holder,
   encapsulator: scene,
@@ -131,23 +149,7 @@ const scene2 = new Scene({
     new GridWidget({
       doCursorDragIcon: true
     }),
-    new DraggableWidget({
-      content: scene3Holder,
-      name: "scene-holders",
-      header: {
-        "title": "Scene Holder",
-        buttons: {
-          maximize: {
-            show: true
-          }
-        }
-      },
-      style: {
-        width: "40vw",
-        height: "20vh"
-      },
-      resize: "both"
-    })
+    widget
   ]
 })
 
@@ -159,3 +161,16 @@ new Scene({
     new GridWidget({})
   ]
 })
+
+setInterval(() => {
+  widget.setTitle("I try to call " + randomText(10) + " every " + randomText(4) + "; What can I say?")
+}, 100)
+
+const chars = "abcdefghijklmnoprstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+function randomText(len: number) {
+  let str = "";
+  for (let i = 0; i < len; i++) {
+    str += chars[Math.floor(Math.random() * chars.length)]
+  }
+  return str;
+}

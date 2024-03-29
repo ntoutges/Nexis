@@ -38,8 +38,9 @@ async function getSvgCache(src) {
     await cacheItem.await();
     return cacheItem;
 }
-// in the form of <category>.<name> or <uri>
 export async function getSvg(srcString) {
+    if (Array.isArray(srcString))
+        return Promise.all(srcString.map(src => getSvg(src)));
     const srcArr = srcString.split(".");
     if (srcArr.length < 2) { // no category given
         return (await getSvgCache(srcString)).parsedData;

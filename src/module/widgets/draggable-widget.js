@@ -12,6 +12,7 @@ export class DraggableWidget extends Widget {
     minimizeTimeout = null;
     acceptableMouseButtons;
     doDragAll;
+    headerButtons = {};
     buttonColors = new Map();
     isClosing = false;
     isExpanding = false;
@@ -58,7 +59,10 @@ export class DraggableWidget extends Widget {
         const title = document.createElement("div");
         title.classList.add("framework-draggable-widget-titles");
         title.setAttribute("draggable", "false");
-        title.innerText = header?.title ?? "Unnamed";
+        const titleText = document.createElement("h3");
+        titleText.classList.add("framework-draggable-widget-title-texts");
+        titleText.innerText = header?.title ?? "Unnamed";
+        title.append(titleText);
         this.header.append(title);
         const titleEnd = document.createElement('div');
         titleEnd.classList.add("framework-draggable-widget-title-ends");
@@ -101,11 +105,23 @@ export class DraggableWidget extends Widget {
                     this._scene.layers.moveToTop(this); // still do select
                 });
                 // fetch svg data
-                getSvg(options?.icon ?? defOptions.icon).then(svg => {
-                    button.append(svg);
-                    svg.style.width = options?.size ?? defOptions.size;
-                    svg.style.height = options?.size ?? defOptions.size;
+                const iconSvgs = [options?.icon ?? defOptions.icon];
+                const altIcon = options?.altIcon ?? defOptions.altIcon;
+                if (altIcon !== null)
+                    iconSvgs.push(altIcon);
+                getSvg(iconSvgs).then(svgs => {
+                    svgs[0].classList.add("framework-header-buttons-main");
+                    button.append(svgs[0]); // standard icon
+                    if (svgs.length >= 2) { // alternate icon
+                        svgs[1].classList.add("framework-header-buttons-alt");
+                        button.append(svgs[1]);
+                    }
+                    for (const svg of svgs) {
+                        svg.style.width = options?.size ?? defOptions.size;
+                        svg.style.height = options?.size ?? defOptions.size;
+                    }
                 });
+                this.headerButtons[type] = button;
                 switch (type) {
                     case "close":
                         button.addEventListener("click", this.close.bind(this));
@@ -229,6 +245,7 @@ export class DraggableWidget extends Widget {
      */
     minimize() {
         this.body.classList.toggle("draggable-widget-minimize");
+        this.headerButtons.collapse?.classList.toggle("framework-draggable-widget-button-alts");
         if (this.body.classList.contains("draggable-widget-minimize")) {
             if (this.container.classList.contains("draggable-widget-fullscreen"))
                 this.maximize(); // unmaximize if maximized
@@ -254,6 +271,7 @@ export class DraggableWidget extends Widget {
     close() {
         if (this.isClosing)
             return; // don't interrupt process
+        this.headerButtons.close?.classList.add("framework-draggable-widget-button-alts");
         if (this.body.classList.contains("draggable-widget-minimize")) {
             this.header.classList.add("draggable-widget-close");
             setTimeout(() => {
@@ -282,6 +300,7 @@ export class DraggableWidget extends Widget {
             this.element.clientHeight; // trigger CSS reflow
         }
         this.container.classList.toggle("draggable-widget-fullscreen");
+        this.headerButtons.maximize?.classList.toggle("framework-draggable-widget-button-alts");
         if (this.container.classList.contains("draggable-widget-fullscreen")) {
             if (this.body.classList.contains("draggable-widget-minimize"))
                 this.minimize(); // unminimize if minimized
@@ -303,6 +322,8 @@ export class DraggableWidget extends Widget {
             }, 200);
         }
     }
+    get isFullScreen() { return this.container.classList.contains("draggable-widget-fullscreen"); }
+    get isMovementExempt() { return super.isMovementExempt || this.isFullScreen; }
     showButtons() {
         if (this.buttonHideTimeout != null) { // stop timeout
             clearTimeout(this.buttonHideTimeout);
@@ -335,12 +356,9 @@ export class DraggableWidget extends Widget {
         button.style.fill = this.buttonColors.get(type)[set].fill;
     }
     setTitle(title) {
-        const titleEl = this.header.querySelector(".framework-draggable-widget-titles");
-        if (!titleEl)
-            return;
-        const children = Array.from(titleEl.children);
-        titleEl.innerText = title;
-        titleEl.append(...children);
+        const titleEl = this.header.querySelector(".framework-draggable-widget-titles > .framework-draggable-widget-title-texts");
+        if (titleEl)
+            titleEl.textContent = title;
     }
     resetBounds() {
         this.body.style.width = "";

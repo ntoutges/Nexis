@@ -17,6 +17,7 @@ export class DraggableWidget extends Widget {
   private readonly acceptableMouseButtons: number[];
 
   private readonly doDragAll: boolean;
+  private readonly headerButtons: Partial<Record<buttonTypes, HTMLElement>> = {};
 
   private readonly buttonColors = new Map<buttonTypes, {
     dormant: { fill: string, highlight: string }
@@ -88,7 +89,12 @@ export class DraggableWidget extends Widget {
     const title = document.createElement("div");
     title.classList.add("framework-draggable-widget-titles");
     title.setAttribute("draggable", "false");
-    title.innerText = header?.title ?? "Unnamed";
+    
+    const titleText = document.createElement("h3");
+    titleText.classList.add("framework-draggable-widget-title-texts");
+    titleText.innerText = header?.title ?? "Unnamed";
+    title.append(titleText);
+
     this.header.append(title);
 
     const titleEnd = document.createElement('div');
@@ -139,12 +145,27 @@ export class DraggableWidget extends Widget {
         });
 
         // fetch svg data
-        getSvg(options?.icon ?? defOptions.icon).then(svg => {
-          button.append(svg);
-          svg.style.width = options?.size ?? defOptions.size;
-          svg.style.height = options?.size ?? defOptions.size;
+        const iconSvgs = [options?.icon ?? defOptions.icon];
+
+        const altIcon = options?.altIcon ?? defOptions.altIcon;
+        if (altIcon !== null) iconSvgs.push(altIcon);
+
+        getSvg(iconSvgs).then(svgs => {
+          svgs[0].classList.add("framework-header-buttons-main");
+          button.append(svgs[0]); // standard icon
+          
+          if (svgs.length >= 2) { // alternate icon
+            svgs[1].classList.add("framework-header-buttons-alt");
+            button.append(svgs[1]);
+          }
+          
+          for (const svg of svgs) {
+            svg.style.width = options?.size ?? defOptions.size;
+            svg.style.height = options?.size ?? defOptions.size;
+          }
         });
 
+        this.headerButtons[type as buttonTypes] = button;
         switch (type as buttonTypes) {
           case "close":
             button.addEventListener("click", this.close.bind(this));
@@ -285,6 +306,8 @@ export class DraggableWidget extends Widget {
    */
   protected minimize() {
     this.body.classList.toggle("draggable-widget-minimize");
+    this.headerButtons.collapse?.classList.toggle("framework-draggable-widget-button-alts");
+
     if (this.body.classList.contains("draggable-widget-minimize")) {
       if (this.container.classList.contains("draggable-widget-fullscreen")) this.maximize(); // unmaximize if maximized
       this.showButtons();
@@ -308,6 +331,8 @@ export class DraggableWidget extends Widget {
 
   protected close() {
     if (this.isClosing) return; // don't interrupt process
+
+    this.headerButtons.close?.classList.add("framework-draggable-widget-button-alts");
     if (this.body.classList.contains("draggable-widget-minimize")) {
       this.header.classList.add("draggable-widget-close");
       setTimeout(() => { // wait for closing animation
@@ -336,8 +361,9 @@ export class DraggableWidget extends Widget {
       this.element.classList.add("draggable-autoset-height");
       this.element.clientHeight; // trigger CSS reflow
     }
-
+    
     this.container.classList.toggle("draggable-widget-fullscreen");
+    this.headerButtons.maximize?.classList.toggle("framework-draggable-widget-button-alts");
     if (this.container.classList.contains("draggable-widget-fullscreen")) {
       if (this.body.classList.contains("draggable-widget-minimize")) this.minimize(); // unminimize if minimized
 
@@ -359,6 +385,9 @@ export class DraggableWidget extends Widget {
       }, 200);
     }
   }
+
+  get isFullScreen() { return this.container.classList.contains("draggable-widget-fullscreen"); }
+  get isMovementExempt() { return super.isMovementExempt || this.isFullScreen; }
 
   private showButtons() {
     if (this.buttonHideTimeout != null) { // stop timeout
@@ -395,12 +424,8 @@ export class DraggableWidget extends Widget {
   }
 
   setTitle(title: string) {
-    const titleEl = this.header.querySelector(".framework-draggable-widget-titles") as HTMLElement;
-    if (!titleEl) return;
-    
-    const children = Array.from(titleEl.children);
-    titleEl.innerText = title;
-    titleEl.append(...children);
+    const titleEl = this.header.querySelector(".framework-draggable-widget-titles > .framework-draggable-widget-title-texts") as HTMLElement;
+    if (titleEl) titleEl.textContent = title;
   }
 
   resetBounds() {

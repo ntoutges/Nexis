@@ -80,6 +80,7 @@ export class Scene extends FrameworkBase {
       const height = this.el.offsetHeight;
       this.bounds.setPos({ x: width, y: height });
 
+      this.updateWidgetPosition(); // updates visibility
       this.elListener.trigger("resize", new Event("resize", {}));
     });
     this.resizeListener.on("scale", (scale: number) => {
@@ -122,7 +123,7 @@ export class Scene extends FrameworkBase {
   }
 
   protected updateIndividualWidgetPosition(widget: Widget) {
-    if (!widget.isBuilt || widget.positioning === 0) return; // if positioning is 0 (doesn't move), then ignore
+    if (widget.isMovementExempt) return; // if positioning is 0 (doesn't move), then ignore
 
     const {x,y} = widget.pos.getPosData(["x","y"]);
       

@@ -59,6 +59,7 @@ export class Scene extends FrameworkBase {
             const width = this.el.offsetWidth;
             const height = this.el.offsetHeight;
             this.bounds.setPos({ x: width, y: height });
+            this.updateWidgetPosition(); // updates visibility
             this.elListener.trigger("resize", new Event("resize", {}));
         });
         this.resizeListener.on("scale", (scale) => {
@@ -101,7 +102,7 @@ export class Scene extends FrameworkBase {
         this.updateIndividualWidgetScale(widget);
     }
     updateIndividualWidgetPosition(widget) {
-        if (!widget.isBuilt || widget.positioning === 0)
+        if (widget.isMovementExempt)
             return; // if positioning is 0 (doesn't move), then ignore
         const { x, y } = widget.pos.getPosData(["x", "y"]);
         const sWidth = widget.bounds.getPosComponent("x");
