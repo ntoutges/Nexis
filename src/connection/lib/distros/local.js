@@ -23,6 +23,7 @@ export class LocalClient extends ClientBase {
     // TODO: make this do something...
     async disconnectFrom(id) { return true; } // always assume success
     acceptConnection(id) { this.setReadyState(id, true); }
+    async destroyClient() { }
 }
 export class LocalChannel extends ChannelBase {
     doSend(msg, recipientId) {

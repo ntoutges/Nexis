@@ -67,7 +67,7 @@ export interface ContextMenuItemInterface {
   value: string
   name?: string
   shortcut?: string
-  icon?: string
+  icon?: string | string[]
 }
 
 export interface ContextMenuSectionInterface {

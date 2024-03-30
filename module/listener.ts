@@ -215,6 +215,22 @@ export class Listener<Types, Data> {
 
   isListeningTo(type: Types): boolean { return this.listeners.has(type) }
   hasListenerId(id: number) { return this.reserved.has(id); }
+  
+
+  clear() {
+    this.listeners.clear();
+    this.allListeners.clear();
+    this.priorities.clear();
+      this.reserved.clear();
+      this.onListenCallbacks.splice(0);
+      this.pollingCallbacks.clear();
+      
+      this.pollingIntervals.forEach(interval => interval.pause());
+      this.pollingIntervals.clear();
+
+      this.rateLimits.clear();
+      this.autoResponses.clear();
+  }
 }
 
 export class ElementListener<ExtraTypes, ExtraData=void> extends Listener<ExtraTypes | "resize", HTMLElement | ExtraData> {

@@ -8,6 +8,9 @@ export class ContextMenuItem {
   private _shortcut: string;
   private _icon: string;
   private listener: Listener<ContextMenuEvents, ContextMenuItem> = null;
+  
+  private _iconStates: string[] = [];
+  private _state: number = 0;
 
   private el: HTMLDivElement = null;
   
@@ -22,7 +25,9 @@ export class ContextMenuItem {
     this._value = value;
     this._name = name;
     this._shortcut = shortcut;
-    this._icon = icon;
+
+    this._iconStates = Array.isArray(icon) ? (icon.length == 0 ? [""] : icon) : [icon];
+    this._icon = this._iconStates[this._state];
   }
 
   setListener(listener: Listener<ContextMenuEvents, ContextMenuItem>) {
@@ -52,7 +57,7 @@ export class ContextMenuItem {
     if (this._shortcut) shortcut.innerText = this._shortcut;
     this.el.append(shortcut);
 
-    this.el.addEventListener("click", this.onEvent.bind(this, "click"));
+    this.el.addEventListener("click", this.onclick.bind(this));
     this.el.addEventListener("mouseenter", this.onEvent.bind(this, "mouseenter"));
     this.el.addEventListener("mouseleave", this.onEvent.bind(this, "mouseleave"));
 
@@ -75,6 +80,7 @@ export class ContextMenuItem {
   get name() { return this._name; }
   get icon() { return this._icon; }
   get shortcut() { return this._shortcut; }
+  get state() { return this._state; }
 
   get element() { return this.el; }
 
@@ -96,6 +102,15 @@ export class ContextMenuItem {
     if (wasChange) this.listener.trigger("change", this);
   }
 
+  set state(state: number) {
+    state %= this._iconStates.length;
+    if (state < 0) state += this._iconStates.length;
+
+    let wasChange = state != this.state;
+    this._state = state;
+    if (wasChange) this.icon = this._iconStates[this._state];
+  }
+
   enable() {
     this.isEnabled = true;
     this.updateEnabledState();
@@ -109,6 +124,11 @@ export class ContextMenuItem {
     if (!this.el) return; // no element to update
     if (this.isEnabled) this.el.classList.remove("framework-contextmenu-item-disabled")
     else this.el.classList.add("framework-contextmenu-item-disabled");
+  }
+
+  private onclick() {
+    this.state++; // move to next state
+    this.onEvent("click");
   }
 }
 

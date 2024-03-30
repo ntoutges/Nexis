@@ -6,6 +6,8 @@ import { Layers } from "./layers.js";
 import { GlobalSingleUseWidget } from "./widgets/widget.js";
 import { Pos } from "./pos.js";
 import { BasicWire } from "./widgets/wire.js";
+import { Ids } from "./ids.js";
+import { RevMap } from "./widgets/revMap.js";
 var sceneIdentifiers = 0;
 export class Scene extends FrameworkBase {
     draggable;
@@ -14,7 +16,8 @@ export class Scene extends FrameworkBase {
     resizeListener = new ElementListener();
     interListener = new Listener();
     bounds = new Pos({});
-    widgets = [];
+    widgetIds = new Ids();
+    widgets = new RevMap();
     nestedScenes = [];
     snapObjects = new Map();
     nextSnapObjectId = 0;
@@ -64,7 +67,7 @@ export class Scene extends FrameworkBase {
         });
         this.resizeListener.on("scale", (scale) => {
             this.updateTrackedDraggableScale(scale);
-            for (const widget of this.widgets) {
+            for (const widget of this.widgets.values()) {
                 widget.updateTrackedDraggableScale(scale);
             }
             this.updateNestedSceneScale();
@@ -73,20 +76,29 @@ export class Scene extends FrameworkBase {
         if (encapsulator !== null)
             encapsulator.addNestedScene(this);
     }
-    addWidget(widget) {
-        widget.attachTo(this);
-        this.widgets.push(widget);
+    addWidget(widget, id = 0) {
+        if (typeof id == "function")
+            id = id(this.widgetIds.getIdsInUse()); // generate id
+        if (!this.widgetIds.reserveId(id))
+            id = this.widgetIds.generateId(); // if id invalid, generate new
+        widget.attachTo(this, id);
+        this.widgets.set(id, widget);
         this.layers.add(widget);
         this.updateIndividualWidget(widget);
         for (const snapObj of this.snapObjects.values()) {
             widget.pos.addSnapObject(snapObj);
         } // add snap objects
+        return id;
     }
     removeWidget(widget) {
-        const index = this.widgets.indexOf(widget);
-        if (index == -1)
-            return; // widget doesn't exist in the scene
-        this.widgets.splice(index, 1); // remove widget from list
+        if (typeof widget == "number") {
+            if (!this.widgets.has(widget))
+                return false; // widgetId doesn't exist
+            widget = this.widgets.get(widget);
+        }
+        else if (!this.widgets.revHas(widget))
+            return false; // widget doesn't exist
+        this.widgets.revDelete(widget);
         this.layers.remove(widget);
         widget.detachFrom(this);
         if (widget instanceof BasicWire && this.wires.has(widget))
@@ -96,7 +108,7 @@ export class Scene extends FrameworkBase {
         } // remove snap objects
     }
     updateIndividualWidget(widget) {
-        if (!this.widgets.includes(widget))
+        if (!this.widgets.revHas(widget))
             return; // don't try to update invalid widget
         this.updateIndividualWidgetPosition(widget);
         this.updateIndividualWidgetScale(widget);
@@ -132,12 +144,12 @@ export class Scene extends FrameworkBase {
         widget.setZoom(this.draggable.pos.z);
     }
     updateWidgetPosition() {
-        for (const widget of this.widgets) {
+        for (const widget of this.widgets.values()) {
             this.updateIndividualWidgetPosition(widget);
         }
     }
     updateWidgetScale() {
-        for (const widget of this.widgets) {
+        for (const widget of this.widgets.values()) {
             this.updateIndividualWidgetScale(widget);
         }
     }
@@ -155,7 +167,7 @@ export class Scene extends FrameworkBase {
         this.updateWidgetScale();
     }
     setWidgetPos(widget, x, y) {
-        if (!this.widgets.includes(widget))
+        if (!this.widgets.revHas(widget))
             return;
         const bounds = this.el.getBoundingClientRect();
         // include x/y position of scene
@@ -168,7 +180,7 @@ export class Scene extends FrameworkBase {
         this.draggable.setOffsetTo(bounds.x / 2, bounds.y / 2);
     }
     addGlobalSnapObject(obj) {
-        for (const widget of this.widgets) {
+        for (const widget of this.widgets.values()) {
             widget.pos.addSnapObject(obj);
         }
         const id = this.nextSnapObjectId++;
@@ -178,7 +190,7 @@ export class Scene extends FrameworkBase {
     removeGlobalSnapObject(obj) {
         if (typeof obj == "number")
             obj = this.snapObjects.get(obj);
-        for (const widget of this.widgets) {
+        for (const widget of this.widgets.values()) {
             widget.pos.removeSnapObject(obj);
         }
         let id = -1;

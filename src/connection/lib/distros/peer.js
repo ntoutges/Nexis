@@ -20,7 +20,6 @@ export class PeerClient extends ClientBase {
         this.peer = new connection.Peer(this.fullId);
         this.peer.on("open", (id) => {
             this.setReadyState(this.id, true); // self is ready
-            console.log("ready to send!");
         });
         this.peer.on("connection", (conn) => {
             conn.on("data", (data) => {
@@ -80,7 +79,6 @@ export class PeerClient extends ClientBase {
         conn.on("open", () => {
             this.conns.set(id, conn);
             this.toggleReadyStateTo(id, true);
-            console.log("open");
             resolve(true);
         });
         conn.on("data", (data) => {
@@ -100,6 +98,9 @@ export class PeerClient extends ClientBase {
     get fullId() { return this.conn.getFullId(this.id); }
     getConn(id) {
         return this.conns.get(id) ?? null;
+    }
+    async destroyClient() {
+        this.peer.destroy();
     }
 }
 export class PeerChannel extends ChannelBase {

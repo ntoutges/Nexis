@@ -26,6 +26,7 @@ export class Widget extends FrameworkBase {
   readonly elListener = new ElementListener<"move" | "detach">();
 
   protected _scene: Scene = null;
+  private _id: number;
   private layer: number; // used to store layer until attached to a scene
 
   readonly positioning: number;
@@ -43,7 +44,7 @@ export class Widget extends FrameworkBase {
 
   constructor({
     name, style,
-    content,
+    content = document.createElement("div"),
     positioning = 1,
     doZoomScale = true,
     layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
@@ -140,10 +141,13 @@ export class Widget extends FrameworkBase {
   //   }
   // }
 
-  attachTo(scene: Scene) {
+  attachTo(scene: Scene, id: number) {
     const isFirstScene = this._scene == null;
     if (!isFirstScene) this.detachFrom(this._scene);
     this._scene = scene;
+    this._id = id;
+    this.element.setAttribute("id", `framework-widget-i${id}`)
+
     this.sceneDraggableListener.updateValidity();
     this.sceneElementListener.updateValidity();
     this.sceneInterListener.updateValidity();
@@ -405,7 +409,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
     this.doAutoClose = false;
   }
 
-  // format: <value>/<name>/<icon>/<shortcut>
+  // format: <value>/<name>/<icon>,<icon-2>,.../<shortcut>
   static itemBuilder(input: string): ContextMenuItem {
     const parts = input.split("/");
 
@@ -415,7 +419,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
     buildData.value = parts[0];
 
     if (parts.length > 1 && parts[1].trim()) buildData.name = parts[1];
-    if (parts.length > 2 && parts[2].trim()) buildData.icon = parts[2];
+    if (parts.length > 2 && parts[2].trim()) buildData.icon = parts[2].split(",");
     if (parts.length > 3 && parts[3].trim()) buildData.shortcut = parts[3];
 
     return new ContextMenuItem(buildData);

@@ -18,6 +18,7 @@ export class Widget extends FrameworkBase {
     addons = new AddonContainer(this);
     elListener = new ElementListener();
     _scene = null;
+    _id;
     layer; // used to store layer until attached to a scene
     positioning;
     doZoomScale;
@@ -28,7 +29,7 @@ export class Widget extends FrameworkBase {
     bounds = new Pos({});
     align = { x: 0, y: 0 };
     name;
-    constructor({ name, style, content, positioning = 1, doZoomScale = true, layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
+    constructor({ name, style, content = document.createElement("div"), positioning = 1, doZoomScale = true, layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
     pos = {}, resize, contextmenu = [], addons = {} }) {
         super({
             name: `${name}-widget widget`,
@@ -103,11 +104,13 @@ export class Widget extends FrameworkBase {
     //     "y": this.el.offsetHeight * scale
     //   }
     // }
-    attachTo(scene) {
+    attachTo(scene, id) {
         const isFirstScene = this._scene == null;
         if (!isFirstScene)
             this.detachFrom(this._scene);
         this._scene = scene;
+        this._id = id;
+        this.element.setAttribute("id", `framework-widget-i${id}`);
         this.sceneDraggableListener.updateValidity();
         this.sceneElementListener.updateValidity();
         this.sceneInterListener.updateValidity();
@@ -334,7 +337,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
     blockClosing() {
         this.doAutoClose = false;
     }
-    // format: <value>/<name>/<icon>/<shortcut>
+    // format: <value>/<name>/<icon>,<icon-2>,.../<shortcut>
     static itemBuilder(input) {
         const parts = input.split("/");
         const buildData = { value: "" };
@@ -344,7 +347,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
         if (parts.length > 1 && parts[1].trim())
             buildData.name = parts[1];
         if (parts.length > 2 && parts[2].trim())
-            buildData.icon = parts[2];
+            buildData.icon = parts[2].split(",");
         if (parts.length > 3 && parts[3].trim())
             buildData.shortcut = parts[3];
         return new ContextMenuItem(buildData);

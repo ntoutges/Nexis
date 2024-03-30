@@ -34,7 +34,7 @@ export class DraggableWidget extends Widget {
     doCursorDragIcon=true,
     doDragAll=false,
     options,
-    content,
+    content=document.createElement("div"),
     name,
     resize,
     contextmenu=[],
@@ -227,8 +227,8 @@ export class DraggableWidget extends Widget {
     this.draggable?.setZoom(z);
   }
 
-  attachTo(scene: Scene): void {
-    super.attachTo(scene);
+  attachTo(scene: Scene, id: number): void {
+    super.attachTo(scene, id);
 
     if (!this.draggable) {
       if (this.doDragAll) {

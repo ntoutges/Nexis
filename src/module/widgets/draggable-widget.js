@@ -17,7 +17,7 @@ export class DraggableWidget extends Widget {
     isClosing = false;
     isExpanding = false;
     draggableInfo = { scrollX: true, scrollY: true };
-    constructor({ layer, positioning, pos, style, header = {}, doCursorDragIcon = true, doDragAll = false, options, content, name, resize, contextmenu = [], doZoomScale, addons }) {
+    constructor({ layer, positioning, pos, style, header = {}, doCursorDragIcon = true, doDragAll = false, options, content = document.createElement("div"), name, resize, contextmenu = [], doZoomScale, addons }) {
         const container = document.createElement("div");
         const headerEl = document.createElement("div");
         const body = document.createElement("div");
@@ -175,8 +175,8 @@ export class DraggableWidget extends Widget {
         super.setZoom(z); // just in case this is eventually implemented in parent class
         this.draggable?.setZoom(z);
     }
-    attachTo(scene) {
-        super.attachTo(scene);
+    attachTo(scene, id) {
+        super.attachTo(scene, id);
         if (!this.draggable) {
             if (this.doDragAll) {
                 this.draggable = new Draggable({

@@ -11,6 +11,14 @@ export class ConnectionBase {
             this.clients.set(id, this.createNewClient(id, heartbeatInterval));
         return this.clients.get(id);
     }
+    destroyClient(id) {
+        if (!this.clients.has(id))
+            return;
+        const client = this.clients.get(id);
+        this.clients.delete(id);
+        if (!client.isDestroyed)
+            client.destroy();
+    }
     getClient(id) {
         return this.clients.get(id) ?? null;
     }
@@ -46,6 +54,7 @@ export class ClientBase {
     listener = new Listener();
     errListener = new Listener();
     readyStates = new Set();
+    _isDestroyed = false;
     hbInterval;
     constructor(id, connection, heartbeatInterval) {
         this.id = id;
@@ -68,7 +77,7 @@ export class ClientBase {
                 this.dmChannel.sendControlMessage({
                     hb: {
                         id: this.id,
-                        interval: this.hbInterval.interval
+                        interval: this.hbInterval.getInterval()
                     }
                 }, id); // send control message to all
             }, 1000); // need to figure out why this is needed...
@@ -397,6 +406,17 @@ export class ClientBase {
             this.clientHeartbeats.delete(id);
         }
     }
+    async destroy() {
+        this.routerId = null; // disconnect from router
+        const promises = [];
+        this.clients.forEach((_, clientId) => {
+            promises.push(this.disconnectFrom(clientId));
+        });
+        this.listener.clear();
+        await this.destroyClient();
+        this.conn.destroyClient(this.id);
+    }
+    get isDestroyed() { return this._isDestroyed; }
 }
 export class ChannelBase {
     requestIds = new Ids();

@@ -23,7 +23,7 @@ export interface CommonWidgetInterface extends CommonFrameworkInterface {
 type contextmenuType = Record<string, { el: HTMLElement | HTMLElement, options: string }>;
 export interface BasicWidgetInterface extends CommonWidgetInterface {
   name: string
-  content: HTMLElement
+  content?: HTMLElement
 }
 
 export interface headerOption {
