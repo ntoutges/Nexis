@@ -32,6 +32,7 @@ export class GridWidget extends Widget {
             contextmenu,
             addons
         });
+        this.addInitParams({ options, doCursorDragIcon, doIndependentCenter, gridChangeScaleFactor }, ["name"]);
         this.step = Math.max(options?.grid?.size, 10) || 50;
         this.gridColor = options?.grid?.color || "lightgrey";
         this.megaStep = Math.max(options?.megagrid?.size, 2) || 5;

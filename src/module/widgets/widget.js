@@ -16,7 +16,7 @@ export class Widget extends FrameworkBase {
     transformations = new Map();
     contextmenus = {};
     addons = new AddonContainer(this);
-    elListener = new ElementListener();
+    elListener = new ElementListener(300);
     _scene = null;
     _id;
     layer; // used to store layer until attached to a scene
@@ -36,6 +36,7 @@ export class Widget extends FrameworkBase {
             children: [content],
             style, resize
         });
+        this.addInitParams({ name, positioning, doZoomScale, layer, pos });
         this.name = name;
         this.elListener.observe(this.el);
         this.positioning = positioning;
@@ -163,6 +164,7 @@ export class Widget extends FrameworkBase {
         });
     }
     get isBuilt() { return true; } // used by types like GlobalSingleUseWidget for scene optimization
+    get doSaveWidget() { return true; }
     manualResizeTo(d) {
         if (this.scene)
             d.scale = this.scene.draggable.pos.z; // update scale if this.scene exists
@@ -170,6 +172,22 @@ export class Widget extends FrameworkBase {
     }
     get doImmediateSceneAppend() { return true; }
     get isMovementExempt() { return !this.isBuilt || this.positioning === 0; }
+    getId() { return this._id; }
+    save() {
+        return {
+            ...super.save(),
+            id: this._id,
+            type: this.constructor.name,
+            pos: {
+                x: this.pos.getPosComponent("x"),
+                y: this.pos.getPosComponent("y")
+            },
+            addons: this.addons.save()
+        };
+    }
+    load(data) {
+        this.pos.setPos(data.pos);
+    }
 }
 const globalSingleUseWidgetMap = new Map();
 export class GlobalSingleUseWidget extends Widget {
@@ -210,6 +228,7 @@ export class GlobalSingleUseWidget extends Widget {
         }
     }
     get isBuilt() { return this._isBuilt; }
+    get doSaveWidget() { return false; } // by default: don't save GlobalSingleUseWidgets
     static unbuildType(type) {
         if (globalSingleUseWidgetMap.has(type)) {
             globalSingleUseWidgetMap.get(type).unbuild();
@@ -235,7 +254,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
             doZoomScale: false
         });
         container.classList.add("framework-contextmenu-containers");
-        container.addEventListener("mousedown", (e) => { e.stopPropagation(); }); // block dragging
+        container.addEventListener("pointerdown", (e) => { e.stopPropagation(); }); // block dragging
         container.addEventListener("contextmenu", (e) => { e.preventDefault(); }); // prevent real context-menu on fake context-menu
         if (items.length > 0) {
             if (items[0] instanceof ContextMenuSection)

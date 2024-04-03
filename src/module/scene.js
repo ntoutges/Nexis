@@ -7,7 +7,7 @@ import { GlobalSingleUseWidget } from "./widgets/widget.js";
 import { Pos } from "./pos.js";
 import { BasicWire } from "./widgets/wire.js";
 import { Ids } from "./ids.js";
-import { RevMap } from "./widgets/revMap.js";
+import { RevMap } from "./revMap.js";
 var sceneIdentifiers = 0;
 export class Scene extends FrameworkBase {
     draggable;
@@ -24,6 +24,9 @@ export class Scene extends FrameworkBase {
     layers = new Layers();
     wires = new Set();
     encapsulator = null;
+    loadClasses = {
+        widget: new Map()
+    };
     constructor({ parent = null, options = {}, style, widgets = [], doStartCentered = false, resize, encapsulator = null }) {
         super({
             name: "scene",
@@ -56,8 +59,9 @@ export class Scene extends FrameworkBase {
             if (isNew)
                 this.el.addEventListener(type, this.elListener.trigger.bind(this.elListener, type));
         });
-        this.elListener.on("mousedown", () => { GlobalSingleUseWidget.unbuildType("contextmenu"); });
+        this.elListener.on("pointerdown", () => { GlobalSingleUseWidget.unbuildType("contextmenu"); });
         this.resizeListener.observe(this.el);
+        // this.resizeListener.setResizePoll(1000);
         this.resizeListener.on("resize", () => {
             const width = this.el.offsetWidth;
             const height = this.el.offsetHeight;
@@ -106,6 +110,9 @@ export class Scene extends FrameworkBase {
         for (const snapObj of this.snapObjects.values()) {
             widget.pos.removeSnapObject(snapObj);
         } // remove snap objects
+    }
+    getWidgetById(id) {
+        return this.widgets.get(id, null);
     }
     updateIndividualWidget(widget) {
         if (!this.widgets.revHas(widget))
@@ -220,6 +227,36 @@ export class Scene extends FrameworkBase {
         scene.encapsulator = null;
         this.nestedScenes.splice(i, 1);
         return true; // successfully removed
+    }
+    addLoadClass(type, classname) {
+        this.loadClasses[type].set(classname.name, classname);
+    }
+    save() {
+        const widgetSave = {};
+        this.widgets.forEach((widget, key) => {
+            if (widget.doSaveWidget)
+                widgetSave[key] = widget.save();
+        });
+        return {
+            widgets: widgetSave,
+            nested: this.nestedScenes.map(scene => scene.save())
+        };
+    }
+    load(state) {
+        const widgets = new Map();
+        for (const widgetId in state.widgets) {
+            const data = state.widgets[widgetId];
+            const type = data.type;
+            if (this.loadClasses.widget.has(type)) {
+                const loaded = new (this.loadClasses.widget.get(type))(data.params);
+                const id = this.addWidget(loaded, data.id);
+                widgets.set(id, loaded);
+            }
+        }
+        for (const [widgetId, widget] of widgets) {
+            const data = state.widgets[widgetId];
+            widget.load(data);
+        }
     }
 }
 //# sourceMappingURL=scene.js.map

@@ -70,7 +70,10 @@ export class Listener {
         if (this.pollingIntervals.has(type)) { // modify existing SmartInterval
             this.pollingIntervals.get(type).setInterval(period);
         }
-        this.pollingCallbacks.set(type, [() => { return null; }, period ?? 400]); // create new entry
+        if (this.pollingCallbacks.has(type)) {
+            const func = this.pollingCallbacks.get(type)[0];
+            this.pollingCallbacks.set(type, [func, period ?? 400]); // create new entry
+        }
     }
     /**
      * An event that triggers once, after which, sends an immediate event to any listeners that connect
@@ -190,9 +193,11 @@ export class Listener {
 export class ElementListener extends Listener {
     elements = new Set();
     resizeObserver = new ResizeObserver(this.triggerElementResize.bind(this));
-    constructor() {
+    animationPeriod = 0;
+    constructor(animationPeriod = 0) {
         super();
         this.setRateLimit("resize", 100); // non-absurd rate-limit number
+        this.setAnimationTime(animationPeriod);
     }
     observe(el) {
         this.elements.add(el);
@@ -202,11 +207,15 @@ export class ElementListener extends Listener {
         this.elements.delete(el);
         this.resizeObserver.unobserve(el);
     }
+    setAnimationTime(period) {
+        this.animationPeriod = period;
+    }
     triggerElementResize(entries) {
-        const context = this;
-        entries.forEach((entry) => {
-            context.trigger("resize", entry.target);
-        });
+        entries.forEach(entry => this.trigger("resize", entry.target));
+        if (this.animationPeriod > 0)
+            setTimeout(() => {
+                entries.forEach(entry => this.trigger("resize", entry.target));
+            }, this.animationPeriod);
     }
 }
 //# sourceMappingURL=listener.js.map

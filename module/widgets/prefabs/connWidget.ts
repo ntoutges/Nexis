@@ -71,6 +71,7 @@ export class ConnWidget extends DraggableWidget {
         }
       }
     });
+    this.addInitParams({ wireType }, "*");
 
     this.contextmenus.header.listener.on("click", (item) => {
       switch (item.value) {
@@ -247,6 +248,7 @@ export class ConnConsole extends DraggableWidget {
       },
       doDragAll: true
     });
+    this.addInitParams({ wireType }, "*");
 
     this.terminalBody.classList.add("framework-prefab-connsole-bodies");
     this.terminalInput.classList.add("framework-prefab-connsole-inputs");

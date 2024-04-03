@@ -69,17 +69,17 @@ export class Draggable {
       if (Array.isArray(element)) {
         if (element.length == 0) throw new Error("Draggable must have at least one [element] (got 0)");
         for (const el of element) {
-          el.addEventListener("mousedown", this.initDrag.bind(this));
+          el.addEventListener("pointerdown", this.initDrag.bind(this));
           el.addEventListener("wheel", this.onScroll.bind(this)); 
         }
       }
       else {
-        element.addEventListener("mousedown", this.initDrag.bind(this));
+        element.addEventListener("pointerdown", this.initDrag.bind(this));
         element.addEventListener("wheel", this.onScroll.bind(this));
       }
 
       for (const el of periphery) {
-        if (this.blockDrag) el.addEventListener("mousedown", (e) => {
+        if (this.blockDrag) el.addEventListener("pointerdown", (e) => {
           e.stopPropagation();
           this.listener.trigger("selected", this);
         });
@@ -299,12 +299,12 @@ export class Draggable {
 
   changeViewport(viewport: HTMLElement) {
     if (this.viewport) { // remove old listeners
-      this.viewport.removeEventListener("mousemove", this.doDragBound);
-      this.viewport.removeEventListener("mousemove", this.endDragBound);
+      this.viewport.removeEventListener("pointermove", this.doDragBound);
+      this.viewport.removeEventListener("pointermove", this.endDragBound);
     }
     // add new listeners
-    viewport.addEventListener("mousemove", this.doDragBound);
-    viewport.addEventListener("mouseup", this.endDragBound);
+    viewport.addEventListener("pointermove", this.doDragBound);
+    viewport.addEventListener("pointerup", this.endDragBound);
     this.viewport = viewport;
   }
 

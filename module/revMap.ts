@@ -29,4 +29,8 @@ export class RevMap<Key, Val> {
 
   keys() { return this.forwards.keys(); }
   values() { return this.forwards.values(); }
+
+  forEach(callback: (value: Val, key: Key, map: Map<Key,Val>) => void) {
+    this.forwards.forEach(callback);
+  }
 }

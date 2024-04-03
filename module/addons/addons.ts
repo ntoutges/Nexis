@@ -13,9 +13,9 @@ export class AddonContainer {
   protected readonly topEdge = new AddonEdge(this, "top");
   protected readonly bottomEdge = new AddonEdge(this, "bottom");
 
-  protected readonly addonIdEdgeMap = new Map<string, {edge: AddonEdge, id: number}>();
+  protected readonly addonIdEdgeMap = new Map<string, { edge: AddonEdge, id: number }>();
   readonly widget: Widget;
-  
+
   constructor(widget: Widget) {
     this.el.classList.add("framework-addon-containers");
     this.widget = widget;
@@ -28,7 +28,7 @@ export class AddonContainer {
   updateAddonPositions() {
     const width = this.el.offsetWidth;
     const height = this.el.offsetHeight;
-    
+
     this.leftEdge.setSize(height);
     this.rightEdge.setSize(height);
     this.topEdge.setSize(width);
@@ -61,7 +61,7 @@ export class AddonContainer {
     return data.edge.get(data.id);
   }
 
-  private getEdge(side: "top" | "bottom" | "left" | "right") {
+  getEdge(side: "top" | "bottom" | "left" | "right") {
     switch (side) {
       case "top":
         return this.topEdge;
@@ -82,6 +82,15 @@ export class AddonContainer {
     const distance = Math.abs(r1Pos - r2Pos);
     return distance < (r1Size + r2Size) / 2;
   }
+
+  save(): Record<string, any> {
+    return {
+      left: this.leftEdge.save(),
+      right: this.rightEdge.save(),
+      top: this.topEdge.save(),
+      bottom: this.bottomEdge.save()
+    };
+  }
 }
 
 // TODO: make items overflow into custom "overflow addon"
@@ -91,10 +100,10 @@ export class AddonEdge {
   private readonly addons = new Map<number, Addon>();
   private readonly addonListeners = new Map<number, number[]>();
   private size: number = 0;
-  
+
   readonly direction: "top" | "bottom" | "left" | "right";
-  readonly normal: { x: -1 | 0 | 1, y: -1 | 0 | 1 } = { x:0, y:0 };
-  
+  readonly normal: { x: -1 | 0 | 1, y: -1 | 0 | 1 } = { x: 0, y: 0 };
+
   readonly addonContainer: AddonContainer;
 
   constructor(addonContainer: AddonContainer, direction: "top" | "bottom" | "left" | "right") {
@@ -122,8 +131,8 @@ export class AddonEdge {
   add(addon: Addon): number {
     const id = this.ids.generateId();
     this.addons.set(id, addon);
-    addon.attachTo(this);
-    
+    addon.attachTo(this, id);
+
     const listenerIds: number[] = [];
     listenerIds.push(addon.listener.on("positioning", this.updatePosition.bind(this)));
     listenerIds.push(addon.listener.on("size", this.updatePosition.bind(this)));
@@ -143,7 +152,7 @@ export class AddonEdge {
     const listenerIds = this.addonListeners.get(id);
 
     for (const id of listenerIds) { addon.listener.off(id); } // stop listening to addon
-    
+
     this.addons.delete(id);
     this.updatePosition();
     return true;
@@ -176,7 +185,7 @@ export class AddonEdge {
       if (intersections.length >= 1) { // intersects with something, position needs to change
         if (intersections.length >= 2) { // more than one intersection; need to 
           addonGroups.add.apply(addonGroups, [].concat(intersections)); // combine all groups that intersect original addon into one group
-        
+
           // update newly combined group data
           this.updateGroupData(addonGroups, intersections[0]);
         }
@@ -207,7 +216,7 @@ export class AddonEdge {
       addonGroups.forEach((group, data, brk) => {
         const intersects = this.groupIntersectsGroup(group[0], addonGroups);
         if (intersects.length == 0) return;
-        
+
         const otherGroup = addonGroups.get(intersects[0]);
         const otherData = addonGroups.getGroupData(intersects[0]);
 
@@ -222,7 +231,7 @@ export class AddonEdge {
 
         const thisPosDiff = posDiff * thisWeight / totalWeight;
         const otherPosDiff = posDiff * otherWeight / totalWeight;
-        
+
         for (const addon of group) {
           addon.position += thisPosDiff;
         }
@@ -233,7 +242,7 @@ export class AddonEdge {
         addonGroups.add(group[0], otherGroup[0]); // combine groups
 
         this.updateGroupData(addonGroups, group[0]);
-        
+
         wasDiff = true;
         brk();
       });
@@ -266,7 +275,7 @@ export class AddonEdge {
   ) {
     const intersectedAddons: Addon[] = [];
 
-    addonGroups.forEach((group,data) => {
+    addonGroups.forEach((group, data) => {
       // intersection between group and addon
       if (addon.intersectsRegion(data.pos, data.size)) {
         intersectedAddons.push(group[0]); // only need to store one element in the group (groups are garunteed not to be empty)
@@ -285,11 +294,11 @@ export class AddonEdge {
 
     const intersectedAddons: Addon[] = [];
 
-    addonGroups.forEach((group,data) => {
+    addonGroups.forEach((group, data) => {
       if (group == addonGroup) return; // don't compare to self
       // intersection between group and addon
       if (AddonContainer.regionsIntersect(
-        addonGroupData.pos,addonGroupData.size,
+        addonGroupData.pos, addonGroupData.size,
         data.pos, data.size
       )) {
         intersectedAddons.push(group[0]); // only need to store one element in the group (groups are garunteed not to be empty)
@@ -314,9 +323,17 @@ export class AddonEdge {
     r1Pos: number, r1Size: number,
     r2Pos: number, r2Size: number
   ) {
-    const leftDist = Math.abs((r1Pos - r1Size/2) - (r2Pos + r2Size/2)); // distance traveled to move left (negative dir)
-    const rightDist = Math.abs((r1Pos + r1Size/2) - (r2Pos - r2Size/2)); // distance traveled to move right (positive dir)
+    const leftDist = Math.abs((r1Pos - r1Size / 2) - (r2Pos + r2Size / 2)); // distance traveled to move left (negative dir)
+    const rightDist = Math.abs((r1Pos + r1Size / 2) - (r2Pos - r2Size / 2)); // distance traveled to move right (positive dir)
     return leftDist < rightDist ? -leftDist : rightDist;
+  }
+
+  save(): Record<string, any> {
+    const save = {};
+    for (const [id, addon] of this.addons) {
+      save[id] = addon.save();
+    }
+    return save;
   }
 }
 
@@ -342,9 +359,11 @@ export class Addon {
   protected moveId: number;
   protected closeId: number;
 
-  protected interWidgetListener = new AttachableListener<string, any>(() => this.addonContainer?.widget.sceneInterListener );
-  protected sceneElListener = new AttachableListener<string, Event>(() => this.addonContainer?.widget?.sceneElementListener );
-  
+  protected interWidgetListener = new AttachableListener<string, any>(() => this.addonContainer?.widget.sceneInterListener);
+  protected sceneElListener = new AttachableListener<string, Event>(() => this.addonContainer?.widget?.sceneElementListener);
+
+  private id: number = null;
+
   constructor({
     content,
     positioning = 0.5, // default is centered
@@ -362,8 +381,9 @@ export class Addon {
     this.contentEl = content;
   }
 
-  attachTo(addonEdge: AddonEdge) {
+  attachTo(addonEdge: AddonEdge, id: number) {
     addonEdge.el.append(this.el);
+    this.id = id;
 
     if (this.addonEdge) { // remove old listeners
       const newWidget = this.addonEdge.addonContainer.widget;
@@ -381,7 +401,7 @@ export class Addon {
     this.sceneElListener.updateValidity();
   }
 
-  get normal() { return this.addonEdge ? this.addonEdge.normal : { x:0, y:0 }; }
+  get normal() { return this.addonEdge ? this.addonEdge.normal : { x: 0, y: 0 }; }
 
   get addonContainer() { return this.addonEdge?.addonContainer; }
 
@@ -392,17 +412,17 @@ export class Addon {
   get position() { return this._position; }
 
   set size(newSize) {
-    this._size = Math.max(1,newSize);;
+    this._size = Math.max(1, newSize);;
     this.listener.trigger("size", this);
     this.el.style.width = `${this._size}px`;
     this.el.style.height = `${this._size}px`;
   }
   set circleness(newCircleness) {
-    this._circleness = Math.max(0,Math.min(1,newCircleness));
-    this.el.style.borderRadius = `${50*this._circleness}%`;
+    this._circleness = Math.max(0, Math.min(1, newCircleness));
+    this.el.style.borderRadius = `${50 * this._circleness}%`;
   }
   set positioning(newPositioning) {
-    this._positioning = Math.max(0,Math.min(1,newPositioning));
+    this._positioning = Math.max(0, Math.min(1, newPositioning));
     this.listener.trigger("positioning", this);
   }
   // set weight(newWeight) { 
@@ -432,19 +452,36 @@ export class Addon {
       const bounds = this.addonContainer.widget.element.getBoundingClientRect();
       return draggable.toSceneSpace(
         bounds.left,
-        bounds.top + bounds.height/2
+        bounds.top + bounds.height / 2
       );
     }
 
     return draggable.toSceneSpace(
-      bounds.left + bounds.width/2, // add size/2 to get centered x
-      bounds.top + bounds.height/2 // add size/2 to get centered y
+      bounds.left + bounds.width / 2, // add size/2 to get centered x
+      bounds.top + bounds.height / 2 // add size/2 to get centered y
     );
+  }
+
+  save() {
+    return {
+      type: this.constructor.name,
+      id: this.id,
+      edge: this.addonEdge?.direction,
+      widget: this.addonContainer?.widget.getId()
+    };
+  }
+
+  saveRef() {
+    return {
+      id: this.id,
+      edge: this.addonEdge.direction,
+      widget: this.addonContainer.widget.getId()
+    };
   }
 }
 
 export class AddonTest extends Addon {
-  constructor(color="black", size=16, positioning=0.5) {
+  constructor(color = "black", size = 16, positioning = 0.5) {
     const content = document.createElement("div");
     content.style.background = color;
     content.style.width = "100%";
@@ -453,6 +490,6 @@ export class AddonTest extends Addon {
       content,
       size,
       positioning
-    })
+    });
   }
 }

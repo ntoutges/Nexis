@@ -68,6 +68,14 @@ export class AddonContainer {
         const distance = Math.abs(r1Pos - r2Pos);
         return distance < (r1Size + r2Size) / 2;
     }
+    save() {
+        return {
+            left: this.leftEdge.save(),
+            right: this.rightEdge.save(),
+            top: this.topEdge.save(),
+            bottom: this.bottomEdge.save()
+        };
+    }
 }
 // TODO: make items overflow into custom "overflow addon"
 export class AddonEdge {
@@ -102,7 +110,7 @@ export class AddonEdge {
     add(addon) {
         const id = this.ids.generateId();
         this.addons.set(id, addon);
-        addon.attachTo(this);
+        addon.attachTo(this, id);
         const listenerIds = [];
         listenerIds.push(addon.listener.on("positioning", this.updatePosition.bind(this)));
         listenerIds.push(addon.listener.on("size", this.updatePosition.bind(this)));
@@ -245,6 +253,13 @@ export class AddonEdge {
         const rightDist = Math.abs((r1Pos + r1Size / 2) - (r2Pos - r2Size / 2)); // distance traveled to move right (positive dir)
         return leftDist < rightDist ? -leftDist : rightDist;
     }
+    save() {
+        const save = {};
+        for (const [id, addon] of this.addons) {
+            save[id] = addon.save();
+        }
+        return save;
+    }
 }
 ;
 export class Addon {
@@ -261,6 +276,7 @@ export class Addon {
     closeId;
     interWidgetListener = new AttachableListener(() => this.addonContainer?.widget.sceneInterListener);
     sceneElListener = new AttachableListener(() => this.addonContainer?.widget?.sceneElementListener);
+    id = null;
     constructor({ content, positioning = 0.5, // default is centered
     // weight = 100,
     circleness = 1, size = 16 }) {
@@ -272,8 +288,9 @@ export class Addon {
         this.el.append(content);
         this.contentEl = content;
     }
-    attachTo(addonEdge) {
+    attachTo(addonEdge, id) {
         addonEdge.el.append(this.el);
+        this.id = id;
         if (this.addonEdge) { // remove old listeners
             const newWidget = this.addonEdge.addonContainer.widget;
             newWidget.elListener.off(this.moveId);
@@ -338,6 +355,21 @@ export class Addon {
         return draggable.toSceneSpace(bounds.left + bounds.width / 2, // add size/2 to get centered x
         bounds.top + bounds.height / 2 // add size/2 to get centered y
         );
+    }
+    save() {
+        return {
+            type: this.constructor.name,
+            id: this.id,
+            edge: this.addonEdge?.direction,
+            widget: this.addonContainer?.widget.getId()
+        };
+    }
+    saveRef() {
+        return {
+            id: this.id,
+            edge: this.addonEdge.direction,
+            widget: this.addonContainer.widget.getId()
+        };
     }
 }
 export class AddonTest extends Addon {

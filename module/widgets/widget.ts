@@ -23,7 +23,7 @@ export class Widget extends FrameworkBase {
   readonly contextmenus: Record<string, ContextMenu> = {};
   readonly addons = new AddonContainer(this);
 
-  readonly elListener = new ElementListener<"move" | "detach">();
+  readonly elListener = new ElementListener<"move" | "detach">(300);
 
   protected _scene: Scene = null;
   private _id: number;
@@ -58,6 +58,7 @@ export class Widget extends FrameworkBase {
       children: [content],
       style, resize
     });
+    this.addInitParams({ name, positioning, doZoomScale, layer, pos });
 
     this.name = name;
     this.elListener.observe(this.el);
@@ -207,6 +208,7 @@ export class Widget extends FrameworkBase {
   }
 
   get isBuilt(): boolean { return true; } // used by types like GlobalSingleUseWidget for scene optimization
+  get doSaveWidget(): boolean { return true; }
 
   protected manualResizeTo(d: Draggable) {
     if (this.scene) d.scale = this.scene.draggable.pos.z; // update scale if this.scene exists
@@ -214,8 +216,26 @@ export class Widget extends FrameworkBase {
   }
 
   get doImmediateSceneAppend() { return true; }
-
   get isMovementExempt() { return !this.isBuilt || this.positioning === 0; }
+
+  getId() { return this._id; }
+
+  save() {
+    return {
+      ...super.save(),
+      id: this._id,
+      type: this.constructor.name,
+      pos: {
+        x: this.pos.getPosComponent("x"),
+        y: this.pos.getPosComponent("y")
+      },
+      addons: this.addons.save()
+    }
+  }
+
+  load(data: ReturnType<this["save"]>) {
+    this.pos.setPos(data.pos);
+  }
 }
 
 const globalSingleUseWidgetMap = new Map<string, GlobalSingleUseWidget>();
@@ -266,6 +286,7 @@ export abstract class GlobalSingleUseWidget extends Widget {
   }
 
   get isBuilt() { return this._isBuilt; }
+  get doSaveWidget(): boolean { return false; } // by default: don't save GlobalSingleUseWidgets
 
   static unbuildType(type: string) {
     if (globalSingleUseWidgetMap.has(type)) {
@@ -303,7 +324,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
     });
 
     container.classList.add("framework-contextmenu-containers");
-    container.addEventListener("mousedown", (e) => { e.stopPropagation(); }); // block dragging
+    container.addEventListener("pointerdown", (e) => { e.stopPropagation(); }); // block dragging
     container.addEventListener("contextmenu", (e) => { e.preventDefault(); }) // prevent real context-menu on fake context-menu
 
     if (items.length > 0) {

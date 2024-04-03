@@ -9,6 +9,7 @@ export class FrameworkBase {
         draggable: null
     };
     trackedDraggables = [];
+    initParams = {};
     constructor({ name, parent = null, children = [], style, resize = "none" }) {
         this.el.classList.add("frameworks");
         this.resizeData.option = resize;
@@ -39,9 +40,24 @@ export class FrameworkBase {
                 this.el.style[property] = style[property];
             }
         }
+        this.addInitParams({ name, style, resize });
     }
     hide() { this.el.classList.add("hiddens"); }
     show() { this.el.classList.remove("hiddens"); }
+    addInitParams(params, delParams = null) {
+        if (delParams !== null)
+            this.delInitParams(delParams);
+        for (const key in params) {
+            this.initParams[key] = params[key];
+        }
+    }
+    delInitParams(params) {
+        if (params === "*")
+            params = Object.keys(this.initParams); // remove all params
+        for (const key of params) {
+            delete this.initParams[key];
+        }
+    }
     appendTo(parent) {
         parent.append(this.el);
         if (this.resizeData.dragEl) {
@@ -93,5 +109,11 @@ export class FrameworkBase {
             draggable.scale = scale;
         }
     }
+    save() {
+        return {
+            params: this.initParams
+        };
+    }
+    ;
 }
 //# sourceMappingURL=framework.js.map

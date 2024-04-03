@@ -89,7 +89,10 @@ export class Listener<Types, Data> {
     if (this.pollingIntervals.has(type)) { // modify existing SmartInterval
       this.pollingIntervals.get(type).setInterval(period);
     }
-    this.pollingCallbacks.set(type, [ () => { return null; }, period ?? 400 ]); // create new entry
+    if (this.pollingCallbacks.has(type)) {
+      const func = this.pollingCallbacks.get(type)[0];
+      this.pollingCallbacks.set(type, [ func, period ?? 400 ]); // create new entry
+    }
   }
 
   /**
@@ -236,10 +239,12 @@ export class Listener<Types, Data> {
 export class ElementListener<ExtraTypes, ExtraData=void> extends Listener<ExtraTypes | "resize", HTMLElement | ExtraData> {
   private readonly elements = new Set<HTMLElement>();
   private readonly resizeObserver = new ResizeObserver(this.triggerElementResize.bind(this));
+  private animationPeriod: number = 0;
   
-  constructor() {
+  constructor(animationPeriod: number = 0) {
     super();
     this.setRateLimit("resize", 100); // non-absurd rate-limit number
+    this.setAnimationTime(animationPeriod);
   }
 
   observe(el: HTMLElement) {
@@ -252,10 +257,14 @@ export class ElementListener<ExtraTypes, ExtraData=void> extends Listener<ExtraT
     this.resizeObserver.unobserve(el);
   }
 
+  setAnimationTime(period: number) {
+    this.animationPeriod = period;
+  }
+
   private triggerElementResize(entries: ResizeObserverEntry[]) {
-    const context = this;
-    entries.forEach((entry: ResizeObserverEntry) => {
-      context.trigger("resize", entry.target as HTMLElement);
-    });
+    entries.forEach(entry => this.trigger("resize", entry.target as HTMLElement));
+    if (this.animationPeriod > 0) setTimeout(() => {
+      entries.forEach(entry => this.trigger("resize", entry.target as HTMLElement));
+    }, this.animationPeriod);
   }
 }

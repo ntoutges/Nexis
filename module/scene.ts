@@ -9,10 +9,11 @@ import { GlobalSingleUseWidget, Widget } from "./widgets/widget.js";
 import { Grid, Pos } from "./pos.js";
 import { BasicWire } from "./widgets/wire.js";
 import { Ids } from "./ids.js";
-import { RevMap } from "./widgets/revMap.js";
+import { RevMap } from "./revMap.js";
 
 var sceneIdentifiers = 0;
 
+type loadClasses = "widget";
 export class Scene extends FrameworkBase {
   readonly draggable: Draggable;
   readonly identifier = sceneIdentifiers++;
@@ -32,6 +33,10 @@ export class Scene extends FrameworkBase {
   readonly layers = new Layers<Widget>();
   private readonly wires = new Set<BasicWire>();
   protected encapsulator = null;
+
+  private readonly loadClasses: Record<loadClasses, Map<string, { new(...args: any[]): Object }>> = {
+    widget: new Map<string, { new(...args: any[]): Widget }>()
+  }
 
   constructor({
     parent = null,
@@ -75,9 +80,10 @@ export class Scene extends FrameworkBase {
     this.elListener.onListen((type, isNew) => {
       if (isNew) this.el.addEventListener(type, this.elListener.trigger.bind(this.elListener, type));
     });
-    this.elListener.on("mousedown", () => { GlobalSingleUseWidget.unbuildType("contextmenu"); })
+    this.elListener.on("pointerdown", () => { GlobalSingleUseWidget.unbuildType("contextmenu"); })
 
     this.resizeListener.observe(this.el);
+    // this.resizeListener.setResizePoll(1000);
     this.resizeListener.on("resize", () => {
       const width = this.el.offsetWidth;
       const height = this.el.offsetHeight;
@@ -130,6 +136,10 @@ export class Scene extends FrameworkBase {
     if (widget instanceof BasicWire && this.wires.has(widget)) this.wires.delete(widget); // stop tracking wire
 
     for (const snapObj of this.snapObjects.values()) { widget.pos.removeSnapObject(snapObj); } // remove snap objects
+  }
+
+  getWidgetById(id: number): Widget {
+    return this.widgets.get(id, null);
   }
 
   updateIndividualWidget(widget: Widget) {
@@ -271,5 +281,44 @@ export class Scene extends FrameworkBase {
     scene.encapsulator = null;
     this.nestedScenes.splice(i,1);
     return true; // successfully removed
+  }
+
+  addLoadClass(
+    type: loadClasses,
+    classname: { new(...args: any[]): Object }
+  ) {
+    this.loadClasses[type].set(classname.name, classname);
+  }
+
+  save(): Record<string,any> {
+    const widgetSave = {};
+    this.widgets.forEach((widget,key) => {
+      if (widget.doSaveWidget) widgetSave[key] = widget.save();
+    });
+
+    return {
+      widgets: widgetSave,
+      nested: this.nestedScenes.map(scene => scene.save())
+    }
+  }
+
+  load(state: Record<string,any>) {
+    const widgets = new Map<number, Widget>();
+    for (const widgetId in state.widgets) {
+      const data = state.widgets[widgetId];
+      const type = data.type;
+
+      if (this.loadClasses.widget.has(type)) {
+        const loaded = new (this.loadClasses.widget.get(type))(data.params) as Widget;
+        const id = this.addWidget(loaded, data.id);
+        widgets.set(id, loaded);
+      }
+    }
+
+
+    for (const [widgetId, widget] of widgets) {
+      const data = state.widgets[widgetId];
+      widget.load(data);
+    }
   }
 }

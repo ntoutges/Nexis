@@ -5,7 +5,7 @@ import { FrameworkBaseInterface, resizeType } from "./interfaces.js";
 import * as svg from "./svg.js"
 
 
-export class FrameworkBase {
+export abstract class FrameworkBase {
   protected el: HTMLDivElement = document.createElement("div");
   protected readonly resizeData: {
     option: resizeType,
@@ -17,6 +17,7 @@ export class FrameworkBase {
       draggable: null
     };
   private trackedDraggables: Draggable[] = [];
+  private readonly initParams: Record<string,any> = {};
 
   constructor({
     name,
@@ -25,7 +26,6 @@ export class FrameworkBase {
     style,
     resize = "none"
   }: FrameworkBaseInterface) {
-
     this.el.classList.add("frameworks");
     this.resizeData.option = resize;
     const names = name.split(" ");
@@ -52,10 +52,25 @@ export class FrameworkBase {
     if (style) {
       for (const property in style) { this.el.style[property] = style[property]; }
     }
+
+    this.addInitParams({ name,style,resize });
   }
 
   hide() { this.el.classList.add("hiddens"); }
   show() { this.el.classList.remove("hiddens"); }
+
+  addInitParams(params: Record<string,any>): void
+  addInitParams(params: Record<string,any>, delParams: string[] | "*"): void
+  addInitParams(params: Record<string,any>, delParams: string[] | "*" = null) {
+    if (delParams !== null) this.delInitParams(delParams);
+
+    for (const key in params) { this.initParams[key] = params[key]; }
+  }
+
+  delInitParams(params: string[] | "*") {
+    if (params === "*") params = Object.keys(this.initParams); // remove all params
+    for (const key of params) { delete this.initParams[key]; }
+  }
 
   appendTo(parent: HTMLElement) {
     parent.append(this.el);
@@ -106,7 +121,7 @@ export class FrameworkBase {
   protected untrackDraggable(draggable: Draggable) {
     const index = this.trackedDraggables.indexOf(draggable);
     if (index === -1) return false;
-    this.trackedDraggables.splice(index,1);
+    this.trackedDraggables.splice(index, 1);
     return true;
   }
   updateTrackedDraggableScale(scale: number) {
@@ -114,4 +129,10 @@ export class FrameworkBase {
       draggable.scale = scale;
     }
   }
+
+  save(): Record<string, any> {
+    return {
+      params: this.initParams
+    };
+  };
 }

@@ -10,8 +10,8 @@ export class ConnectorAddon<Direction extends string> extends Addon {
   readonly type: string;
   readonly direction: Direction;
 
-  private sceneMousemoveId: number = null;
-  private sceneMouseupId: number = null;
+  private scenepointermoveId: number = null;
+  private scenepointerupId: number = null;
 
   private wireInProgress: BasicWire = null;
   readonly validator: (addon1: Direction, addon2: Direction) => boolean
@@ -53,9 +53,9 @@ export class ConnectorAddon<Direction extends string> extends Addon {
 
     this.updateStyle();
 
-    // prevent mousedown from propagating to some future draggable
-    this.el.addEventListener("mousedown", e => {
-      this.interWidgetListener.trigger(`${type}::mousedown`, this);
+    // prevent pointerdown from propagating to some future draggable
+    this.el.addEventListener("pointerdown", e => {
+      this.interWidgetListener.trigger(`${type}::pointerdown`, this);
       e.stopPropagation();
 
       this.wireInProgress = new BasicWire();
@@ -67,29 +67,29 @@ export class ConnectorAddon<Direction extends string> extends Addon {
       this.wireInProgress.point2.setPos(initialPos[0], initialPos[1]);
       
       // update end position of wire
-      this.sceneMousemoveId = this.sceneElListener.on("mousemove", (e) => {
+      this.scenepointermoveId = this.sceneElListener.on("pointermove", (e) => {
         const [ sceneX, sceneY ] = this.addonContainer.widget.scene.draggable.toSceneSpace((e as MouseEvent).pageX, (e as MouseEvent).pageY)
         this.wireInProgress.point2.setPos(sceneX, sceneY);
       });
 
       // remove wire (dropped somewhere in the scene)
-      this.sceneMouseupId = this.sceneElListener.on("mouseup", () => {
+      this.scenepointerupId = this.sceneElListener.on("pointerup", () => {
         this.disconnectSceneMouseListeners();
         this.removeWireInProgress();
       });
     });
 
     // remove wire (dropped on the input node)
-    this.el.addEventListener("mouseup", e => {
+    this.el.addEventListener("pointerup", e => {
       e.stopPropagation();
-      this.interWidgetListener.trigger(`${type}::mouseup`, this);
+      this.interWidgetListener.trigger(`${type}::pointerup`, this);
 
       this.disconnectSceneMouseListeners();
       this.removeWireInProgress();
     });
 
     // finalize wire (attach to opposite node)
-    this.interWidgetListener.on(`${type}::mouseup`, other => {
+    this.interWidgetListener.on(`${type}::pointerup`, other => {
       if (!this.wireInProgress) return;
       
       if ((this.validator == null) ? true : this.validator(this.direction, (other as ConnectorAddon<Direction>).direction)) {
@@ -124,11 +124,11 @@ export class ConnectorAddon<Direction extends string> extends Addon {
   }
 
   private disconnectSceneMouseListeners() {
-    if (this.sceneMousemoveId == null) return false;
-    this.sceneElListener.off(this.sceneMousemoveId);
-    this.sceneElListener.off(this.sceneMouseupId);
-    this.sceneMousemoveId = null;
-    this.sceneMouseupId = null;
+    if (this.scenepointermoveId == null) return false;
+    this.sceneElListener.off(this.scenepointermoveId);
+    this.sceneElListener.off(this.scenepointerupId);
+    this.scenepointermoveId = null;
+    this.scenepointerupId = null;
     return true;
   }
 
@@ -138,7 +138,7 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     this.wireInProgress = null;
   }
 
-  protected setPoint(point: WirePoint) {
+  setPoint(point: WirePoint) {
     this.points.push({
       point,
       listener: point.listener.on("receive", data => { this.sender.trigger("receive", data); })
@@ -194,4 +194,18 @@ export class ConnectorAddon<Direction extends string> extends Addon {
   get wireCount() {
     return this.points.length;
   }
-}
+
+  // save() {
+  //   return {
+  //     ...super.save(),
+      
+  //   };
+  // }
+
+  // saveRef() {
+  //   return {
+  //     ...super.saveRef(),
+      
+  //   }
+  // }
+};

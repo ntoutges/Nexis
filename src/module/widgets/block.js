@@ -10,6 +10,7 @@ export class BlockWidget extends Widget {
             content: el,
             resize
         });
+        this.addInitParams({}, ["name"]);
     }
 }
 //# sourceMappingURL=block.js.map

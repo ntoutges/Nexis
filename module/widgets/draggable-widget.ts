@@ -75,6 +75,7 @@ export class DraggableWidget extends Widget {
       contextmenu: contextmenu,
       addons
     });
+    this.addInitParams({ header, doCursorDragIcon, doDragAll, options });
 
     this.container = container;
     this.container.classList.add("framework-draggable-widget-containers")
@@ -139,7 +140,7 @@ export class DraggableWidget extends Widget {
         button.addEventListener("mouseenter", this.updateButtonColor.bind(this, button, type, "active"));
         button.addEventListener("mouseleave", this.updateButtonColor.bind(this, button, type, "dormant"));
         this.updateButtonColor(button, type as buttonTypes, "dormant");
-        button.addEventListener("mousedown", (e) => {
+        button.addEventListener("pointerdown", (e) => {
           e.stopPropagation(); // prevent dragging from button
           this._scene.layers.moveToTop(this); // still do select
         });
