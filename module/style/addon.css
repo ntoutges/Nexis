@@ -36,7 +36,10 @@
 
 .framework-addon-edges {
   position: absolute;
-  /* width: 100%; */
+
+  /* use the following for debugging */
+  /* height: 10px;
+  background: orange; */
 }
 
 .framework-addon-edges-left {
@@ -47,7 +50,7 @@
 
 .framework-addon-edges-right {
   right: 0px;
-  transform: rotate(-90deg);
+  transform: rotate(90deg) translateX(100%);
   transform-origin: 100% 0;
 }
 
