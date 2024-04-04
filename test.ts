@@ -1,6 +1,6 @@
 import { Grid, Pos } from "./module/pos.js";
 import { Scene } from "./module/scene.js";
-import { AddonTest } from "./module/addons/addons.js";
+import { Addon, AddonTest } from "./module/addons/addons.js";
 import { DraggableWidget } from "./module/widgets/draggable-widget.js";
 import { GridWidget } from "./module/widgets/grid.js";
 import { ConnectorAddon } from "./module/addons/connector.js";
@@ -36,28 +36,72 @@ const scene = new Scene({
     }
   },
   widgets: [
-    // new GridWidget({
+    new GridWidget({
+      style: {
+        background: "cornsilk"
+      },
+      options: {
+        coords: true
+      },
+      doCursorDragIcon: true
+    }),
+    new ConnWidget({
+      wireType: "data",
+      connections: { "peer": new PeerConnection(Peer, "fw") },
+      validator: connValidator
+    }),
+    new ConnWidget({
+      wireType: "data",
+      connections: { "peer": new PeerConnection(Peer, "fw") },
+      validator: connValidator
+    }),
+    new ConnConsole({
+      wireType: "data",
+      validator: connValidator
+    }),
+    new ConnConsole({
+      wireType: "data",
+      validator: connValidator
+    })
+    // new DraggableWidget({
+    //   name: "addonTest",
+    //   header: {
+    //     title: "Addon Test"
+    //   },
     //   style: {
-    //     background: "cornsilk"
+    //     width: "200px",
+    //     height: "50px"
     //   },
-    //   options: {
-    //     coords: true
+    //   addons: {
+    //     "l1": {
+    //       side: "bottom",
+    //       addon: new Addon({
+    //         content: document.createElement("h1"),
+    //         size: 30
+    //       })
+    //     },
+    //     "l2": {
+    //       side: "bottom",
+    //       addon: new Addon({
+    //         content: document.createElement("div"),
+    //         weight: 10000000
+    //       })
+    //     },
+    //     "l3": {
+    //       side: "bottom",
+    //       addon: new Addon({
+    //         content: document.createElement("div"),
+    //         weight: 10000
+    //       })
+    //     },
+    //     "l4": {
+    //       side: "bottom",
+    //       addon: new Addon({
+    //         content: document.createElement("h1")
+    //       })
+    //     }
     //   },
-    //   doCursorDragIcon: true
-    // }),
-    // new ConnWidget({
-    //   wireType: "data",
-    //   connections: { "peer": new PeerConnection(Peer, "fw") }
-    // }),
-    // new ConnWidget({
-    //   wireType: "data",
-    //   connections: { "peer": new PeerConnection(Peer, "fw") }
-    // }),
-    // new ConnConsole({
-    //   wireType: "data"
-    // }),
-    // new ConnConsole({
-    //   wireType: "data"
+    //   resize: "both"
     // })
   ]
 });
@@ -70,9 +114,3 @@ scene.addLoadClass("widget", BasicWire)
 scene.addLoadClass("widget", ConnConsole);
 scene.addLoadClass("widget", ConnWidget);
 scene.addLoadClass("widget", GridWidget);
-
-scene.load(JSON.parse(`{"widgets":{"0":{"params":{"style":{"background":"cornsilk"},"resize":"none","positioning":0,"doZoomScale":true,"layer":-1,"pos":{},"options":{"coords":true},"doCursorDragIcon":true,"doIndependentCenter":false,"gridChangeScaleFactor":0.4},"id":0,"type":"GridWidget","pos":{"x":0,"y":0},"addons":{"left":{},"right":{},"top":{},"bottom":{}}},"2":{"params":{"wireType":"data"},"id":2,"type":"ConnWidget","pos":{"x":0,"y":0},"addons":{"left":{"1":{"type":"ConnectorAddon","id":1,"edge":"left","widget":2}},"right":{"1":{"type":"ConnectorAddon","id":1,"edge":"right","widget":2},"2":{"type":"ConnectorAddon","id":2,"edge":"right","widget":2}},"top":{},"bottom":{}}},"5":{"params":{"wireType":"data"},"id":5,"type":"ConnWidget","pos":{"x":0,"y":0},"addons":{"left":{"1":{"type":"ConnectorAddon","id":1,"edge":"left","widget":5}},"right":{"1":{"type":"ConnectorAddon","id":1,"edge":"right","widget":5},"2":{"type":"ConnectorAddon","id":2,"edge":"right","widget":5}},"top":{},"bottom":{}}},"8":{"params":{"wireType":"data"},"id":8,"type":"ConnConsole","pos":{"x":-187,"y":-301},"addons":{"left":{"1":{"type":"ConnectorAddon","id":1,"edge":"left","widget":8}},"right":{"1":{"type":"ConnectorAddon","id":1,"edge":"right","widget":8}},"top":{},"bottom":{}}},"12":{"params":{"wireType":"data"},"id":12,"type":"ConnConsole","pos":{"x":205,"y":-239},"addons":{"left":{"1":{"type":"ConnectorAddon","id":1,"edge":"left","widget":12}},"right":{"1":{"type":"ConnectorAddon","id":1,"edge":"right","widget":12}},"top":{},"bottom":{}}},"16":{"params":{},"id":16,"type":"BasicWire","pos":{"x":13,"y":-177},"addons":{"left":{},"right":{},"top":{},"bottom":{}},"wire":{"point1":{"addon":{"type":"ConnectorAddon","id":1,"edge":"right","widget":8},"hasAddon":true},"point2":{"addon":{"type":"ConnectorAddon","id":1,"edge":"left","widget":12},"hasAddon":true}}}},"nested":[]}`))
-
-// setInterval(() => {
-//   console.log(JSON.stringify(scene.save()))
-// }, 1000)

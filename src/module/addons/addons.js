@@ -84,6 +84,7 @@ export class AddonEdge {
     addons = new Map();
     addonListeners = new Map();
     size = 0;
+    _isPositioning = false;
     direction;
     normal = { x: 0, y: 0 };
     addonContainer;
@@ -140,38 +141,26 @@ export class AddonEdge {
         this.updatePosition();
     }
     updatePosition() {
+        this._isPositioning = true; // inhibit movement listeners
         const groups = this.assembleGroups();
         this.positionGroups(groups);
+        this._isPositioning = false;
     }
     // creates groups such that no two elements within a group are overlapping
     assembleGroups() {
         const addonGroups = new Group();
-        for (const addon of this.addons.values()) {
-            const desiredOffset = addon.positioning * this.size;
-            addon.position = desiredOffset;
-            const intersections = this.addonIntersectsGroup(addon, addonGroups);
-            if (intersections.length >= 1) { // intersects with something, position needs to change
-                if (intersections.length >= 2) { // more than one intersection; need to 
-                    addonGroups.add.apply(addonGroups, [].concat(intersections)); // combine all groups that intersect original addon into one group
-                    // update newly combined group data
-                    this.updateGroupData(addonGroups, intersections[0]);
-                }
-                const data = addonGroups.getGroupData(intersections[0]);
-                // adjust element position
-                const posDiff = this.getSmallestDistance(addon, data.pos, data.size);
-                addon.position += posDiff;
-                addonGroups.add(addon, intersections[0]); // add addon to intersections group
-            }
-            else {
-                addonGroups.add(addon); // no element; as such, no position adjustment necessary
-            }
-            // update group data based on new addon element(s)
-            this.updateGroupData(addonGroups, addon);
+        for (const addon of Array.from(this.addons.values()).sort((a, b) => b.weight - a.weight)) {
+            addonGroups.add(addon);
+            const pos = Math.min(Math.max(addon.positioning * this.size, addon.size / 2), this.size - addon.size / 2);
+            addon.position = pos;
+            addonGroups.setGroupData(addon, { pos, size: addon.size });
         }
         return addonGroups;
     }
     // ensures that no two groups are overlapping
     positionGroups(addonGroups) {
+        if (addonGroups.size == 0)
+            return;
         const maxItterations = addonGroups.size; // every loop itteration, size of groups will shrink by 1. If not, then the loop is done!
         for (let i = 0; i < maxItterations; i++) {
             let wasDiff = false;
@@ -179,29 +168,53 @@ export class AddonEdge {
                 const intersects = this.groupIntersectsGroup(group[0], addonGroups);
                 if (intersects.length == 0)
                     return;
+                wasDiff = true;
                 const otherGroup = addonGroups.get(intersects[0]);
                 const otherData = addonGroups.getGroupData(intersects[0]);
-                const posDiff = this.getSmallestDistanceRegion(otherData.pos, otherData.size, data.pos, data.size);
-                const thisWeight = otherData.size;
-                const otherWeight = data.size;
-                const totalWeight = thisWeight + otherWeight;
-                const thisPosDiff = posDiff * thisWeight / totalWeight;
-                const otherPosDiff = posDiff * otherWeight / totalWeight;
+                const otherOffset = this.getSmallestDistanceRegion(data.pos, data.size, otherData.pos, otherData.size);
+                otherGroup.forEach(addon => addon.position += otherOffset); // remove any overlap
+                // combine groups
+                addonGroups.add(group[0], addonGroups.get(intersects[0])[0]);
+                // assume 'group' at offset 0
+                // using formula: offset = sum(weight(addon)*offset(addon)) / sum(weight(addon))
+                let offsetWeight = 0;
+                let totalWeight = 0;
                 for (const addon of group) {
-                    addon.position += thisPosDiff;
+                    const offset = addon.positioning * this.size - addon.position;
+                    const weight = addon.weight;
+                    offsetWeight += offset * weight;
+                    totalWeight += weight;
                 }
-                for (const addon of otherGroup) {
-                    addon.position -= otherPosDiff;
+                const springOffset = offsetWeight / totalWeight;
+                for (const addon of group) {
+                    addon.position += springOffset;
                 }
-                addonGroups.add(group[0], otherGroup[0]); // combine groups
                 this.updateGroupData(addonGroups, group[0]);
-                wasDiff = true;
+                data = addonGroups.getGroupData(group[0]);
+                const top = data.pos - data.size / 2;
+                const bottom = this.size - (data.pos + data.size / 2);
+                if (top < 0) { // ensure no items too high/left
+                    for (const addon of group) {
+                        addon.position -= top;
+                    }
+                    this.updateGroupData(addonGroups, group[0]);
+                    data = addonGroups.getGroupData(group[0]);
+                }
+                else if (bottom < 0) { // ensure no items too low/right, and doesn't push above top
+                    const movement = Math.max(-bottom, top);
+                    for (const addon of group) {
+                        addon.position += movement;
+                    }
+                    this.updateGroupData(addonGroups, group[0]);
+                    data = addonGroups.getGroupData(group[0]);
+                }
                 brk();
             });
             if (!wasDiff)
                 break; // no difference means loop can be stopped
         }
     }
+    get isPositioning() { return this._isPositioning; }
     updateGroupData(addonGroups, groupElement) {
         let min = Infinity;
         let max = -Infinity;
@@ -265,7 +278,7 @@ export class AddonEdge {
 export class Addon {
     _positioning; // number in range [0,1] indicating position within AddonEdge
     _position = 0; // represents the actual position (in px)
-    // private _weight: number;
+    _weight;
     _circleness;
     _size;
     el = document.createElement("div");
@@ -278,10 +291,9 @@ export class Addon {
     sceneElListener = new AttachableListener(() => this.addonContainer?.widget?.sceneElementListener);
     id = null;
     constructor({ content, positioning = 0.5, // default is centered
-    // weight = 100,
-    circleness = 1, size = 16 }) {
+    weight = 100, circleness = 1, size = 16 }) {
         this.positioning = positioning;
-        // this.weight = weight;
+        this.weight = weight;
         this.circleness = circleness;
         this.size = size;
         this.el.classList.add("framework-addons");
@@ -310,7 +322,7 @@ export class Addon {
     get size() { return this._size; }
     get circleness() { return this._circleness; }
     get positioning() { return this._positioning; }
-    // get weight() { return this._weight; }
+    get weight() { return this._weight; }
     get position() { return this._position; }
     set size(newSize) {
         this._size = Math.max(1, newSize);
@@ -325,12 +337,13 @@ export class Addon {
     }
     set positioning(newPositioning) {
         this._positioning = Math.max(0, Math.min(1, newPositioning));
-        this.listener.trigger("positioning", this);
+        if (!this.addonEdge?.isPositioning)
+            this.listener.trigger("positioning", this);
     }
-    // set weight(newWeight) { 
-    //   this._weight = (newWeight > 0) ? newWeight : 0;
-    //   this.listener.trigger("weight", this);
-    // }
+    set weight(newWeight) {
+        this._weight = (newWeight < 1) ? 1 : newWeight;
+        this.listener.trigger("weight", this);
+    }
     set position(newPos) {
         this._position = newPos;
         this.el.style.left = `${newPos}px`;

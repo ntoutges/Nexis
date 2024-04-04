@@ -45,7 +45,7 @@ export class ConnWidget extends DraggableWidget {
                         direction: "output",
                         type: wireType,
                         validator,
-                        positioning: 0.1
+                        positioning: 0.9
                     })
                 }
             },
@@ -113,7 +113,6 @@ export class ConnWidget extends DraggableWidget {
                     this.client = null;
                     this.channel = null;
                     this._connState = 0;
-                    console.log("destroyed");
                 });
                 break;
             case 1: { // connecting
@@ -165,6 +164,7 @@ export class ConnWidget extends DraggableWidget {
     }
 }
 export class ConnConsole extends DraggableWidget {
+    terminalContainer = document.createElement("div");
     terminalBody = document.createElement("div");
     terminalInput = document.createElement("input");
     doAutoscroll = true;
@@ -210,6 +210,7 @@ export class ConnConsole extends DraggableWidget {
             doDragAll: true
         });
         this.addInitParams({ wireType }, "*");
+        this.terminalContainer = container;
         this.terminalBody.classList.add("framework-prefab-connsole-bodies");
         this.terminalInput.classList.add("framework-prefab-connsole-inputs");
         container.append(this.terminalBody, this.terminalInput);
@@ -252,6 +253,9 @@ export class ConnConsole extends DraggableWidget {
             });
             return lineEl;
         }));
+        if (this.doAutoscroll) {
+            this.terminalContainer.scrollTop = this.terminalContainer.scrollHeight;
+        }
     }
     clear() {
         this.terminalInput.value = "";
