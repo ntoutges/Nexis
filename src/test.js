@@ -2,7 +2,6 @@ import { Scene } from "./module/scene.js";
 import { GridWidget } from "./module/widgets/grid.js";
 import { ConnectorAddon } from "./module/addons/connector.js";
 import { BasicWire } from "./module/widgets/wire.js";
-import { PeerConnection } from "./connection/lib/distros/peer.js";
 import { ConnConsole, ConnWidget } from "./module/widgets/prefabs/connWidget.js";
 ConnectorAddon.setStyle("data", "input", { background: "white" });
 ConnectorAddon.setStyle("data", "output", { background: "black" });
@@ -34,16 +33,16 @@ const scene = new Scene({
             },
             doCursorDragIcon: true
         }),
-        new ConnWidget({
-            wireType: "data",
-            connections: { "peer": new PeerConnection(Peer, "fw") },
-            validator: connValidator
-        }),
-        new ConnWidget({
-            wireType: "data",
-            connections: { "peer": new PeerConnection(Peer, "fw") },
-            validator: connValidator
-        }),
+        // new ConnWidget({
+        //   wireType: "data",
+        //   connections: { "peer": new PeerConnection(Peer, "fw") },
+        //   validator: connValidator
+        // }),
+        // new ConnWidget({
+        //   wireType: "data",
+        //   connections: { "peer": new PeerConnection(Peer, "fw") },
+        //   validator: connValidator
+        // }),
         new ConnConsole({
             wireType: "data",
             validator: connValidator

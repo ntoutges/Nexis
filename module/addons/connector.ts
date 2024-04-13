@@ -5,6 +5,10 @@ import { Addon } from "./addons.js";
 const styles = new Map<string, Record<string, string>>();
 const styleUsers = new Map<string, ConnectorAddon<any>[]>();
 
+type config_t = {
+  removeDuplicates: boolean
+};
+
 export class ConnectorAddon<Direction extends string> extends Addon {
   readonly connListener = new Listener<"move", "">();
   readonly type: string;
@@ -14,9 +18,10 @@ export class ConnectorAddon<Direction extends string> extends Addon {
   private scenepointerupId: number = null;
 
   private wireInProgress: BasicWire = null;
-  readonly validator: (addon1: Direction, addon2: Direction) => boolean
+  private readonly validator: (addon1: Direction, addon2: Direction) => boolean
+  private readonly buildConfig: config_t;
 
-  private readonly points: {point: WirePoint, listener: number }[] = [];
+  private readonly points: { point: WirePoint, listener: number, wire: BasicWire }[] = [];
   readonly sender = new Listener<"send" | "receive" | "connect" | "disconnect", any>();
 
   /**
@@ -26,12 +31,14 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     type,
     positioning = 0.5,
     direction,
+    config = {},
     validator = null
   }: {
     positioning?: number
     type: string
     direction: Direction
     validator?: (addon1: Direction, addon2: Direction) => boolean
+    config?: Partial<config_t>
   }) {
     const el = document.createElement("div");
     el.classList.add("framework-addon-connectors", `framework-addon-connectors-${direction}`);
@@ -43,13 +50,18 @@ export class ConnectorAddon<Direction extends string> extends Addon {
       size: 14
     });
 
-    const styleName = ConnectorAddon.getStyleName(type,direction);
+    const styleName = ConnectorAddon.getStyleName(type, direction);
     if (!styleUsers.has(styleName)) styleUsers.set(styleName, []);
     styleUsers.get(styleName).push(this);
 
     this.type = type;
     this.direction = direction;
     this.validator = validator;
+
+    // set defaults in buildConfig
+    this.buildConfig = {
+      removeDuplicates: config.removeDuplicates ?? true
+    };
 
     this.updateStyle();
 
@@ -65,10 +77,10 @@ export class ConnectorAddon<Direction extends string> extends Addon {
 
       const initialPos = this.getPositionInScene();
       this.wireInProgress.point2.setPos(initialPos[0], initialPos[1]);
-      
+
       // update end position of wire
       this.scenepointermoveId = this.sceneElListener.on("pointermove", (e) => {
-        const [ sceneX, sceneY ] = this.addonContainer.widget.scene.draggable.toSceneSpace((e as MouseEvent).pageX, (e as MouseEvent).pageY)
+        const [sceneX, sceneY] = this.addonContainer.widget.scene.draggable.toSceneSpace((e as MouseEvent).pageX, (e as MouseEvent).pageY)
         this.wireInProgress.point2.setPos(sceneX, sceneY);
       });
 
@@ -82,23 +94,35 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     // remove wire (dropped on the input node)
     this.el.addEventListener("pointerup", e => {
       e.stopPropagation();
-      this.interWidgetListener.trigger(`${type}::pointerup`, this);
-
       this.disconnectSceneMouseListeners();
       this.removeWireInProgress();
+
+      this.interWidgetListener.trigger(`${type}::pointerup`, this);
     });
 
     // finalize wire (attach to opposite node)
     this.interWidgetListener.on(`${type}::pointerup`, other => {
       if (!this.wireInProgress) return;
-      
-      if ((this.validator == null) ? true : this.validator(this.direction, (other as ConnectorAddon<Direction>).direction)) {
+
+      let passesBuildConfig = true;
+      if (this.buildConfig.removeDuplicates) { // duplicates not allowed
+        const duplicate = this.getDuplicateWire(other as ConnectorAddon<Direction>);
+        if (duplicate !== null) { // duplicate found
+          duplicate.scene.removeWidget(duplicate);
+          passesBuildConfig = false;
+        }
+      }
+
+      if (
+        passesBuildConfig 
+        && ((this.validator == null) ? true : this.validator(this.direction, (other as ConnectorAddon<Direction>).direction))
+      ) {
         this.disconnectSceneMouseListeners();
         this.wireInProgress.point2.attachToAddon(other as ConnectorAddon<Direction>);
-        
-        this.setPoint(this.wireInProgress.point1);
-        (other as ConnectorAddon<Direction>).setPoint(this.wireInProgress.point2);
-        
+
+        this.setPoint(this.wireInProgress, 1);
+        (other as ConnectorAddon<Direction>).setPoint(this.wireInProgress, 2);
+
         // wire finished, register
         this.addonEdge?.addonContainer.widget?.scene?.registerWire(this.wireInProgress);
 
@@ -138,9 +162,14 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     this.wireInProgress = null;
   }
 
-  setPoint(point: WirePoint) {
+  setPoint(wire: BasicWire, point: 1 | 2): void;
+  setPoint(wire: BasicWire, point: WirePoint): void;
+  setPoint(wire: BasicWire, point: WirePoint | 1 | 2) {
+    if (typeof point == "number") point = (point == 1) ? wire.point1 : wire.point2;
+
     this.points.push({
       point,
+      wire,
       listener: point.listener.on("receive", data => { this.sender.trigger("receive", data); })
     });
     this.sender.trigger("connect", "");
@@ -151,18 +180,18 @@ export class ConnectorAddon<Direction extends string> extends Addon {
   protected removePoint(point: WirePoint) {
     const index = this.points.findIndex(val => val.point == point);
     if (index == -1) return; // invalid point
-    
+
     point.listener.off(this.points[index].listener); // stop listening to point
-    this.points.splice(index,1); // remove point altogether
+    this.points.splice(index, 1); // remove point altogether
     this.sender.trigger("disconnect", "");
   }
 
   static setStyle(
     type: string,
     direction: string,
-    style: Record<string,string>
+    style: Record<string, string>
   ) {
-    const name = ConnectorAddon.getStyleName(type,direction);
+    const name = ConnectorAddon.getStyleName(type, direction);
     styles.set(
       name,
       style
@@ -186,26 +215,44 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     type: string,
     direction: string
   ) {
-    const name = ConnectorAddon.getStyleName(type,direction);
+    const name = ConnectorAddon.getStyleName(type, direction);
     return styles.has(name) ? styles.get(name) : {};
   }
 
   // each wire generates a point, which is put into this array
-  get wireCount() {
-    return this.points.length;
+  get wireCount() { return this.points.length; }
+  get wires() { return this.points.map(data => data.wire); }
+
+  getDuplicateWire(wire: BasicWire): BasicWire
+  getDuplicateWire(point: ConnectorAddon<Direction>): BasicWire
+  getDuplicateWire(wire: BasicWire | ConnectorAddon<Direction>) {
+    let otherAddon: ConnectorAddon<Direction>;
+    if (wire instanceof BasicWire) {
+      if (wire.point1.addon == this) otherAddon = wire.point2.addon as ConnectorAddon<Direction>;
+      else if (wire.point2.addon == this) otherAddon = wire.point2.addon as ConnectorAddon<Direction>;
+      else return null; // wire shares neither point.addon with this addon, so it CANNOT match
+    }
+    else otherAddon = wire; // passing in other addon
+
+    // check if second point matches with given wire
+    for (const pointData of this.points) {
+      const otherWireAddon = (pointData.wire.point1.addon == this) ? pointData.wire.point2.addon : pointData.wire.point1.addon;
+      if (otherWireAddon == otherAddon) return pointData.wire; // found matching wire
+    }
+    return null; // no matching wires found
   }
 
   // save() {
   //   return {
   //     ...super.save(),
-      
+
   //   };
   // }
 
   // saveRef() {
   //   return {
   //     ...super.saveRef(),
-      
+
   //   }
   // }
 };

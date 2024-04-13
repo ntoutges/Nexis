@@ -5,8 +5,8 @@ import { Widget } from "./widget.js";
 export class WirePoint {
     x = 0;
     y = 0;
-    addon;
-    addonListener = new AttachableListener(() => this.addon?.listener);
+    _addon;
+    addonListener = new AttachableListener(() => this._addon?.listener);
     listener = new Listener();
     constructor() {
         // setTimeout to allow position to update after scene position updates (Thanks to JS event system!)
@@ -14,14 +14,15 @@ export class WirePoint {
     }
     attachToAddon(addon) {
         this.listener.trigger("disconnect", this); // detach from any current addon
-        this.addon = addon;
+        this._addon = addon;
         this.addonListener.updateValidity();
         this.updatePosition();
     }
-    get normal() { return this.addon ? this.addon.normal : { x: 0, y: 0 }; }
-    get radius() { return this.addon ? this.addon.size / 2 : 0; }
+    get addon() { return this._addon; }
+    get normal() { return this._addon ? this._addon.normal : { x: 0, y: 0 }; }
+    get radius() { return this._addon ? this._addon.size / 2 : 0; }
     updatePosition() {
-        const pos = this.addon?.getPositionInScene();
+        const pos = this._addon?.getPositionInScene();
         if (!pos)
             return; // invalid (this.addon not yet set, or addon not part of scene)
         this.setPos(pos[0], pos[1]);
@@ -38,8 +39,8 @@ export class WirePoint {
         };
     }
     save() {
-        return this.addon ? {
-            addon: this.addon.saveRef(),
+        return this._addon ? {
+            addon: this._addon.saveRef(),
             hasAddon: true
         } : {
             x: this.x,
@@ -52,7 +53,7 @@ export class WirePoint {
             const widget = scene.getWidgetById(data.addon.widget);
             const addon = widget.addons.getEdge(data.addon.edge).get(data.addon.id);
             this.attachToAddon(addon);
-            addon.setPoint(this);
+            // addon.setPoint(this);
         }
         else {
             this.setPos(data.x, data.y);
@@ -92,6 +93,10 @@ export class BasicWire extends Widget {
                     this.disconnect();
                     break;
             }
+        });
+        this.elListener.on("detach", () => {
+            this.point1.addon?.listener.trigger("close", this.point1.addon);
+            this.point2.addon?.listener.trigger("close", this.point2.addon);
         });
     }
     getPolar() {

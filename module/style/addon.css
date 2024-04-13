@@ -75,12 +75,3 @@
   cursor: pointer;
   background: grey !important;
 }
-
-/* debugging */
-.framework-addons {
-  background: lightcoral;
-
-  &:has(> h1) {
-    background: lightblue;
-  }
-}

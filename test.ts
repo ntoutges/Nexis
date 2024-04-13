@@ -45,16 +45,16 @@ const scene = new Scene({
       },
       doCursorDragIcon: true
     }),
-    new ConnWidget({
-      wireType: "data",
-      connections: { "peer": new PeerConnection(Peer, "fw") },
-      validator: connValidator
-    }),
-    new ConnWidget({
-      wireType: "data",
-      connections: { "peer": new PeerConnection(Peer, "fw") },
-      validator: connValidator
-    }),
+    // new ConnWidget({
+    //   wireType: "data",
+    //   connections: { "peer": new PeerConnection(Peer, "fw") },
+    //   validator: connValidator
+    // }),
+    // new ConnWidget({
+    //   wireType: "data",
+    //   connections: { "peer": new PeerConnection(Peer, "fw") },
+    //   validator: connValidator
+    // }),
     new ConnConsole({
       wireType: "data",
       validator: connValidator

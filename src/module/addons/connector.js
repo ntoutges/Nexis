@@ -11,12 +11,13 @@ export class ConnectorAddon extends Addon {
     scenepointerupId = null;
     wireInProgress = null;
     validator;
+    buildConfig;
     points = [];
     sender = new Listener();
     /**
      * @param validator This is a function that, when called, should return true if the connection is valid, and false otherwise. If unset, this will act as a function that always returns true
      */
-    constructor({ type, positioning = 0.5, direction, validator = null }) {
+    constructor({ type, positioning = 0.5, direction, config = {}, validator = null }) {
         const el = document.createElement("div");
         el.classList.add("framework-addon-connectors", `framework-addon-connectors-${direction}`);
         super({
@@ -32,6 +33,10 @@ export class ConnectorAddon extends Addon {
         this.type = type;
         this.direction = direction;
         this.validator = validator;
+        // set defaults in buildConfig
+        this.buildConfig = {
+            removeDuplicates: config.removeDuplicates ?? true
+        };
         this.updateStyle();
         // prevent pointerdown from propagating to some future draggable
         this.el.addEventListener("pointerdown", e => {
@@ -57,19 +62,28 @@ export class ConnectorAddon extends Addon {
         // remove wire (dropped on the input node)
         this.el.addEventListener("pointerup", e => {
             e.stopPropagation();
-            this.interWidgetListener.trigger(`${type}::pointerup`, this);
             this.disconnectSceneMouseListeners();
             this.removeWireInProgress();
+            this.interWidgetListener.trigger(`${type}::pointerup`, this);
         });
         // finalize wire (attach to opposite node)
         this.interWidgetListener.on(`${type}::pointerup`, other => {
             if (!this.wireInProgress)
                 return;
-            if ((this.validator == null) ? true : this.validator(this.direction, other.direction)) {
+            let passesBuildConfig = true;
+            if (this.buildConfig.removeDuplicates) { // duplicates not allowed
+                const duplicate = this.getDuplicateWire(other);
+                if (duplicate !== null) { // duplicate found
+                    duplicate.scene.removeWidget(duplicate);
+                    passesBuildConfig = false;
+                }
+            }
+            if (passesBuildConfig
+                && ((this.validator == null) ? true : this.validator(this.direction, other.direction))) {
                 this.disconnectSceneMouseListeners();
                 this.wireInProgress.point2.attachToAddon(other);
-                this.setPoint(this.wireInProgress.point1);
-                other.setPoint(this.wireInProgress.point2);
+                this.setPoint(this.wireInProgress, 1);
+                other.setPoint(this.wireInProgress, 2);
                 // wire finished, register
                 this.addonEdge?.addonContainer.widget?.scene?.registerWire(this.wireInProgress);
                 this.wireInProgress.setIsEditing(false);
@@ -105,9 +119,12 @@ export class ConnectorAddon extends Addon {
         this.addonContainer.widget.scene.removeWidget(this.wireInProgress);
         this.wireInProgress = null;
     }
-    setPoint(point) {
+    setPoint(wire, point) {
+        if (typeof point == "number")
+            point = (point == 1) ? wire.point1 : wire.point2;
         this.points.push({
             point,
+            wire,
             listener: point.listener.on("receive", data => { this.sender.trigger("receive", data); })
         });
         this.sender.trigger("connect", "");
@@ -140,8 +157,27 @@ export class ConnectorAddon extends Addon {
         return styles.has(name) ? styles.get(name) : {};
     }
     // each wire generates a point, which is put into this array
-    get wireCount() {
-        return this.points.length;
+    get wireCount() { return this.points.length; }
+    get wires() { return this.points.map(data => data.wire); }
+    getDuplicateWire(wire) {
+        let otherAddon;
+        if (wire instanceof BasicWire) {
+            if (wire.point1.addon == this)
+                otherAddon = wire.point2.addon;
+            else if (wire.point2.addon == this)
+                otherAddon = wire.point2.addon;
+            else
+                return null; // wire shares neither point.addon with this addon, so it CANNOT match
+        }
+        else
+            otherAddon = wire; // passing in other addon
+        // check if second point matches with given wire
+        for (const pointData of this.points) {
+            const otherWireAddon = (pointData.wire.point1.addon == this) ? pointData.wire.point2.addon : pointData.wire.point1.addon;
+            if (otherWireAddon == otherAddon)
+                return pointData.wire; // found matching wire
+        }
+        return null; // no matching wires found
     }
 }
 ;
