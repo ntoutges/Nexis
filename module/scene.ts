@@ -7,7 +7,7 @@ import { ElementListener, Listener } from "./listener.js";
 import { Layers } from "./layers.js";
 import { GlobalSingleUseWidget, Widget } from "./widgets/widget.js";
 import { Grid, Pos } from "./pos.js";
-import { BasicWire } from "./widgets/wire.js";
+import { WireBase } from "./widgets/wire/base.js";
 import { Ids } from "./ids.js";
 import { RevMap } from "./revMap.js";
 
@@ -31,7 +31,7 @@ export class Scene extends FrameworkBase {
   private nextSnapObjectId: number = 0;
 
   readonly layers = new Layers<Widget>();
-  private readonly wires = new Set<BasicWire>();
+  private readonly wires = new Set<WireBase>();
   protected encapsulator = null;
 
   private readonly loadClasses: Record<loadClasses, Map<string, { new(...args: any[]): Object }>> = {
@@ -133,7 +133,7 @@ export class Scene extends FrameworkBase {
     this.layers.remove(widget);
     widget.detachFrom(this);
 
-    if (widget instanceof BasicWire && this.wires.has(widget)) this.wires.delete(widget); // stop tracking wire
+    if (widget instanceof WireBase && this.wires.has(widget)) this.wires.delete(widget); // stop tracking wire
 
     for (const snapObj of this.snapObjects.values()) { widget.pos.removeSnapObject(snapObj); } // remove snap objects
   }
@@ -265,7 +265,7 @@ export class Scene extends FrameworkBase {
     return true; // exists
   }
 
-  registerWire(wire: BasicWire) {
+  registerWire(wire: WireBase) {
     this.wires.add(wire); // track wire
   }
   

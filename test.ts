@@ -6,10 +6,11 @@ import { GridWidget } from "./module/widgets/grid.js";
 import { ConnectorAddon } from "./module/addons/connector.js";
 import { AttachableListener } from "./module/attachableListener.js";
 import { Listener } from "./module/listener.js";
-import { BasicWire } from "./module/widgets/wire.js";
 import { PeerConnection } from "./connection/lib/distros/peer.js";
 import { FAnimation } from "./module/animation.js";
 import { ConnConsole, ConnWidget } from "./module/widgets/prefabs/connWidget.js";
+import { WireLine } from "./module/widgets/wire/line.js";
+import { WireCatenary } from "./module/widgets/wire/catenary.js";
 
 ConnectorAddon.setStyle("data", "input", { background: "white" });
 ConnectorAddon.setStyle("data", "output", { background: "black" });
@@ -45,22 +46,26 @@ const scene = new Scene({
       },
       doCursorDragIcon: true
     }),
-    // new ConnWidget({
-    //   wireType: "data",
-    //   connections: { "peer": new PeerConnection(Peer, "fw") },
-    //   validator: connValidator
-    // }),
-    // new ConnWidget({
-    //   wireType: "data",
-    //   connections: { "peer": new PeerConnection(Peer, "fw") },
-    //   validator: connValidator
-    // }),
-    new ConnConsole({
-      wireType: "data",
+    new ConnWidget({
+      type: "data",
+      connections: { "peer": new PeerConnection(Peer, "fw") },
+      validator: connValidator
+    }),
+    new ConnWidget({
+      type: "data",
+      connections: { "peer": new PeerConnection(Peer, "fw") },
       validator: connValidator
     }),
     new ConnConsole({
-      wireType: "data",
+      type: "data",
+      validator: connValidator,
+      wireData: {
+        type: WireCatenary,
+        params: {}
+      }
+    }),
+    new ConnConsole({
+      type: "data",
       validator: connValidator
     })
     // new DraggableWidget({
@@ -110,7 +115,7 @@ function connValidator(dir1: "input" | "output" | "omni", dir2: "input" | "outpu
   return (dir1 == "input" && dir2 == "output") || (dir1 == "output" && dir2 == "input") || (dir1 == "omni") || (dir2 == "omni")
 }
 
-scene.addLoadClass("widget", BasicWire)
+scene.addLoadClass("widget", WireLine)
 scene.addLoadClass("widget", ConnConsole);
 scene.addLoadClass("widget", ConnWidget);
 scene.addLoadClass("widget", GridWidget);

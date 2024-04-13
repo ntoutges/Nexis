@@ -20,13 +20,15 @@ export class ConnWidget extends DraggableWidget {
   private doDebugErros = false;
   
   constructor({
-    wireType,
+    type,
     connections = {},
-    validator = null
+    validator = null,
+    wireData = null
   }: {
-    wireType: string,
+    type: string,
     validator?: (addon1: "input" | "output", addon2: "input" | "output") => boolean
     connections?: Record<string,ConnectionBase<any>>
+    wireData?: ConnectorAddon<any>["wireData"]
   }) {
     const container = document.createElement("div");
     container.classList.add("framework-prefab-connection-containers");
@@ -42,24 +44,27 @@ export class ConnWidget extends DraggableWidget {
           side: "left",
           addon: new ConnectorAddon<"input" | "output">({
             direction: "input",
-            type: wireType,
-            validator
+            type,
+            validator,
+            wireData
           })
         },
         "output": {
           side: "right",
           addon: new ConnectorAddon<"input" | "output">({
             direction: "output",
-            type: wireType,
-            validator
+            type,
+            validator,
+            wireData
           })
         },
         "debug": {
           side: "right",
           addon: new ConnectorAddon<"input" | "output">({
             direction: "output",
-            type: wireType,
+            type,
             validator,
+            wireData,
             positioning: 0.9
           })
         }
@@ -71,7 +76,7 @@ export class ConnWidget extends DraggableWidget {
         }
       }
     });
-    this.addInitParams({ wireType }, "*");
+    this.addInitParams({ type }, "*");
 
     this.contextmenus.header.listener.on("click", (item) => {
       switch (item.value) {
@@ -202,11 +207,13 @@ export class ConnConsole extends DraggableWidget {
   private doPassthru: boolean = false;
   
   constructor({
-    wireType,
-    validator = null
+    type,
+    validator = null,
+    wireData = null
   }: {
-    wireType: string,
+    type: string,
     validator?: (addon1: "input" | "output", addon2: "input" | "output") => boolean
+    wireData?: ConnectorAddon<any>["wireData"]
   }) {
     const container = document.createElement("div");
     container.classList.add("framework-prefab-connsole-containers");
@@ -222,16 +229,18 @@ export class ConnConsole extends DraggableWidget {
           side: "left",
           addon: new ConnectorAddon({
             direction: "input",
-            type: wireType,
-            validator
+            type,
+            validator,
+            wireData
           })
         },
         "output": {
           side: "right",
           addon: new ConnectorAddon({
             direction: "output",
-            type: wireType,
-            validator
+            type,
+            validator,
+            wireData
           })
         }
       },
@@ -248,7 +257,7 @@ export class ConnConsole extends DraggableWidget {
       },
       doDragAll: true
     });
-    this.addInitParams({ wireType }, "*");
+    this.addInitParams({ type }, "*");
 
     this.terminalContainer = container;
     this.terminalBody.classList.add("framework-prefab-connsole-bodies");

@@ -5,7 +5,7 @@ import { ElementListener, Listener } from "./listener.js";
 import { Layers } from "./layers.js";
 import { GlobalSingleUseWidget } from "./widgets/widget.js";
 import { Pos } from "./pos.js";
-import { BasicWire } from "./widgets/wire.js";
+import { WireBase } from "./widgets/wire/base.js";
 import { Ids } from "./ids.js";
 import { RevMap } from "./revMap.js";
 var sceneIdentifiers = 0;
@@ -105,7 +105,7 @@ export class Scene extends FrameworkBase {
         this.widgets.revDelete(widget);
         this.layers.remove(widget);
         widget.detachFrom(this);
-        if (widget instanceof BasicWire && this.wires.has(widget))
+        if (widget instanceof WireBase && this.wires.has(widget))
             this.wires.delete(widget); // stop tracking wire
         for (const snapObj of this.snapObjects.values()) {
             widget.pos.removeSnapObject(snapObj);

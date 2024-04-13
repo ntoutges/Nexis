@@ -1,5 +1,6 @@
 import { Listener } from "../listener.js";
-import { BasicWire, WirePoint } from "../widgets/wire.js";
+import { WireBase, WirePoint } from "../widgets/wire/base.js";
+import { WireLine } from "../widgets/wire/line.js";
 import { Addon } from "./addons.js";
 
 const styles = new Map<string, Record<string, string>>();
@@ -17,12 +18,17 @@ export class ConnectorAddon<Direction extends string> extends Addon {
   private scenepointermoveId: number = null;
   private scenepointerupId: number = null;
 
-  private wireInProgress: BasicWire = null;
+  private wireInProgress: WireBase = null;
   private readonly validator: (addon1: Direction, addon2: Direction) => boolean
   private readonly buildConfig: config_t;
 
-  private readonly points: { point: WirePoint, listener: number, wire: BasicWire }[] = [];
+  private readonly points: { point: WirePoint, listener: number, wire: WireBase }[] = [];
   readonly sender = new Listener<"send" | "receive" | "connect" | "disconnect", any>();
+
+  readonly wireData: {
+    type: { new(...args: any[]): WireBase },
+    params: Record<string, any>
+  }
 
   /**
    * @param validator This is a function that, when called, should return true if the connection is valid, and false otherwise. If unset, this will act as a function that always returns true 
@@ -31,6 +37,7 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     type,
     positioning = 0.5,
     direction,
+    wireData = null,
     config = {},
     validator = null
   }: {
@@ -38,7 +45,11 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     type: string
     direction: Direction
     validator?: (addon1: Direction, addon2: Direction) => boolean
-    config?: Partial<config_t>
+    config?: Partial<config_t>,
+    wireData?: {
+      type: { new(...args: any[]): WireBase }
+      params: Record<string,any>
+    }
   }) {
     const el = document.createElement("div");
     el.classList.add("framework-addon-connectors", `framework-addon-connectors-${direction}`);
@@ -58,6 +69,11 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     this.direction = direction;
     this.validator = validator;
 
+    this.wireData = {
+      type: wireData?.type ?? WireLine,
+      params: wireData?.params ?? {}
+    };
+
     // set defaults in buildConfig
     this.buildConfig = {
       removeDuplicates: config.removeDuplicates ?? true
@@ -70,7 +86,7 @@ export class ConnectorAddon<Direction extends string> extends Addon {
       this.interWidgetListener.trigger(`${type}::pointerdown`, this);
       e.stopPropagation();
 
-      this.wireInProgress = new BasicWire();
+      this.wireInProgress = new this.wireData.type(this.wireData.params);
       this.addonContainer.widget.scene.addWidget(this.wireInProgress);
       this.wireInProgress.point1.attachToAddon(this);
       this.wireInProgress.setIsEditing(true);
@@ -162,9 +178,9 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     this.wireInProgress = null;
   }
 
-  setPoint(wire: BasicWire, point: 1 | 2): void;
-  setPoint(wire: BasicWire, point: WirePoint): void;
-  setPoint(wire: BasicWire, point: WirePoint | 1 | 2) {
+  setPoint(wire: WireBase, point: 1 | 2): void;
+  setPoint(wire: WireBase, point: WirePoint): void;
+  setPoint(wire: WireBase, point: WirePoint | 1 | 2) {
     if (typeof point == "number") point = (point == 1) ? wire.point1 : wire.point2;
 
     this.points.push({
@@ -223,11 +239,11 @@ export class ConnectorAddon<Direction extends string> extends Addon {
   get wireCount() { return this.points.length; }
   get wires() { return this.points.map(data => data.wire); }
 
-  getDuplicateWire(wire: BasicWire): BasicWire
-  getDuplicateWire(point: ConnectorAddon<Direction>): BasicWire
-  getDuplicateWire(wire: BasicWire | ConnectorAddon<Direction>) {
+  getDuplicateWire(wire: WireBase): WireBase
+  getDuplicateWire(point: ConnectorAddon<Direction>): WireBase
+  getDuplicateWire(wire: WireBase | ConnectorAddon<Direction>) {
     let otherAddon: ConnectorAddon<Direction>;
-    if (wire instanceof BasicWire) {
+    if (wire instanceof WireBase) {
       if (wire.point1.addon == this) otherAddon = wire.point2.addon as ConnectorAddon<Direction>;
       else if (wire.point2.addon == this) otherAddon = wire.point2.addon as ConnectorAddon<Direction>;
       else return null; // wire shares neither point.addon with this addon, so it CANNOT match
@@ -240,6 +256,14 @@ export class ConnectorAddon<Direction extends string> extends Addon {
       if (otherWireAddon == otherAddon) return pointData.wire; // found matching wire
     }
     return null; // no matching wires found
+  }
+
+  setWireData(
+    type: { new(...args: any[]): WireBase },
+    params: Record<string,any>
+  ) {
+    this.wireData.type = type;
+    this.wireData.params = params;
   }
 
   // save() {

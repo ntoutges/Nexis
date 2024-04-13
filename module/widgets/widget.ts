@@ -53,8 +53,9 @@ export class Widget extends FrameworkBase {
     contextmenu = [],
     addons = {}
   }: BasicWidgetInterface) {
+    name = name.split(" ").map(name => name + "-widget").join(" ");
     super({
-      name: `${name}-widget widget`,
+      name: `${name} widget`,
       children: [content],
       style, resize
     });

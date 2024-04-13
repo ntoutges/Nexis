@@ -1,8 +1,10 @@
 import { Scene } from "./module/scene.js";
 import { GridWidget } from "./module/widgets/grid.js";
 import { ConnectorAddon } from "./module/addons/connector.js";
-import { BasicWire } from "./module/widgets/wire.js";
+import { PeerConnection } from "./connection/lib/distros/peer.js";
 import { ConnConsole, ConnWidget } from "./module/widgets/prefabs/connWidget.js";
+import { WireLine } from "./module/widgets/wire/line.js";
+import { WireCatenary } from "./module/widgets/wire/catenary.js";
 ConnectorAddon.setStyle("data", "input", { background: "white" });
 ConnectorAddon.setStyle("data", "output", { background: "black" });
 ConnectorAddon.setStyle("data", "omni", { background: "radial-gradient(black, black 50%, white 50%, white)" });
@@ -33,22 +35,26 @@ const scene = new Scene({
             },
             doCursorDragIcon: true
         }),
-        // new ConnWidget({
-        //   wireType: "data",
-        //   connections: { "peer": new PeerConnection(Peer, "fw") },
-        //   validator: connValidator
-        // }),
-        // new ConnWidget({
-        //   wireType: "data",
-        //   connections: { "peer": new PeerConnection(Peer, "fw") },
-        //   validator: connValidator
-        // }),
-        new ConnConsole({
-            wireType: "data",
+        new ConnWidget({
+            type: "data",
+            connections: { "peer": new PeerConnection(Peer, "fw") },
+            validator: connValidator
+        }),
+        new ConnWidget({
+            type: "data",
+            connections: { "peer": new PeerConnection(Peer, "fw") },
             validator: connValidator
         }),
         new ConnConsole({
-            wireType: "data",
+            type: "data",
+            validator: connValidator,
+            wireData: {
+                type: WireCatenary,
+                params: {}
+            }
+        }),
+        new ConnConsole({
+            type: "data",
             validator: connValidator
         })
         // new DraggableWidget({
@@ -96,7 +102,7 @@ const scene = new Scene({
 function connValidator(dir1, dir2) {
     return (dir1 == "input" && dir2 == "output") || (dir1 == "output" && dir2 == "input") || (dir1 == "omni") || (dir2 == "omni");
 }
-scene.addLoadClass("widget", BasicWire);
+scene.addLoadClass("widget", WireLine);
 scene.addLoadClass("widget", ConnConsole);
 scene.addLoadClass("widget", ConnWidget);
 scene.addLoadClass("widget", GridWidget);

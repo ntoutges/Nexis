@@ -1,7 +1,7 @@
-import { AttachableListener } from "../attachableListener.js";
-import { WIRE_LAYER } from "../layer-info.js";
-import { Listener } from "../listener.js";
-import { Widget } from "./widget.js";
+import { AttachableListener } from "../../attachableListener.js";
+import { WIRE_LAYER } from "../../layer-info.js";
+import { Listener } from "../../listener.js";
+import { Widget } from "../widget.js";
 export class WirePoint {
     x = 0;
     y = 0;
@@ -64,11 +64,14 @@ export class WireBase extends Widget {
     point1 = new WirePoint();
     point2 = new WirePoint();
     wireEl;
-    constructor() {
+    _width;
+    _color;
+    _shadow;
+    constructor({ name, width = 2, color = "black", shadow = "white", pointerless = false }) {
         const wireEl = document.createElement("div");
         super({
             content: wireEl,
-            name: "basic-wire",
+            name: `basic-wire ${name}`,
             layer: WIRE_LAYER,
             contextmenu: {
                 "conn": {
@@ -77,9 +80,14 @@ export class WireBase extends Widget {
                 }
             }
         });
+        this._width = Math.max(width, 0);
+        this._color = color;
+        this._shadow = shadow;
+        setTimeout(this.updateWireStyle.bind(this), 1); // allow constructor of subclass to finish before running update
         this.delInitParams("*");
         this.wireEl = wireEl;
-        this.wireEl.classList.add("framework-basic-wire-body");
+        this.wireEl.classList.add("framework-wire-body");
+        this.wireEl.classList.toggle("framework-wire-body-pointerless", pointerless);
         this.point1.listener.on("move", this.updateElementTransformations.bind(this));
         this.point2.listener.on("move", this.updateElementTransformations.bind(this));
         this.point1.listener.on("send", this.point2.listener.trigger.bind(this.point2.listener, "receive")); // forward from point1 to point2
@@ -128,35 +136,4 @@ export class WireBase extends Widget {
         this.point2.load(data.wire.point2, this.scene);
     }
 }
-export class LineWire extends WireBase {
-    constructor() {
-        super();
-    }
-    getPolar() {
-        const dx = this.point2.getPos().x - this.point1.getPos().x;
-        const dy = this.point2.getPos().y - this.point1.getPos().y;
-        const mag = Math.sqrt(dx * dx + dy * dy);
-        const rot = Math.atan2(dy, dx);
-        return { mag, rot };
-    }
-    updateElementTransformations() {
-        if (!this.scene)
-            return;
-        let { mag, rot } = this.getPolar();
-        // this allows the wire to not overlap addon
-        const r1 = this.point1.radius;
-        const r2 = this.point2.radius;
-        mag = Math.max(mag - (r1 + r2), 0);
-        const pos1 = this.point1.getPos();
-        const pos2 = this.point2.getPos();
-        // ensure x/y is always at top-left
-        const minX = Math.min(pos1.x, pos2.x);
-        const minY = Math.min(pos1.y, pos2.y);
-        this.setPos(minX, minY);
-        this.wireEl.style.top = `${pos1.y - minY}px`;
-        this.wireEl.style.left = `${pos1.x - minX}px`;
-        this.wireEl.style.width = `${mag}px`;
-        this.wireEl.style.transform = `translateY(-50%) rotate(${rot}rad) translateX(${r1}px)`;
-    }
-}
-//# sourceMappingURL=wire.js.map
+//# sourceMappingURL=base.js.map

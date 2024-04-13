@@ -1,5 +1,6 @@
 import { Listener } from "../listener.js";
-import { BasicWire } from "../widgets/wire.js";
+import { WireBase } from "../widgets/wire/base.js";
+import { WireLine } from "../widgets/wire/line.js";
 import { Addon } from "./addons.js";
 const styles = new Map();
 const styleUsers = new Map();
@@ -14,10 +15,11 @@ export class ConnectorAddon extends Addon {
     buildConfig;
     points = [];
     sender = new Listener();
+    wireData;
     /**
      * @param validator This is a function that, when called, should return true if the connection is valid, and false otherwise. If unset, this will act as a function that always returns true
      */
-    constructor({ type, positioning = 0.5, direction, config = {}, validator = null }) {
+    constructor({ type, positioning = 0.5, direction, wireData = null, config = {}, validator = null }) {
         const el = document.createElement("div");
         el.classList.add("framework-addon-connectors", `framework-addon-connectors-${direction}`);
         super({
@@ -33,6 +35,10 @@ export class ConnectorAddon extends Addon {
         this.type = type;
         this.direction = direction;
         this.validator = validator;
+        this.wireData = {
+            type: wireData?.type ?? WireLine,
+            params: wireData?.params ?? {}
+        };
         // set defaults in buildConfig
         this.buildConfig = {
             removeDuplicates: config.removeDuplicates ?? true
@@ -42,7 +48,7 @@ export class ConnectorAddon extends Addon {
         this.el.addEventListener("pointerdown", e => {
             this.interWidgetListener.trigger(`${type}::pointerdown`, this);
             e.stopPropagation();
-            this.wireInProgress = new BasicWire();
+            this.wireInProgress = new this.wireData.type(this.wireData.params);
             this.addonContainer.widget.scene.addWidget(this.wireInProgress);
             this.wireInProgress.point1.attachToAddon(this);
             this.wireInProgress.setIsEditing(true);
@@ -161,7 +167,7 @@ export class ConnectorAddon extends Addon {
     get wires() { return this.points.map(data => data.wire); }
     getDuplicateWire(wire) {
         let otherAddon;
-        if (wire instanceof BasicWire) {
+        if (wire instanceof WireBase) {
             if (wire.point1.addon == this)
                 otherAddon = wire.point2.addon;
             else if (wire.point2.addon == this)
@@ -178,6 +184,10 @@ export class ConnectorAddon extends Addon {
                 return pointData.wire; // found matching wire
         }
         return null; // no matching wires found
+    }
+    setWireData(type, params) {
+        this.wireData.type = type;
+        this.wireData.params = params;
     }
 }
 ;

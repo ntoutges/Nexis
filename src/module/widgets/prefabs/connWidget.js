@@ -13,7 +13,7 @@ export class ConnWidget extends DraggableWidget {
     channel = null;
     onlyBody = false;
     doDebugErros = false;
-    constructor({ wireType, connections = {}, validator = null }) {
+    constructor({ type, connections = {}, validator = null, wireData = null }) {
         const container = document.createElement("div");
         container.classList.add("framework-prefab-connection-containers");
         super({
@@ -27,24 +27,27 @@ export class ConnWidget extends DraggableWidget {
                     side: "left",
                     addon: new ConnectorAddon({
                         direction: "input",
-                        type: wireType,
-                        validator
+                        type,
+                        validator,
+                        wireData
                     })
                 },
                 "output": {
                     side: "right",
                     addon: new ConnectorAddon({
                         direction: "output",
-                        type: wireType,
-                        validator
+                        type,
+                        validator,
+                        wireData
                     })
                 },
                 "debug": {
                     side: "right",
                     addon: new ConnectorAddon({
                         direction: "output",
-                        type: wireType,
+                        type,
                         validator,
+                        wireData,
                         positioning: 0.9
                     })
                 }
@@ -56,7 +59,7 @@ export class ConnWidget extends DraggableWidget {
                 }
             }
         });
-        this.addInitParams({ wireType }, "*");
+        this.addInitParams({ type }, "*");
         this.contextmenus.header.listener.on("click", (item) => {
             switch (item.value) {
                 case "msg":
@@ -169,7 +172,7 @@ export class ConnConsole extends DraggableWidget {
     terminalInput = document.createElement("input");
     doAutoscroll = true;
     doPassthru = false;
-    constructor({ wireType, validator = null }) {
+    constructor({ type, validator = null, wireData = null }) {
         const container = document.createElement("div");
         container.classList.add("framework-prefab-connsole-containers");
         super({
@@ -183,16 +186,18 @@ export class ConnConsole extends DraggableWidget {
                     side: "left",
                     addon: new ConnectorAddon({
                         direction: "input",
-                        type: wireType,
-                        validator
+                        type,
+                        validator,
+                        wireData
                     })
                 },
                 "output": {
                     side: "right",
                     addon: new ConnectorAddon({
                         direction: "output",
-                        type: wireType,
-                        validator
+                        type,
+                        validator,
+                        wireData
                     })
                 }
             },
@@ -209,7 +214,7 @@ export class ConnConsole extends DraggableWidget {
             },
             doDragAll: true
         });
-        this.addInitParams({ wireType }, "*");
+        this.addInitParams({ type }, "*");
         this.terminalContainer = container;
         this.terminalBody.classList.add("framework-prefab-connsole-bodies");
         this.terminalInput.classList.add("framework-prefab-connsole-inputs");
