@@ -53,9 +53,9 @@ export class Widget extends FrameworkBase {
     contextmenu = [],
     addons = {}
   }: BasicWidgetInterface) {
-    name = name.split(" ").map(name => name + "-widget").join(" ");
+    const superName = name.split(" ").map(name => name + "-widget").join(" ");
     super({
-      name: `${name} widget`,
+      name: `${superName} widget`,
       children: [content],
       style, resize
     });

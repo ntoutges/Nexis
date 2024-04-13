@@ -12,7 +12,7 @@ export class WireCatenary extends WireBase {
   constructor({
     width,color,shadow,
 
-    drop = 100,
+    drop = -100,
     tensionCoef = -0.001,
     segments=15
   }: {
@@ -29,6 +29,8 @@ export class WireCatenary extends WireBase {
       width,color,shadow,
       pointerless: true
     });
+
+    this.addInitParams({ drop, segments, tensionCoef });
 
     this.drop = drop;
     this.segments = segments;

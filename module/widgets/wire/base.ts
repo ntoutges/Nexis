@@ -123,7 +123,7 @@ export abstract class WireBase extends Widget {
     this._shadow = shadow;
     setTimeout(this.updateWireStyle.bind(this), 1); // allow constructor of subclass to finish before running update
 
-    this.delInitParams("*")
+    this.addInitParams({ width, color, shadow, pointerless }, "*");
 
     this.wireEl = wireEl;
     this.wireEl.classList.add("framework-wire-body");
@@ -148,8 +148,9 @@ export abstract class WireBase extends Widget {
     });
 
     this.elListener.on("detach", () => {
-      this.point1.addon?.listener.trigger("close", this.point1.addon);
-      this.point2.addon?.listener.trigger("close", this.point2.addon);
+      // this.point1.addon?.listener.trigger("close", this.point1.addon);
+      // this.point2.addon?.listener.trigger("close", this.point2.addon);
+      this.disconnect();
     });
   }
 

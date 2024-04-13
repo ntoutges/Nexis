@@ -89,6 +89,7 @@ export class ConnectorAddon<Direction extends string> extends Addon {
       this.wireInProgress = new this.wireData.type(this.wireData.params);
       this.addonContainer.widget.scene.addWidget(this.wireInProgress);
       this.wireInProgress.point1.attachToAddon(this);
+      
       this.wireInProgress.setIsEditing(true);
 
       const initialPos = this.getPositionInScene();
@@ -135,10 +136,10 @@ export class ConnectorAddon<Direction extends string> extends Addon {
       ) {
         this.disconnectSceneMouseListeners();
         this.wireInProgress.point2.attachToAddon(other as ConnectorAddon<Direction>);
-
+        
         this.setPoint(this.wireInProgress, 1);
         (other as ConnectorAddon<Direction>).setPoint(this.wireInProgress, 2);
-
+        
         // wire finished, register
         this.addonEdge?.addonContainer.widget?.scene?.registerWire(this.wireInProgress);
 
@@ -182,7 +183,7 @@ export class ConnectorAddon<Direction extends string> extends Addon {
   setPoint(wire: WireBase, point: WirePoint): void;
   setPoint(wire: WireBase, point: WirePoint | 1 | 2) {
     if (typeof point == "number") point = (point == 1) ? wire.point1 : wire.point2;
-
+    
     this.points.push({
       point,
       wire,

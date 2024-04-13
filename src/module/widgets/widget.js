@@ -31,9 +31,9 @@ export class Widget extends FrameworkBase {
     name;
     constructor({ name, style, content = document.createElement("div"), positioning = 1, doZoomScale = true, layer = 100 - Math.round(positioning * 100), // default makes elements positioned "closer" to the background lower in layer
     pos = {}, resize, contextmenu = [], addons = {} }) {
-        name = name.split(" ").map(name => name + "-widget").join(" ");
+        const superName = name.split(" ").map(name => name + "-widget").join(" ");
         super({
-            name: `${name} widget`,
+            name: `${superName} widget`,
             children: [content],
             style, resize
         });
