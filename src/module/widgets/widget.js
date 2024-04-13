@@ -1,7 +1,7 @@
 import { FrameworkBase } from "../framework.js";
 import { ElementListener, Listener } from "../listener.js";
 import { Pos, SnapPos } from "../pos.js";
-import { AddonContainer } from "../addons/addons.js";
+import { AddonContainer } from "../addons/base.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 import { AttachableListener } from "../attachableListener.js";
 const alignmentMap = {

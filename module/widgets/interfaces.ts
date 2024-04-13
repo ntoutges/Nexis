@@ -1,4 +1,4 @@
-import { Addon } from "../addons/addons.js";
+import { Addon } from "../addons/base.js";
 import { CommonFrameworkInterface, draggableListener } from "../interfaces.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 

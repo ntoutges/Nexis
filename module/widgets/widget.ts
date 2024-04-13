@@ -4,7 +4,7 @@ import { ContextMenuEvents, ContextMenuItemInterface, DraggableEvents } from "..
 import { ElementListener, Listener } from "../listener.js";
 import { Grid, Pos, SnapPos } from "../pos.js";
 import { Scene } from "../scene.js";
-import { AddonContainer } from "../addons/addons.js";
+import { AddonContainer } from "../addons/base.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 import { BasicWidgetInterface, ContextMenuInterface, GlobalSingleUseWidgetInterface, SceneListenerTypes, sceneElListener, sceneListener } from "./interfaces.js";
 import { AttachableListener } from "../attachableListener.js";

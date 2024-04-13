@@ -1,7 +1,7 @@
 import { Listener } from "../listener.js";
 import { WireBase, WirePoint } from "../widgets/wire/base.js";
 import { WireLine } from "../widgets/wire/line.js";
-import { Addon } from "./addons.js";
+import { Addon } from "./base.js";
 
 const styles = new Map<string, Record<string, string>>();
 const styleUsers = new Map<string, ConnectorAddon<any>[]>();

@@ -1,7 +1,7 @@
 import { Listener } from "../listener.js";
 import { WireBase } from "../widgets/wire/base.js";
 import { WireLine } from "../widgets/wire/line.js";
-import { Addon } from "./addons.js";
+import { Addon } from "./base.js";
 const styles = new Map();
 const styleUsers = new Map();
 export class ConnectorAddon extends Addon {

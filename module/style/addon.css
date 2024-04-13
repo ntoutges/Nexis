@@ -75,3 +75,22 @@
   cursor: pointer;
   background: grey !important;
 }
+
+
+.addon-edge-aliases {
+  border-radius: 0px;
+  overflow: visible;
+  height: 0px;
+  
+  background: red !important;
+  &> .addon-edge-aliase-contents {
+    display: flex;
+    flex-direction: row;
+    height: 0px;
+
+    &> .framework-addons {
+      position: relative;
+      transform: translateY(-50%);
+    }
+  }
+}

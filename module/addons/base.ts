@@ -2,8 +2,8 @@ import { AttachableListener } from "../attachableListener.js";
 import { Group } from "../group.js";
 import { Ids } from "../ids.js";
 import { Listener } from "../listener.js";
-import { DraggableWidget } from "../widgets/draggable-widget.js";
 import { Widget } from "../widgets/widget.js";
+import { AddonEdgeAlias } from "./alias.js";
 
 // this class can easily add 
 export class AddonContainer {
@@ -243,8 +243,8 @@ export class AddonEdge {
           data = addonGroups.getGroupData(group[0]);
         }
         else if (bottom < 0) { // ensure no items too low/right, and doesn't push above top
-          const movement = Math.max(-bottom, top);
-          for (const addon of group) { addon.position += movement; }
+          const movement = Math.min(-bottom, top);
+          for (const addon of group) { addon.position -= movement; }
           this.updateGroupData(addonGroups, group[0]);
           data = addonGroups.getGroupData(group[0]);
         }
@@ -276,21 +276,21 @@ export class AddonEdge {
     });
   }
 
-  private addonIntersectsGroup(
-    addon: Addon, // element to test
-    addonGroups: Group<Addon, { pos: number, size: number }>, // group containing elements already processed
-  ) {
-    const intersectedAddons: Addon[] = [];
+  // private addonIntersectsGroup(
+  //   addon: Addon, // element to test
+  //   addonGroups: Group<Addon, { pos: number, size: number }>, // group containing elements already processed
+  // ) {
+  //   const intersectedAddons: Addon[] = [];
 
-    addonGroups.forEach((group, data) => {
-      // intersection between group and addon
-      if (addon.intersectsRegion(data.pos, data.size)) {
-        intersectedAddons.push(group[0]); // only need to store one element in the group (groups are garunteed not to be empty)
-      }
-    });
+  //   addonGroups.forEach((group, data) => {
+  //     // intersection between group and addon
+  //     if (addon.intersectsRegion(data.pos, data.size)) {
+  //       intersectedAddons.push(group[0]); // only need to store one element in the group (groups are garunteed not to be empty)
+  //     }
+  //   });
 
-    return intersectedAddons;
-  }
+  //   return intersectedAddons;
+  // }
 
   private groupIntersectsGroup(
     addon: Addon, // element in group to test
@@ -318,13 +318,13 @@ export class AddonEdge {
   // returns signed value to indicate direction to move addon so it no longer intersects a region
   // positive indicates right, negative indicates left
   // this will return the smallest distance to travel
-  private getSmallestDistance(
-    addon: Addon,
-    regionPos: number,
-    regionSize: number
-  ) {
-    return this.getSmallestDistanceRegion(regionPos, regionSize, addon.position, addon.size);
-  }
+  // private getSmallestDistance(
+  //   addon: Addon,
+  //   regionPos: number,
+  //   regionSize: number
+  // ) {
+  //   return this.getSmallestDistanceRegion(regionPos, regionSize, addon.position, addon.size);
+  // }
 
   private getSmallestDistanceRegion(
     r1Pos: number, r1Size: number,
@@ -334,6 +334,8 @@ export class AddonEdge {
     const rightDist = Math.abs((r1Pos + r1Size / 2) - (r2Pos - r2Size / 2)); // distance traveled to move right (positive dir)
     return leftDist < rightDist ? -leftDist : rightDist;
   }
+
+  
 
   save(): Record<string, any> {
     const save = {};
@@ -357,7 +359,7 @@ export class Addon {
   private _position: number = 0; // represents the actual position (in px)
   private _weight: number;
   private _circleness: number;
-  private _size: number;
+  protected _size: number;
   protected el = document.createElement("div");
   protected contentEl: HTMLElement;
 
@@ -388,20 +390,24 @@ export class Addon {
     this.contentEl = content;
   }
 
-  attachTo(addonEdge: AddonEdge, id: number) {
-    addonEdge.el.append(this.el);
+  attachTo(addonEdge: AddonEdge | AddonEdgeAlias, id: number) {
+    if (!(addonEdge instanceof AddonEdge)) {
+      addonEdge.contentEl.append(this.el);
+      addonEdge = addonEdge.parentAddonEdge;
+    }
+    else addonEdge.el.append(this.el);
     this.id = id;
 
     if (this.addonEdge) { // remove old listeners
-      const newWidget = this.addonEdge.addonContainer.widget;
-      newWidget.elListener.off(this.moveId);
-      newWidget.elListener.off(this.closeId);
+      const widget = this.addonEdge.addonContainer.widget;
+      widget.elListener.off(this.moveId);
+      widget.elListener.off(this.closeId);
     }
     this.addonEdge = addonEdge;
     if (this.addonEdge) { // add new listeners
-      const newWidget = this.addonEdge.addonContainer.widget;
-      this.moveId = newWidget.elListener.on("move", this.listener.trigger.bind(this.listener, "move", this)); // add new listener
-      this.closeId = newWidget.elListener.on("detach", this.listener.trigger.bind(this.listener, "close"));
+      const widget = this.addonEdge.addonContainer.widget;
+      this.moveId = widget.elListener.on("move", this.listener.trigger.bind(this.listener, "move", this)); // add new listener
+      this.closeId = widget.elListener.on("detach", this.listener.trigger.bind(this.listener, "close"));
     }
 
     this.interWidgetListener.updateValidity();

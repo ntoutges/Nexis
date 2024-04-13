@@ -1,4 +1,4 @@
-import { Addon } from "../../addons/addons.js";
+import { Addon } from "../../addons/base.js";
 import { ConnectorAddon } from "../../addons/connector.js";
 import { AttachableListener } from "../../attachableListener.js";
 import { WIRE_LAYER } from "../../layer-info.js";
