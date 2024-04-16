@@ -6,7 +6,7 @@ export class WireCatenary extends WireBase {
     wireDisplay;
     wireDisplayPath;
     wireDisplayShadow;
-    constructor({ width, color, shadow, drop = -100, tensionCoef = -0.001, segments = 15 }) {
+    constructor({ width, color, shadow, drop = 100, tensionCoef = 0.001, segments = 15 }) {
         super({
             name: "catenary-wire",
             width, color, shadow,

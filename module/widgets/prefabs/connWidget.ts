@@ -128,7 +128,7 @@ export class ConnWidget extends DraggableWidget {
   }
 
   set connState(value: 0 | 1 | 2 | 3) {
-    // debugger;
+    debugger;
     switch (value) {
       case 0: // disconneted
       case 3:

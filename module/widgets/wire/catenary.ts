@@ -12,8 +12,8 @@ export class WireCatenary extends WireBase {
   constructor({
     width,color,shadow,
 
-    drop = -100,
-    tensionCoef = -0.001,
+    drop = 100,
+    tensionCoef = 0.001,
     segments=15
   }: {
     width?: number,

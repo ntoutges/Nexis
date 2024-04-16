@@ -28,7 +28,7 @@ export class AddonEdgeAlias extends Addon {
     });
 
     this.el.classList.add("addon-edge-aliases");
-    this.contentEl.classList.add("addon-edge-aliase-contents")
+    this.contentEl.classList.add("addon-edge-alias-contents")
     
     for (const prop in style) {
       this.contentEl.style[prop] = style[prop];

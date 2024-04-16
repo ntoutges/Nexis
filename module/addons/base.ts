@@ -408,6 +408,7 @@ export class Addon {
       const widget = this.addonEdge.addonContainer.widget;
       this.moveId = widget.elListener.on("move", this.listener.trigger.bind(this.listener, "move", this)); // add new listener
       this.closeId = widget.elListener.on("detach", this.listener.trigger.bind(this.listener, "close"));
+      if (this.addonEdge.normal.x != 0) this.el.classList.add("addons-side-rotated");
     }
 
     this.interWidgetListener.updateValidity();

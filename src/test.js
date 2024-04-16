@@ -1,15 +1,17 @@
 import { Scene } from "./module/scene.js";
-import { Addon } from "./module/addons/base.js";
-import { DraggableWidget } from "./module/widgets/draggable-widget.js";
 import { GridWidget } from "./module/widgets/grid.js";
 import { ConnectorAddon } from "./module/addons/connector.js";
+import { PeerConnection } from "./connection/lib/distros/peer.js";
 import { ConnConsole, ConnWidget } from "./module/widgets/prefabs/connWidget.js";
 import { WireLine } from "./module/widgets/wire/line.js";
-import { AddonEdgeAlias } from "./module/addons/alias.js";
+import { WireCatenary } from "./module/widgets/wire/catenary.js";
+import { LocalConnection } from "./connection/lib/distros/local.js";
 ConnectorAddon.setStyle("data", "input", { background: "white" });
 ConnectorAddon.setStyle("data", "output", { background: "black" });
 ConnectorAddon.setStyle("data", "omni", { background: "radial-gradient(black, black 50%, white 50%, white)" });
 const $ = document.querySelector.bind(document);
+const peerConn = new PeerConnection(Peer, "framework");
+const localConn = new LocalConnection();
 const scene = new Scene({
     parent: $("#sandbox"),
     style: {
@@ -36,145 +38,69 @@ const scene = new Scene({
             },
             doCursorDragIcon: true
         }),
-        new DraggableWidget({
-            name: "addonTest",
-            header: {
-                title: "Addon Test"
+        new ConnWidget({
+            type: "data",
+            connections: {
+                "peer": peerConn,
+                "local": new LocalConnection()
             },
-            style: {
-                width: "200px",
-                height: "50px"
+            validator: connValidator,
+            wireData: {
+                params: {},
+                type: WireCatenary
+            }
+        }),
+        new ConnWidget({
+            type: "data",
+            connections: {
+                "peer": peerConn,
+                "local": new LocalConnection()
             },
-            addons: {
-                "l1": {
-                    side: "bottom",
-                    addon: new Addon({
-                        content: document.createElement("div")
-                    })
-                },
-                "l2": {
-                    side: "bottom",
-                    addon: new Addon({
-                        content: document.createElement("div")
-                    })
-                },
-                "l3": {
-                    side: "bottom",
-                    addon: new Addon({
-                        content: document.createElement("div")
-                    })
-                },
-                "l4": {
-                    side: "bottom",
-                    addon: new Addon({
-                        content: document.createElement("div")
-                    })
-                },
-                // "alias": {
-                //   side: "right",
-                //   addon: new AddonEdgeAlias({
-                //     addons: [
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       })
-                //     ],
-                //     style: {
-                //       gap: "5px"
-                //     }
-                //   })
-                // },
-                // "alias2": {
-                //   side: "top",
-                //   addon: new AddonEdgeAlias({
-                //     addons: [
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       }),
-                //       new Addon({
-                //         content: document.createElement("div")
-                //       })
-                //     ],
-                //     style: {
-                //       gap: "5px"
-                //     }
-                //   })
-                // },
-                "alias3": {
-                    side: "bottom",
-                    addon: new AddonEdgeAlias({
-                        addons: [
-                            new Addon({
-                                content: document.createElement("div")
-                            }),
-                            new Addon({
-                                content: document.createElement("div")
-                            }),
-                            new Addon({
-                                content: document.createElement("div")
-                            }),
-                            new Addon({
-                                content: document.createElement("div")
-                            }),
-                            new Addon({
-                                content: document.createElement("div")
-                            }),
-                            new Addon({
-                                content: document.createElement("div")
-                            }),
-                            new Addon({
-                                content: document.createElement("div")
-                            }),
-                            new Addon({
-                                content: document.createElement("div")
-                            })
-                        ],
-                        style: {
-                            gap: "5px"
-                        },
-                        weight: 100
-                    })
-                }
+            validator: connValidator,
+            wireData: {
+                params: {},
+                type: WireCatenary
+            }
+        }),
+        new ConnWidget({
+            type: "data",
+            connections: {
+                "peer": peerConn,
+                "local": new LocalConnection()
             },
-            resize: "both"
+            validator: connValidator,
+            wireData: {
+                params: {},
+                type: WireCatenary
+            }
+        }),
+        new ConnWidget({
+            type: "data",
+            connections: {
+                "peer": peerConn,
+                "local": new LocalConnection()
+            },
+            validator: connValidator,
+            wireData: {
+                params: {},
+                type: WireCatenary
+            }
+        }),
+        new ConnConsole({
+            type: "data",
+            validator: connValidator,
+            wireData: {
+                params: {},
+                type: WireCatenary
+            }
+        }),
+        new ConnConsole({
+            type: "data",
+            validator: connValidator,
+            wireData: {
+                params: {},
+                type: WireCatenary
+            }
         })
     ]
 });
