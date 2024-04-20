@@ -41,29 +41,22 @@ export class ConnectorAddon extends Addon {
         };
         // set defaults in buildConfig
         this.buildConfig = {
-            removeDuplicates: config.removeDuplicates ?? true
+            removeDuplicates: config.removeDuplicates ?? true,
+            singleConn: config.singleConn ?? false
         };
         this.updateStyle();
         // prevent pointerdown from propagating to some future draggable
         this.el.addEventListener("pointerdown", e => {
             this.interWidgetListener.trigger(`${type}::pointerdown`, this);
             e.stopPropagation();
-            this.wireInProgress = new this.wireData.type(this.wireData.params);
-            this.addonContainer.widget.scene.addWidget(this.wireInProgress);
-            this.wireInProgress.point1.attachToAddon(this);
-            this.wireInProgress.setIsEditing(true);
-            const initialPos = this.getPositionInScene();
-            this.wireInProgress.point2.setPos(initialPos[0], initialPos[1]);
-            // update end position of wire
-            this.scenepointermoveId = this.sceneElListener.on("pointermove", (e) => {
-                const [sceneX, sceneY] = this.addonContainer.widget.scene.draggable.toSceneSpace(e.pageX, e.pageY);
-                this.wireInProgress.point2.setPos(sceneX, sceneY);
-            });
-            // remove wire (dropped somewhere in the scene)
-            this.scenepointerupId = this.sceneElListener.on("pointerup", () => {
-                this.disconnectSceneMouseListeners();
-                this.removeWireInProgress();
-            });
+            if (this.buildConfig.singleConn && this.points.length > 0) { // can only build one wire, and already built that wire
+                // this.sender.trigger("rebind", this.points[0].wire);
+                const wire = this.points[0].wire;
+                const otherPoint = (wire.point1.addon == this) ? wire.point2 : wire.point1;
+                otherPoint.addon.rebind(this.points[0].wire);
+            }
+            else
+                this.buildNewWire();
         });
         // remove wire (dropped on the input node)
         this.el.addEventListener("pointerup", e => {
@@ -109,6 +102,40 @@ export class ConnectorAddon extends Addon {
         for (const styleProperty in style) {
             this.contentEl.style[styleProperty] = style[styleProperty];
         }
+    }
+    rebind(wire) {
+        this.wireInProgress = wire;
+        this.buildNewWire();
+    }
+    buildNewWire() {
+        if (!this.wireInProgress) {
+            this.wireInProgress = new this.wireData.type(this.wireData.params);
+            this.addonContainer.widget.scene.addWidget(this.wireInProgress);
+            // set initial points for new wire
+            const initialPos = this.getPositionInScene();
+            this.wireInProgress.point1.attachToAddon(this);
+            this.wireInProgress.point2.setPos(initialPos[0], initialPos[1]);
+        }
+        else {
+            // set initial points for existing wire
+            if (this.wireInProgress.point1.addon != this) { // point1 should be on this addon
+                this.wireInProgress.point2.attachToAddon(null);
+                const pos = this.wireInProgress.point1.getPos();
+                this.wireInProgress.point2.setPos(pos.x, pos.y);
+                this.wireInProgress.point1.attachToAddon(this);
+            }
+        }
+        this.wireInProgress.setIsEditing(true);
+        // update end position of wire
+        this.scenepointermoveId = this.sceneElListener.on("pointermove", (e) => {
+            const [sceneX, sceneY] = this.addonContainer.widget.scene.draggable.toSceneSpace(e.pageX, e.pageY);
+            this.wireInProgress.point2.setPos(sceneX, sceneY);
+        });
+        // remove wire (dropped somewhere in the scene)
+        this.scenepointerupId = this.sceneElListener.on("pointerup", () => {
+            this.disconnectSceneMouseListeners();
+            this.removeWireInProgress();
+        });
     }
     disconnectSceneMouseListeners() {
         if (this.scenepointermoveId == null)

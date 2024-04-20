@@ -228,8 +228,8 @@ export class Scene extends FrameworkBase {
         this.nestedScenes.splice(i, 1);
         return true; // successfully removed
     }
-    addLoadClass(type, classname) {
-        this.loadClasses[type].set(classname.name, classname);
+    addLoadClass(type, classname, params = {}) {
+        this.loadClasses[type].set(classname.name, { classname, params });
     }
     save() {
         const widgetSave = {};
@@ -248,7 +248,8 @@ export class Scene extends FrameworkBase {
             const data = state.widgets[widgetId];
             const type = data.type;
             if (this.loadClasses.widget.has(type)) {
-                const loaded = new (this.loadClasses.widget.get(type))(data.params);
+                const { classname, params: addedParams } = this.loadClasses.widget.get(type);
+                const loaded = new classname({ ...data.params, ...addedParams });
                 const id = this.addWidget(loaded, data.id);
                 widgets.set(id, loaded);
             }

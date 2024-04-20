@@ -113,6 +113,14 @@ const scene = new Scene({
         params: {},
         type: WireCatenary
       }
+    }),
+    new ConnConsole({
+      type: "data",
+      validator: connValidator,
+      wireData: {
+        params: {},
+        type: WireCatenary
+      }
     })
   ]
 });
@@ -123,5 +131,14 @@ function connValidator(dir1: "input" | "output" | "omni", dir2: "input" | "outpu
 
 scene.addLoadClass("widget", WireLine)
 scene.addLoadClass("widget", ConnConsole);
-scene.addLoadClass("widget", ConnWidget);
 scene.addLoadClass("widget", GridWidget);
+scene.addLoadClass(
+  "widget",
+  ConnWidget,
+  {
+    connections: {
+      "peer": peerConn,
+      "local": new LocalConnection()
+    }
+  }
+);

@@ -34,8 +34,8 @@ export class Scene extends FrameworkBase {
   private readonly wires = new Set<WireBase>();
   protected encapsulator = null;
 
-  private readonly loadClasses: Record<loadClasses, Map<string, { new(...args: any[]): Object }>> = {
-    widget: new Map<string, { new(...args: any[]): Widget }>()
+  private readonly loadClasses: Record<loadClasses, Map<string, { classname: { new(...args: any[]): Object }, params: any }>> = {
+    widget: new Map<string, { classname: { new(...args: any[]): Object }, params: any }>()
   }
 
   constructor({
@@ -283,11 +283,12 @@ export class Scene extends FrameworkBase {
     return true; // successfully removed
   }
 
-  addLoadClass(
+  addLoadClass<T extends { new(...args: any[]): Object }>(
     type: loadClasses,
-    classname: { new(...args: any[]): Object }
+    classname: T,
+    params: Partial<ConstructorParameters<T>[0]> = {}
   ) {
-    this.loadClasses[type].set(classname.name, classname);
+    this.loadClasses[type].set(classname.name, { classname, params });
   }
 
   save(): Record<string,any> {
@@ -309,7 +310,8 @@ export class Scene extends FrameworkBase {
       const type = data.type;
 
       if (this.loadClasses.widget.has(type)) {
-        const loaded = new (this.loadClasses.widget.get(type))(data.params) as Widget;
+        const { classname, params: addedParams } = this.loadClasses.widget.get(type);
+        const loaded = new classname({ ...data.params, ...addedParams }) as Widget;
         const id = this.addWidget(loaded, data.id);
         widgets.set(id, loaded);
       }

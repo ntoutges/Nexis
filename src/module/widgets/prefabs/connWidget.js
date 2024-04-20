@@ -32,6 +32,16 @@ export class ConnWidget extends DraggableWidget {
                         wireData
                     })
                 },
+                "forward": {
+                    side: "left",
+                    addon: new ConnectorAddon({
+                        direction: "input",
+                        type,
+                        validator,
+                        wireData,
+                        positioning: 0.9
+                    })
+                },
                 "output": {
                     side: "right",
                     addon: new ConnectorAddon({
@@ -75,6 +85,12 @@ export class ConnWidget extends DraggableWidget {
             this.channel.broadcast(data);
             this.setStatus("");
         });
+        this.addons.get("forward").sender.on("receive", (data) => {
+            if (this.connState != 2)
+                return this.setStatus("Disconnected");
+            this.channel.forward(data.req);
+            this.setStatus("");
+        });
         container.append(this.modes);
         this.routerIdIn.placeholder = "Router Id";
         this.connIdIn.placeholder = "Conn Id";
@@ -105,7 +121,6 @@ export class ConnWidget extends DraggableWidget {
         }
     }
     set connState(value) {
-        debugger;
         switch (value) {
             case 0: // disconneted
             case 3:
@@ -117,6 +132,7 @@ export class ConnWidget extends DraggableWidget {
                     this.channel = null;
                     this._connState = 0;
                 });
+                this.setEditState(true);
                 break;
             case 1: { // connecting
                 this.connectButton.innerText = "Cancel";
@@ -144,10 +160,12 @@ export class ConnWidget extends DraggableWidget {
                 this.channel.listener.on("message", (data) => {
                     this.addons.get("output").sender.trigger("send", this.onlyBody ? data.req.data : data);
                 });
+                this.setEditState(false);
                 break;
             }
             case 2: // connected
                 this.connectButton.innerText = "Disconnect";
+                this.setEditState(false);
                 break;
         }
         this._connState = value;
@@ -164,6 +182,12 @@ export class ConnWidget extends DraggableWidget {
     }
     setStatus(text) {
         this.status.textContent = text;
+    }
+    setEditState(editable) {
+        this.modes.disabled = !editable;
+        this.routerIdIn.disabled = !editable;
+        this.connIdIn.disabled = !editable;
+        this.channelIn.disabled = !editable;
     }
 }
 export class ConnConsole extends DraggableWidget {

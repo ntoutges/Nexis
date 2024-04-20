@@ -220,7 +220,7 @@ export class ClientBase {
                     break;
                 case "send":
                     channel.listener.trigger("message", messageData);
-                    if (!("recipient" in message.header) || message.header.recipient == "")
+                    if (!("recipient" in message.header) || message.header.recipient == null)
                         this.rebroadcast(message); // recipient doesn't matter
             }
             // channel.listener.trigger("all", messageData);
@@ -361,14 +361,7 @@ export class ClientBase {
         catch (err) { }
         if (!Array.isArray(pathArr))
             pathArr = []; // reset to empty array if not array
-        if (this._routerId && !pathArr.includes(this._routerId)) {
-            this.dmChannel.forward(message);
-        }
-        for (const [clientId, subClients] of this.clients) {
-            if (pathArr.includes(clientId))
-                continue; // ignore anyone in send path
-            this.dmChannel.forward(message);
-        }
+        this.dmChannel.forward(message);
     }
     // returns router and client ids
     static debug_getStructure(client) {
@@ -458,7 +451,21 @@ export class ChannelBase {
         }
         if (!("recipient" in header) || header.recipient != null)
             header.recipient = finalRecipientId; // set recipientId
+        let path = [];
+        if (("sender" in header)) {
+            try {
+                path = JSON.parse(header.sender.path);
+            }
+            catch (err) { // invalid path; reset
+                header.sender.path = "[]";
+                path = [];
+            }
+        }
+        if (path.includes(finalRecipientId))
+            return; // recipient has already recieved message; don't need to send again
         const recipientId = this.client.getSendClient(finalRecipientId);
+        if (path.includes(recipientId))
+            return; // recipient has already recieved message; don't need to send again
         const msg = this.constructMessageString(header, data);
         if (!this.client.getReadyState(this.client.id) // client not yet ready to send
             || recipientId === null // finalRecipient cannot be reached
@@ -500,23 +507,23 @@ export class ChannelBase {
             this.doSendTo(header, data, clientId);
         }
     }
-    // doSendTo, but stops if current client id already in header.sender.path
-    doForwardTo(header, data, finalRecipientId = null) {
-        const path = header?.sender?.path ?? null;
-        if (path) {
-            try {
-                const pathArr = JSON.parse(path);
-                if (Array.isArray(pathArr) && pathArr.includes(this.client.id))
-                    return; // don't send, as it would be a repeat
-            }
-            catch (err) { }
-        }
-        this.doSendTo(header, data, finalRecipientId);
-    }
+    // doSendTo, but stops if current client id already in header.sender.path // aka: useless
+    // protected doForwardTo(header: channelMessage["header"], data: channelMessage["data"], finalRecipientId: string = null) {
+    //   const path = header?.sender?.path ?? null;
+    //   if (path) {
+    //     try {
+    //       const pathArr = JSON.parse(path);
+    //       if (Array.isArray(pathArr) && pathArr.includes(this.client.id)) console.log("STOP")
+    //       if (Array.isArray(pathArr) && pathArr.includes(this.client.id)) return; // don't send, as it would be a repeat
+    //     }
+    //     catch(err) {}
+    //   }
+    //   this.doSendTo(header, data, finalRecipientId);
+    // }
     forward(message) {
         if (!("header" in message && "data" in message && "recipient" in message.header))
             return; // invalid message
-        this.doForwardTo(message.header, message.data, message.header.recipient);
+        this.doSendTo(message.header, message.data, message.header.recipient);
     }
     sendControlMessage(data, finalRecipientId = null, lastHeader) {
         if (finalRecipientId === null) {
@@ -529,7 +536,7 @@ export class ChannelBase {
         if (!lastHeader)
             this.doSendTo(header, JSON.stringify(data), finalRecipientId);
         else
-            this.doForwardTo(header, JSON.stringify(data), finalRecipientId);
+            this.doSendTo(header, JSON.stringify(data), finalRecipientId);
     }
     initRequest(resolve) {
         const id = this.requestIds.generateId();

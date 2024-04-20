@@ -11,7 +11,6 @@ export class LocalConnection extends ConnectionBase {
     createNewClient(id, heartbeatInterval) {
         const client = new LocalClient(id, this, heartbeatInterval);
         connWorlds.get(this.worldId).set(id, client);
-        debugger;
         return client;
     }
 }

@@ -6,6 +6,7 @@ export class WireCatenary extends WireBase {
     wireDisplay;
     wireDisplayPath;
     wireDisplayShadow;
+    coefficients = { a: 0, b: 0, c: 0 };
     constructor({ width, color, shadow, drop = 100, tensionCoef = 0.001, segments = 15 }) {
         super({
             name: "catenary-wire",
@@ -45,42 +46,28 @@ export class WireCatenary extends WireBase {
         }
         const [sqX1, sqX2, sqX3] = [x1 * x1, x2 * x2, x3 * x3];
         const mainDiv = (x1 - x2) * (x1 - x3) * (x2 - x3);
-        const a = -(x1 * (y2 - y3) - x2 * (y1 - y3) + x3 * (y1 - y2)) / mainDiv;
-        const b = (sqX1 * (y2 - y3) - sqX2 * (y1 - y3) + sqX3 * (y1 - y2)) / mainDiv;
-        const c = (sqX1 * x2 * y3 * (x1 - x2) - x2 * sqX3 * y1 * (x1 - x2) - x3 * (x1 - x3) * (sqX1 * y2 - sqX2 * y1)) / (x1 * mainDiv);
-        this.drawParabola(x1, x3, a, b, c);
+        this.coefficients.a = -(x1 * (y2 - y3) - x2 * (y1 - y3) + x3 * (y1 - y2)) / mainDiv;
+        this.coefficients.b = (sqX1 * (y2 - y3) - sqX2 * (y1 - y3) + sqX3 * (y1 - y2)) / mainDiv;
+        this.coefficients.c = (sqX1 * x2 * y3 * (x1 - x2) - x2 * sqX3 * y1 * (x1 - x2) - x3 * (x1 - x3) * (sqX1 * y2 - sqX2 * y1)) / (x1 * mainDiv);
+        this.drawParabola(x1, x3, y1, y3);
     }
-    drawParabola(x1, x2, a, b, c) {
-        const minX = Math.min(x1, x2);
-        const maxX = Math.max(x1, x2);
-        const step = this.getStep(maxX - minX);
-        const points = [];
-        const p1 = this.point1.getPos();
-        const p2 = this.point2.getPos();
-        points.push((p1.x < p2.x) ? [p1.x, p1.y] : [p2.x, p2.y]); // push left-most point
-        let minY = Math.min(p1.y, p2.y);
-        let maxY = Math.max(p1.y, p2.y);
-        for (let i = 1; i < this.segments - 1; i++) {
-            const x = minX + step * i;
-            const y = a * x * x + b * x + c;
-            if (isNaN(y)) { // invalid 'y' value
-                this.updateWireDisplay("", 0, 0, 0, 0);
-                return;
-            }
-            if (y < minY)
-                minY = y;
-            else if (y > maxY)
-                maxY = y;
-            points.push([x, y]);
+    drawParabola(x1, x3, y1, y3) {
+        const minX = Math.min(x1, x3);
+        const maxX = Math.max(x1, x3);
+        let minY = Math.min(y1, y3);
+        let maxY = Math.max(y1, y3);
+        const { a, b, c } = this.coefficients;
+        if (a != 0) {
+            // extreme(ax^2 + bx + c) -> 2ax + b = 0 -> x = -b / 2a
+            const x2 = -b / (2 * a);
+            const y2 = a * x2 * x2 + b * x2 + c;
+            minY = Math.min(minY, y2);
+            maxY = Math.max(maxY, y2);
         }
-        points.push((p1.x < p2.x) ? [p2.x, p2.y] : [p1.x, p1.y]); // push right-most point
-        let d = "";
-        points.forEach(([x, y], i) => {
-            if (i == 0)
-                d += `M${x} ${y}`;
-            else
-                d += ` L${x} ${y}`;
-        });
+        // https://math.stackexchange.com/questions/335226/convert-segment-of-parabola-to-quadratic-bezier-curve
+        const p_Cx = (x1 + x3) / 2;
+        const p_Cy = y1 + (2 * a * x1 + b) * (x3 - x1) / 2;
+        const d = `M${x1} ${y1} Q${p_Cx} ${p_Cy} ${x3} ${y3}`; // use quadratic bezier curve to draw parabola, which used to estimate catenary
         this.updateWireDisplay(d, minX, maxX, minY, maxY);
     }
     drawVLineFallback(x, y1, y2, y3) {
@@ -88,7 +75,6 @@ export class WireCatenary extends WireBase {
         const maxY = Math.max(y1, y2, y3);
         this.updateWireDisplay(`M${x} ${minY} L${x} ${maxY}`, x, x, minY, maxY);
     }
-    getStep(distance) { return distance / (this.segments - 1); }
     updateWireDisplay(d, minX, maxX, minY, maxY) {
         const padding = this._width;
         const width = (maxX - minX) + 2 * padding;
