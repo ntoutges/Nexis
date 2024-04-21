@@ -233,7 +233,11 @@ export class ConnConsole extends DraggableWidget {
             contextmenu: {
                 "connsole": {
                     el: container,
-                    options: "clear/Clear/icons.trash;scroll/Autoscroll/icons.check,;passthru/Passthru/,icons.check"
+                    options: "clear/Clear/icons.trash"
+                },
+                "header": {
+                    el: null,
+                    options: ";Options;scroll/Autoscroll/icons.check,;passthru/Passthru/,icons.check"
                 }
             },
             doDragAll: true

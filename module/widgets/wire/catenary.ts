@@ -96,7 +96,7 @@ export class WireCatenary extends WireBase {
     
     const { a,b,c } = this.coefficients;
 
-    if (a != 0) {
+    if (Math.abs(a) > 1e-10) {
       // extreme(ax^2 + bx + c) -> 2ax + b = 0 -> x = -b / 2a
       const x2 = -b / (2*a);
       const y2 = a*x2*x2 + b*x2 + c;
