@@ -166,10 +166,14 @@ export class Widget extends FrameworkBase {
     }
     get isBuilt() { return true; } // used by types like GlobalSingleUseWidget for scene optimization
     get doSaveWidget() { return true; }
-    manualResizeTo(d) {
+    manualResizeTo(d, xComponent = 1, yComponent = 1) {
+        if (xComponent >= 2)
+            this.pos.offsetPos({ x: -d.delta.x });
+        if (yComponent >= 2)
+            this.pos.offsetPos({ y: d.delta.y });
         if (this.scene)
             d.scale = this.scene.draggable.pos.z; // update scale if this.scene exists
-        super.manualResizeTo(d);
+        super.manualResizeTo(d, xComponent, yComponent);
     }
     get doImmediateSceneAppend() { return true; }
     get isMovementExempt() { return !this.isBuilt || this.positioning === 0; }

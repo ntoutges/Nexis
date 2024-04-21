@@ -35,6 +35,7 @@ export class Draggable {
 
   scale: number = 1;
   private enabled: boolean = true;
+  private _lastEvent: MouseEvent = null;
 
   readonly listener = new Listener<DraggableEvents, Draggable>();
 
@@ -116,6 +117,7 @@ export class Draggable {
     if (!this.enabled) return; // disabled
     if (!this.acceptableMouseButtons.has(e.button)) return;
     e.preventDefault();
+    this._lastEvent = e;
     
     this.isDragging = true;
     this.mouseOffset.x = e.pageX;
@@ -149,6 +151,7 @@ export class Draggable {
   protected endDrag(e: MouseEvent) {
     if (!this.isDragging) return;
     if (this.blockDrag) e.stopPropagation();
+    this._lastEvent = e;
     this.isDragging = false;
     this.listener.trigger("dragEnd", this);
   }
@@ -157,6 +160,7 @@ export class Draggable {
     if (!this.zoomable || e.deltaY == 0) return; // don't zoom if not zoomable
     if (this.blockScroll) e.stopPropagation();
     if (!this.enabled) return; // disabled
+    this._lastEvent = e;
 
     // exact position of cursor actually matters here, rather than just difference in position
 
@@ -325,4 +329,6 @@ export class Draggable {
 
   enable() { this.enabled = true; }
   disable() { this.enabled = false; }
+
+  get lastEvent() { return this._lastEvent; }
 }

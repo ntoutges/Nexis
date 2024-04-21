@@ -210,6 +210,8 @@ export class DraggableWidget extends Widget {
     this.body.append(content);
     this.body.style.background = options?.bodyBackground ?? "";
 
+    if (this.resizeData.dragEl) this.body.append(this.resizeData.dragEl);
+
     body.style.height = bodyHeight ?? "";
     body.style.background = bodyBackground ?? "";
 
@@ -432,5 +434,5 @@ export class DraggableWidget extends Widget {
   resetBounds() {
     this.body.style.width = "";
     this.body.style.height = "";
-  }
+  } 
 }

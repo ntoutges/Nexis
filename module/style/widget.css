@@ -20,8 +20,8 @@
   opacity: 0;
 }
 
-.framework-widget:has(> .framework-draggable-widget-containers > .framework-draggable-widget-bodies.draggable-widget-minimize) > .framework-resize-drag-element {
-  display: none;
+.framework-widget:has(> .framework-draggable-widget-containers) {
+  pointer-events: none;
 }
 
 .framework-draggable-widget-containers.framework-widgets-hide-on-inactive > .framework-draggable-widget-headers {
@@ -121,6 +121,8 @@
 
   border-radius: 0px;
   font-family: 'Terminal';
+
+  pointer-events: all;
 }
 
 .framework-draggable-widget-title-texts {
@@ -154,6 +156,8 @@
 
   transition: transform 200ms, clip-path 200ms 200ms;
   transition-delay: 100ms, 100ms;
+
+  pointer-events: all;
 }
 
 .framework-draggable-widget-containers:has(> .framework-draggable-widget-bodies.draggable-widget-minimize) > .framework-draggable-widget-headers > .framework-draggable-widget-title-ends {
@@ -216,6 +220,8 @@
   box-shadow: 0px 0px 1px black;
   min-height: 0px; /* default flex-child cannot be smaller than content; this overrides that */
   /* overflow: hidden; */
+
+  pointer-events: all;
 }
 .framework-draggable-widget-bodies.draggable-widget-minimize {
   animation: minimize-bodies-forward 300ms;
@@ -279,10 +285,6 @@
   }
 }
 
-.framework-scene-holders-widget:has(> .framework-draggable-widget-containers.draggable-widget-fullscreen) > .framework-resize-drag-element {
-  display: none;
-}
-
 .framework-draggable-widget-button-holder > .framework-draggable-widget-buttons:hover {
   cursor: pointer;
 }
@@ -325,6 +327,157 @@
     transform: scaleY(1);
   }
 }
+
+.framework-resize-drag-container {
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0px;
+  top: 0px;
+
+  z-index: 1;
+
+  &:has(> .framework-resize-drag-element-side-left:hover) > .framework-resize-drag-element-side-left,
+  &:has(> .framework-resize-drag-element-side-right:hover) > .framework-resize-drag-element-side-right,
+  &:has(> .framework-resize-drag-element-side-top:hover) > .framework-resize-drag-element-side-top,
+  &:has(> .framework-resize-drag-element-side-bottom:hover) > .framework-resize-drag-element-side-bottom {
+    opacity: 1;
+  }
+}
+
+.framework-widget:has(> .framework-draggable-widget-containers > .framework-draggable-widget-bodies.draggable-widget-minimize) > .framework-resize-drag-element,
+.framework-scene-holders-widget:has(> .framework-draggable-widget-containers.draggable-widget-fullscreen) > .framework-resize-drag-element {
+  display: none;
+}
+
+.framework-resize-drag-element {
+  background: #7bbbff;
+  opacity: 0;
+  pointer-events: all;
+  position: absolute;
+
+  transition: opacity 100ms;
+
+  --resize-width: 3px;
+
+  pointer-events: all;
+
+  &.framework-resize-drag-element-side-left {
+    left: 0px;
+    translate: -100% 0;
+  }
+  
+  &.framework-resize-drag-element-side-right {
+    right: 0px;
+    translate: 100% 0;
+  }
+
+  &.framework-resize-drag-element-side-top {
+    top: 0px;
+    translate: 0 -100%;
+  }
+
+  &.framework-resize-drag-element-side-bottom {
+    bottom: 0px;
+    translate: 0 100%;
+  }
+  
+  &.framework-resize-drag-element-side-right,
+  &.framework-resize-drag-element-side-left {
+    top: var(--resize-width);
+    height: calc(100% - 2 * var(--resize-width));
+    width: var(--resize-width);
+
+    &:hover {
+      cursor: ew-resize;
+    }
+  }
+  
+  &.framework-resize-drag-element-side-top,
+  &.framework-resize-drag-element-side-bottom {
+    left: var(--resize-width);
+    width: calc(100% - 2 * var(--resize-width));
+    height: var(--resize-width);
+
+    &:hover {
+      cursor: ns-resize;
+    }
+  }
+
+  &.framework-resize-drag-element-side-top.framework-resize-drag-element-side-left {
+    left: calc(-1 * var(--resize-width));
+    top: calc(-1 * var(--resize-width));
+  }
+  &.framework-resize-drag-element-side-bottom.framework-resize-drag-element-side-left {
+    top: unset;
+    left: calc(-1 * var(--resize-width));
+    bottom: calc(-1 * var(--resize-width));
+  }
+  &.framework-resize-drag-element-side-top.framework-resize-drag-element-side-right {
+    left: unset;
+    right: calc(-1 * var(--resize-width));
+    top: calc(-1 * var(--resize-width));
+  }
+  &.framework-resize-drag-element-side-bottom.framework-resize-drag-element-side-right {
+    top: unset;
+    left: unset;
+    right: calc(-1 * var(--resize-width));
+    bottom: calc(-1 * var(--resize-width));
+
+    &:hover {
+      cursor: nwse-resize;
+    }
+  }
+
+  &.framework-resize-drag-element-side-top.framework-resize-drag-element-side-left,
+  &.framework-resize-drag-element-side-top.framework-resize-drag-element-side-right,
+  &.framework-resize-drag-element-side-bottom.framework-resize-drag-element-side-left,
+  &.framework-resize-drag-element-side-bottom.framework-resize-drag-element-side-right {
+    width: calc(2 * var(--resize-width));
+    height: calc(2 * var(--resize-width));
+    translate: 0 0;
+  }
+
+  &.framework-resize-drag-element-side-bottom.framework-resize-drag-element-side-right:hover,
+  &.framework-resize-drag-element-side-top.framework-resize-drag-element-side-left:hover {
+    cursor: nwse-resize;
+  }
+
+  &.framework-resize-drag-element-side-bottom.framework-resize-drag-element-side-left:hover,
+  &.framework-resize-drag-element-side-top.framework-resize-drag-element-side-right:hover {
+    cursor: nesw-resize;
+  }
+}
+
+/* .framework-resize-drag-element > svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.framework-resize-drag-element:hover {
+  border-color: black;
+  opacity: 1;
+  width: 15px;
+  height: 15px;
+} */
+
+.framework-resize-drag-element.framework-dir-both:hover {
+  cursor: nwse-resize;
+}
+
+.framework-resize-drag-element.framework-dir-horizontal:hover {
+  cursor: ew-resize;
+}
+
+.framework-resize-drag-element.framework-dir-vertical:hover {
+  cursor: ns-resize;
+}
+
 
 .framework-contextmenu-containers {
   background-color: white;

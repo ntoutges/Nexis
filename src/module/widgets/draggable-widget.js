@@ -162,6 +162,8 @@ export class DraggableWidget extends Widget {
         this.body.classList.add("framework-draggable-widget-bodies");
         this.body.append(content);
         this.body.style.background = options?.bodyBackground ?? "";
+        if (this.resizeData.dragEl)
+            this.body.append(this.resizeData.dragEl);
         body.style.height = bodyHeight ?? "";
         body.style.background = bodyBackground ?? "";
         if (options?.hideOnInactivity ?? false)

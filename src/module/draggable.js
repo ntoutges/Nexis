@@ -26,6 +26,7 @@ export class Draggable {
     acceptableMouseButtons = new Set();
     scale = 1;
     enabled = true;
+    _lastEvent = null;
     listener = new Listener();
     constructor({ viewport, // continues movement
     element, // Initiates movement
@@ -93,6 +94,7 @@ export class Draggable {
         if (!this.acceptableMouseButtons.has(e.button))
             return;
         e.preventDefault();
+        this._lastEvent = e;
         this.isDragging = true;
         this.mouseOffset.x = e.pageX;
         this.mouseOffset.y = e.pageY;
@@ -129,6 +131,7 @@ export class Draggable {
             return;
         if (this.blockDrag)
             e.stopPropagation();
+        this._lastEvent = e;
         this.isDragging = false;
         this.listener.trigger("dragEnd", this);
     }
@@ -139,6 +142,7 @@ export class Draggable {
             e.stopPropagation();
         if (!this.enabled)
             return; // disabled
+        this._lastEvent = e;
         // exact position of cursor actually matters here, rather than just difference in position
         const bounds = this.getBoundingClientRect();
         const localX = (e.pageX - bounds.left);
@@ -278,5 +282,6 @@ export class Draggable {
     get scaledZoom() { return this.pos.z * this.scale; }
     enable() { this.enabled = true; }
     disable() { this.enabled = false; }
+    get lastEvent() { return this._lastEvent; }
 }
 //# sourceMappingURL=draggable.js.map
