@@ -41,87 +41,87 @@ const scene = new Scene({
     }
   },
   widgets: [
-    new GridWidget({
-      style: {
-        background: "cornsilk"
-      },
-      options: {
-        coords: true
-      },
-      doCursorDragIcon: true
-    }),
-    new ConnWidget({
-      type: "data",
-      connections: {
-        "peer": peerConn,
-        "local": new LocalConnection()
-      },
-      validator: connValidator,
-      wireData: {
-        params: {},
-        type: WireCatenary
-      }
-    }),
-    new ConnWidget({
-      type: "data",
-      connections: {
-        "peer": peerConn,
-        "local": new LocalConnection()
-      },
-      validator: connValidator,
-      wireData: {
-        params: {},
-        type: WireCatenary
-      }
-    }),
-    new ConnWidget({
-      type: "data",
-      connections: {
-        "peer": peerConn,
-        "local": new LocalConnection()
-      },
-      validator: connValidator,
-      wireData: {
-        params: {},
-        type: WireCatenary
-      }
-    }),
-    new ConnWidget({
-      type: "data",
-      connections: {
-        "peer": peerConn,
-        "local": new LocalConnection()
-      },
-      validator: connValidator,
-      wireData: {
-        params: {},
-        type: WireCatenary
-      }
-    }),
-    new ConnConsole({
-      type: "data",
-      validator: connValidator,
-      wireData: {
-        params: {},
-        type: WireCatenary
-      }
-    }),
-    new ConnConsole({
-      type: "data",
-      validator: connValidator,
-      wireData: {
-        params: {},
-        type: WireCatenary
-      }
-    }),
-    new ConnConsole({
-      type: "data",
-      validator: connValidator,
-      wireData: {
-        params: {},
-        type: WireCatenary
-      }
-    })
+    // new GridWidget({
+    //   style: {
+    //     background: "cornsilk"
+    //   },
+    //   options: {
+    //     coords: true
+    //   },
+    //   doCursorDragIcon: true
+    // }),
+    // new ConnWidget({
+    //   type: "data",
+    //   connections: {
+    //     "peer": peerConn,
+    //     "local": new LocalConnection()
+    //   },
+    //   validator: connValidator,
+    //   wireData: {
+    //     params: {},
+    //     type: WireCatenary
+    //   }
+    // }),
+    // new ConnWidget({
+    //   type: "data",
+    //   connections: {
+    //     "peer": peerConn,
+    //     "local": new LocalConnection()
+    //   },
+    //   validator: connValidator,
+    //   wireData: {
+    //     params: {},
+    //     type: WireCatenary
+    //   }
+    // }),
+    // new ConnWidget({
+    //   type: "data",
+    //   connections: {
+    //     "peer": peerConn,
+    //     "local": new LocalConnection()
+    //   },
+    //   validator: connValidator,
+    //   wireData: {
+    //     params: {},
+    //     type: WireCatenary
+    //   }
+    // }),
+    // new ConnWidget({
+    //   type: "data",
+    //   connections: {
+    //     "peer": peerConn,
+    //     "local": new LocalConnection()
+    //   },
+    //   validator: connValidator,
+    //   wireData: {
+    //     params: {},
+    //     type: WireCatenary
+    //   }
+    // }),
+    // new ConnConsole({
+    //   type: "data",
+    //   validator: connValidator,
+    //   wireData: {
+    //     params: {},
+    //     type: WireCatenary
+    //   }
+    // }),
+    // new ConnConsole({
+    //   type: "data",
+    //   validator: connValidator,
+    //   wireData: {
+    //     params: {},
+    //     type: WireLine
+    //   }
+    // }),
+    // new ConnConsole({
+    //   type: "data",
+    //   validator: connValidator,
+    //   wireData: {
+    //     params: {},
+    //     type: WireCatenary
+    //   }
+    // })
   ]
 });
 
@@ -129,16 +129,20 @@ function connValidator(dir1: "input" | "output" | "omni", dir2: "input" | "outpu
   return (dir1 == "input" && dir2 == "output") || (dir1 == "output" && dir2 == "input") || (dir1 == "omni") || (dir2 == "omni")
 }
 
-scene.addLoadClass("widget", WireLine)
+scene.addLoadClass("widget", WireCatenary);
+scene.addLoadClass("widget", WireLine);
 scene.addLoadClass("widget", ConnConsole);
 scene.addLoadClass("widget", GridWidget);
 scene.addLoadClass(
   "widget",
-  ConnWidget,
-  {
-    connections: {
-      "peer": peerConn,
-      "local": new LocalConnection()
-    }
-  }
+  ConnWidget
 );
+
+scene.addLoadClass("wire", WireLine);
+scene.addLoadClass("wire", WireCatenary);
+
+scene.load({"widgets":{"0":{"params":{"wireData":{"params":{},"type":{"$$C":{"name":"WireLine","type":"wire"}}},"type":"data","params":{}},"id":0,"type":"ConnConsole","pos":{"x":0,"y":0},"addons":{"left":{"1":{"type":"ConnectorAddon","id":1,"edge":"left","widget":0}},"right":{"1":{"type":"ConnectorAddon","id":1,"edge":"right","widget":0}},"top":{},"bottom":{}}},"4":{"params":{"wireData":{"params":{},"type":{"$$C":{"name":"WireCatenary","type":"wire"}}},"type":"data","params":{}},"id":4,"type":"ConnConsole","pos":{"x":0,"y":0},"addons":{"left":{"1":{"type":"ConnectorAddon","id":1,"edge":"left","widget":4}},"right":{"1":{"type":"ConnectorAddon","id":1,"edge":"right","widget":4}},"top":{},"bottom":{}}}},"nested":[]});
+
+// console.log(JSON.stringify(scene.save()))
+// setInterval(() => {
+// }, 1000)

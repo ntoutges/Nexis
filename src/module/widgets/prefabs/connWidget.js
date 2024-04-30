@@ -70,6 +70,7 @@ export class ConnWidget extends DraggableWidget {
             }
         });
         this.addInitParams({ type }, "*");
+        this.defineObjectificationInitParams({ "connections.*": "+conn", "wireData.type": "addon" });
         this.contextmenus.header.listener.on("click", (item) => {
             switch (item.value) {
                 case "msg":
@@ -242,7 +243,8 @@ export class ConnConsole extends DraggableWidget {
             },
             doDragAll: true
         });
-        this.addInitParams({ type }, "*");
+        this.addInitParams({ type, wireData }, "*");
+        this.defineObjectificationInitParams({ "wireData.type": "wire" });
         this.terminalContainer = container;
         this.terminalBody.classList.add("framework-prefab-connsole-bodies");
         this.terminalInput.classList.add("framework-prefab-connsole-inputs");

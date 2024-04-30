@@ -24,9 +24,7 @@ export class Scene extends FrameworkBase {
     layers = new Layers();
     wires = new Set();
     encapsulator = null;
-    loadClasses = {
-        widget: new Map()
-    };
+    loadClasses = {};
     constructor({ parent = null, options = {}, style, widgets = [], doStartCentered = false, resize, encapsulator = null }) {
         super({
             name: "scene",
@@ -229,6 +227,8 @@ export class Scene extends FrameworkBase {
         return true; // successfully removed
     }
     addLoadClass(type, classname, params = {}) {
+        if (!this.loadClasses.hasOwnProperty(type))
+            this.loadClasses[type] = new Map();
         this.loadClasses[type].set(classname.name, { classname, params });
     }
     save() {
@@ -249,15 +249,60 @@ export class Scene extends FrameworkBase {
             const type = data.type;
             if (this.loadClasses.widget.has(type)) {
                 const { classname, params: addedParams } = this.loadClasses.widget.get(type);
+                this.replaceObjectifications({ ...data.params, ...addedParams });
                 const loaded = new classname({ ...data.params, ...addedParams });
                 const id = this.addWidget(loaded, data.id);
                 widgets.set(id, loaded);
+            }
+            else {
+                console.log(`Unable to load object: ${type}; Not registered`);
             }
         }
         for (const [widgetId, widget] of widgets) {
             const data = state.widgets[widgetId];
             widget.load(data);
         }
+    }
+    replaceObjectifications(object) {
+        const queue = Object.keys(object).map(key => [object, key]);
+        while (queue.length > 0) {
+            const [obj, lastKey] = queue.pop();
+            const lastObj = obj[lastKey];
+            for (const nextKey in lastObj) {
+                if (typeof lastObj != "object" || lastObj[nextKey] == null)
+                    continue;
+                const objectified = this.doObjectification(nextKey, lastObj[nextKey]);
+                if (objectified === null) {
+                    queue.push([lastObj, nextKey]);
+                }
+                else {
+                    obj[lastKey] = objectified;
+                }
+            }
+        }
+        return object; // allow chaining
+    }
+    doObjectification(key, obj) {
+        if (key.length < 3 || key.substring(0, 2) != "$$")
+            return null; // cannot be objectified
+        const loadClass = this.getLoadClass(obj.type, obj.name);
+        if (loadClass == null) {
+            console.error(`Unable to find load class ${obj.type}.${obj.name}`);
+            return null;
+        }
+        switch (key[2]) {
+            case "C":
+                return loadClass.classname;
+            case "I":
+                console.error("Loading instances not yet implemented!");
+                return null;
+        }
+        return null;
+    }
+    getLoadClass(type, name) {
+        if (!this.loadClasses.hasOwnProperty(type) || !this.loadClasses[type].has(name))
+            return null;
+        return this.loadClasses[type].get(name);
     }
 }
 //# sourceMappingURL=scene.js.map

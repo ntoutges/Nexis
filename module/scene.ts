@@ -13,7 +13,7 @@ import { RevMap } from "./revMap.js";
 
 var sceneIdentifiers = 0;
 
-type loadClasses = "widget";
+export type loadClasses = "widget" | "addon" | "wire";
 export class Scene extends FrameworkBase {
   readonly draggable: Draggable;
   readonly identifier = sceneIdentifiers++;
@@ -34,9 +34,7 @@ export class Scene extends FrameworkBase {
   private readonly wires = new Set<WireBase>();
   protected encapsulator = null;
 
-  private readonly loadClasses: Record<loadClasses, Map<string, { classname: { new(...args: any[]): Object }, params: any }>> = {
-    widget: new Map<string, { classname: { new(...args: any[]): Object }, params: any }>()
-  }
+  private readonly loadClasses: Partial<Record<loadClasses, Map<string, { classname: { new(...args: any[]): Object }, params: any }>>> = {}
 
   constructor({
     parent = null,
@@ -288,6 +286,7 @@ export class Scene extends FrameworkBase {
     classname: T,
     params: Partial<ConstructorParameters<T>[0]> = {}
   ) {
+    if (!this.loadClasses.hasOwnProperty(type)) this.loadClasses[type] = new Map();
     this.loadClasses[type].set(classname.name, { classname, params });
   }
 
@@ -311,9 +310,13 @@ export class Scene extends FrameworkBase {
 
       if (this.loadClasses.widget.has(type)) {
         const { classname, params: addedParams } = this.loadClasses.widget.get(type);
+        this.replaceObjectifications({...data.params, ...addedParams});
         const loaded = new classname({ ...data.params, ...addedParams }) as Widget;
         const id = this.addWidget(loaded, data.id);
         widgets.set(id, loaded);
+      }
+      else {
+        console.log(`Unable to load object: ${type}; Not registered`)
       }
     }
 
@@ -322,5 +325,54 @@ export class Scene extends FrameworkBase {
       const data = state.widgets[widgetId];
       widget.load(data);
     }
+  }
+
+  private replaceObjectifications(object: Record<string,any>): Record<string,any> {
+    const queue: [object: Record<string,any>, lastKey: string][] = Object.keys(object).map(key => [object, key]);
+
+    while (queue.length > 0) {
+      const [obj, lastKey] = queue.pop();
+      const lastObj = obj[lastKey];
+      
+      for (const nextKey in lastObj) {
+        if (typeof lastObj != "object" || lastObj[nextKey] == null) continue;
+        
+        const objectified = this.doObjectification(nextKey,lastObj[nextKey]);
+        if (objectified === null) {
+          queue.push([lastObj, nextKey]);
+        }
+        else {
+          obj[lastKey] = objectified;
+        }
+      }
+    }
+
+    return object; // allow chaining
+  }
+
+  private doObjectification(key: string, obj: Record<string,string>) {
+    if (key.length < 3 || key.substring(0,2) != "$$") return null; // cannot be objectified
+    
+    const loadClass = this.getLoadClass(obj.type, obj.name);
+    if (loadClass == null) {
+      console.error(`Unable to find load class ${obj.type}.${obj.name}`)
+      return null;
+    }
+    switch (key[2]) {
+      case "C":
+        return loadClass.classname;
+      case "I":
+        console.error("Loading instances not yet implemented!")
+        return null;
+    }
+    return null;
+  }
+
+  private getLoadClass(type: string, name: string): {
+    classname: new (...args: any[]) => Object;
+    params: any;
+  } {
+    if (!this.loadClasses.hasOwnProperty(type) || !this.loadClasses[type].has(name)) return null;
+    return this.loadClasses[type].get(name);
   }
 }

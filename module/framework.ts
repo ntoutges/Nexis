@@ -2,8 +2,8 @@
 
 import { Draggable } from "./draggable.js";
 import { FrameworkBaseInterface, resizeType } from "./interfaces.js";
-import * as svg from "./svg.js"
-
+import * as objUtils from "./objUtils.js";
+import { Scene, loadClasses } from "./scene.js";
 
 export abstract class FrameworkBase {
   protected el: HTMLDivElement = document.createElement("div");
@@ -18,6 +18,7 @@ export abstract class FrameworkBase {
     };
   private trackedDraggables: Draggable[] = [];
   private readonly initParams: Record<string,any> = {};
+  private readonly initParamObjectifications = new Map<string, string>();
 
   constructor({
     name,
@@ -68,9 +69,20 @@ export abstract class FrameworkBase {
   addInitParams(params: Record<string,any>, delParams: string[] | "*"): void
   addInitParams(params: Record<string,any>, delParams: string[] | "*" = null) {
     if (delParams !== null) this.delInitParams(delParams);
-
     for (const key in params) { this.initParams[key] = params[key]; }
   }
+  
+  /**
+   * Define which init params will be treated as objects
+   * @param keys key gives path to initParam, value gives type (ex: widget)
+   */
+  defineObjectificationInitParams(keys: Record<string,loadClasses | `+${string}`>) { Object.keys(keys).forEach(key => this.initParamObjectifications.set(key, keys[key])); }
+
+  /**
+   * Define which init params will be treated as objects
+   * @param keys array of keys, with subkeys separated by "."
+   */
+  undefineObjectificationInitParams(keys: string[]) { keys.forEach(key => this.initParamObjectifications.delete(key)); }
 
   delInitParams(params: string[] | "*") {
     if (params === "*") params = Object.keys(this.initParams); // remove all params
@@ -180,8 +192,35 @@ export abstract class FrameworkBase {
   }
 
   save(): Record<string, any> {
+    const initParams = objUtils.copy(this.initParams);
+    for (const [objectification,type] of this.initParamObjectifications) {
+      const segments = objUtils.smartSplit(
+        objUtils.smartSplit(objectification, ".", { "\"": "\"" }),
+        "*"
+      );
+      
+      let roots = [initParams];
+      for (const i in segments) { // get all but last segment
+        const segment = segments[i];
+        const isLast = +i == segments.length-1;
+        roots = roots.map(root => objUtils.getSubObject(root, isLast ? segment.slice(0,-1) : segment, null));
+        if (roots == null) continue;
+
+        if (!isLast) roots = roots.map(root => Object.keys(root).map(key => root[key])).flat(1); // add all items
+      }
+
+      const lastSegment = segments[segments.length-1];
+      if (lastSegment.length > 0) {
+        const lastKey = lastSegment[lastSegment.length-1];
+        roots.forEach(root => {
+          if (!root.hasOwnProperty(lastKey) || root[lastKey] == null) return;
+          if (typeof root[lastKey] == "function") root[lastKey] = { "$$C": { name: root[lastKey].name, type } }; // class
+          else if (typeof root[lastKey] == "object") root[lastKey] = { "$$I": { name: root[lastKey].constructor.name, type } }; // instance
+        });
+      }
+    }
     return {
-      params: this.initParams
+      params: initParams
     };
   };
 }
