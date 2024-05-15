@@ -10,6 +10,7 @@ import { Grid, Pos } from "./pos.js";
 import { WireBase } from "./widgets/wire/base.js";
 import { Ids } from "./ids.js";
 import { RevMap } from "./revMap.js";
+import { Saveable } from "./saveable/saveable.js";
 
 var sceneIdentifiers = 0;
 
@@ -33,8 +34,6 @@ export class Scene extends FrameworkBase {
   readonly layers = new Layers<Widget>();
   private readonly wires = new Set<WireBase>();
   protected encapsulator = null;
-
-  private readonly loadClasses: Partial<Record<loadClasses, Map<string, { classname: { new(...args: any[]): Object }, params: any }>>> = {}
 
   constructor({
     parent = null,
@@ -105,8 +104,10 @@ export class Scene extends FrameworkBase {
   addWidget(widget: Widget): number;
   addWidget(widget: Widget, id: number): number;
   addWidget(widget: Widget, idGen: (takenIds: number[]) => number): number;
-  addWidget(widget: Widget, id: number | ((takenIds: number[]) => number) = 0): number {
-    if (typeof id == "function") id = id(this.widgetIds.getIdsInUse()); // generate id
+  addWidget(widget: Widget, id: number | ((takenIds: number[]) => number) = null): number {
+    if (id === null) id = widget.getId() ?? 0;
+    else if (typeof id == "function") id = id(this.widgetIds.getIdsInUse()); // generate id
+
     if (!this.widgetIds.reserveId(id)) id = this.widgetIds.generateId(); // if id invalid, generate new
 
     widget.attachTo(this, id);
@@ -281,20 +282,16 @@ export class Scene extends FrameworkBase {
     return true; // successfully removed
   }
 
-  addLoadClass<T extends { new(...args: any[]): Object }>(
-    type: loadClasses,
-    classname: T,
-    params: Partial<ConstructorParameters<T>[0]> = {}
-  ) {
-    if (!this.loadClasses.hasOwnProperty(type)) this.loadClasses[type] = new Map();
-    this.loadClasses[type].set(classname.name, { classname, params });
-  }
-
   save(): Record<string,any> {
-    const widgetSave = {};
-    this.widgets.forEach((widget,key) => {
-      if (widget.doSaveWidget) widgetSave[key] = widget.save();
-    });
+    const widgetSave = Saveable.save(
+      Array.from(this.widgets.keys()).filter(key => this.widgets.get(key).doSaveWidget).reduce((acc, key) => { acc[key] = this.widgets.get(key); return acc; }, {}),
+      { "*": "widget" }
+    );
+
+    // const widgetSave = {};
+    // this.widgets.forEach((widget,key) => {
+    //   if (widget.doSaveWidget) widgetSave[key] = widget.save();
+    // });
 
     return {
       widgets: widgetSave,
@@ -303,76 +300,9 @@ export class Scene extends FrameworkBase {
   }
 
   load(state: Record<string,any>) {
-    const widgets = new Map<number, Widget>();
-    for (const widgetId in state.widgets) {
-      const data = state.widgets[widgetId];
-      const type = data.type;
+    this.objectify(state);
 
-      if (this.loadClasses.widget.has(type)) {
-        const { classname, params: addedParams } = this.loadClasses.widget.get(type);
-        this.replaceObjectifications({...data.params, ...addedParams});
-        const loaded = new classname({ ...data.params, ...addedParams }) as Widget;
-        const id = this.addWidget(loaded, data.id);
-        widgets.set(id, loaded);
-      }
-      else {
-        console.log(`Unable to load object: ${type}; Not registered`)
-      }
-    }
-
-
-    for (const [widgetId, widget] of widgets) {
-      const data = state.widgets[widgetId];
-      widget.load(data);
-    }
-  }
-
-  private replaceObjectifications(object: Record<string,any>): Record<string,any> {
-    const queue: [object: Record<string,any>, lastKey: string][] = Object.keys(object).map(key => [object, key]);
-
-    while (queue.length > 0) {
-      const [obj, lastKey] = queue.pop();
-      const lastObj = obj[lastKey];
-      
-      for (const nextKey in lastObj) {
-        if (typeof lastObj != "object" || lastObj[nextKey] == null) continue;
-        
-        const objectified = this.doObjectification(nextKey,lastObj[nextKey]);
-        if (objectified === null) {
-          queue.push([lastObj, nextKey]);
-        }
-        else {
-          obj[lastKey] = objectified;
-        }
-      }
-    }
-
-    return object; // allow chaining
-  }
-
-  private doObjectification(key: string, obj: Record<string,string>) {
-    if (key.length < 3 || key.substring(0,2) != "$$") return null; // cannot be objectified
-    
-    const loadClass = this.getLoadClass(obj.type, obj.name);
-    if (loadClass == null) {
-      console.error(`Unable to find load class ${obj.type}.${obj.name}`)
-      return null;
-    }
-    switch (key[2]) {
-      case "C":
-        return loadClass.classname;
-      case "I":
-        console.error("Loading instances not yet implemented!")
-        return null;
-    }
-    return null;
-  }
-
-  private getLoadClass(type: string, name: string): {
-    classname: new (...args: any[]) => Object;
-    params: any;
-  } {
-    if (!this.loadClasses.hasOwnProperty(type) || !this.loadClasses[type].has(name)) return null;
-    return this.loadClasses[type].get(name);
+    const widgets = state.widgets;
+    for (const widgetId in widgets) { this.addWidget(widgets[widgetId]); }
   }
 }

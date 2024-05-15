@@ -98,14 +98,14 @@ const scene = new Scene({
     //     type: WireCatenary
     //   }
     // }),
-    // new ConnConsole({
-    //   type: "data",
-    //   validator: connValidator,
-    //   wireData: {
-    //     params: {},
-    //     type: WireCatenary
-    //   }
-    // }),
+    new ConnConsole({
+      type: "data",
+      validator: connValidator,
+      wireData: {
+        params: {},
+        type: WireCatenary
+      }
+    }),
     // new ConnConsole({
     //   type: "data",
     //   validator: connValidator,
@@ -129,20 +129,19 @@ function connValidator(dir1: "input" | "output" | "omni", dir2: "input" | "outpu
   return (dir1 == "input" && dir2 == "output") || (dir1 == "output" && dir2 == "input") || (dir1 == "omni") || (dir2 == "omni")
 }
 
-scene.addLoadClass("widget", WireCatenary);
-scene.addLoadClass("widget", WireLine);
-scene.addLoadClass("widget", ConnConsole);
-scene.addLoadClass("widget", GridWidget);
-scene.addLoadClass(
-  "widget",
-  ConnWidget
-);
+scene.objectRepository.addObject("addon", ConnectorAddon);
 
-scene.addLoadClass("wire", WireLine);
-scene.addLoadClass("wire", WireCatenary);
+scene.objectRepository.addObject("widget", WireCatenary);
+scene.objectRepository.addObject("widget", WireLine);
+scene.objectRepository.addObject("widget", ConnConsole);
+scene.objectRepository.addObject("widget", GridWidget);
+scene.objectRepository.addObject("widget", ConnWidget);
 
-scene.load({"widgets":{"0":{"params":{"wireData":{"params":{},"type":{"$$C":{"name":"WireLine","type":"wire"}}},"type":"data","params":{}},"id":0,"type":"ConnConsole","pos":{"x":0,"y":0},"addons":{"left":{"1":{"type":"ConnectorAddon","id":1,"edge":"left","widget":0}},"right":{"1":{"type":"ConnectorAddon","id":1,"edge":"right","widget":0}},"top":{},"bottom":{}}},"4":{"params":{"wireData":{"params":{},"type":{"$$C":{"name":"WireCatenary","type":"wire"}}},"type":"data","params":{}},"id":4,"type":"ConnConsole","pos":{"x":0,"y":0},"addons":{"left":{"1":{"type":"ConnectorAddon","id":1,"edge":"left","widget":4}},"right":{"1":{"type":"ConnectorAddon","id":1,"edge":"right","widget":4}},"top":{},"bottom":{}}}},"nested":[]});
+scene.objectRepository.addObject("wire", WireLine);
+scene.objectRepository.addObject("wire", WireCatenary);
 
-// console.log(JSON.stringify(scene.save()))
-// setInterval(() => {
-// }, 1000)
+// scene.load({"widgets":{"0":{"$$I":{"name":"ConnConsole","type":"widget","data":{"params":{"type":"data","wireData":{"params":{},"type":{"$$C":{"name":"WireCatenary","type":"wire"}}}},"id":0,"type":"ConnConsole","pos":{"x":0,"y":0},"addons":{"left":{"1":{"$$I":{"name":"ConnectorAddon","type":"addon","data":{"params":{"positioning":0.5,"weight":100,"circleness":1,"size":14},"id":1,"edge":"left","widget":0}}}},"right":{"1":{"$$I":{"name":"ConnectorAddon","type":"addon","data":{"params":{"positioning":0.5,"weight":100,"circleness":1,"size":14},"id":1,"edge":"right","widget":0}}}},"top":{},"bottom":{}}}}}},"nested":[]});
+
+setInterval(() => {
+  JSON.stringify(scene.save())
+}, 1000)

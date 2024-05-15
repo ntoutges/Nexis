@@ -1,4 +1,4 @@
-export function copy(obj: Record<string,any>) { // maybe improve to allow circular references later
+export function copy(obj: Record<string,any>, filter: (obj: Record<string,any>) => boolean = null) { // maybe improve to allow circular references later
   const copy = {};
   
   const queue: [root: object, next: object, key: string][] = Object.keys(obj).map(key => [copy, obj[key], key]);
@@ -7,7 +7,7 @@ export function copy(obj: Record<string,any>) { // maybe improve to allow circul
     const [root, next, key] = queue.pop();
 
     root[key] = next;
-    if (typeof next == "object" && next != null && next.constructor.name != "object") queue.push(...Object.keys(next).map(key => [root, next[key], key]) as [object, any, string][]);
+    if (typeof next == "object" && next != null && next.constructor.name != "object" && (filter === null || filter(next))) queue.push(...Object.keys(next).map(key => [root, next[key], key]) as [object, any, string][]);
   }
   return copy;
 }

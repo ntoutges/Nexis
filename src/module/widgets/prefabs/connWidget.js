@@ -70,7 +70,7 @@ export class ConnWidget extends DraggableWidget {
             }
         });
         this.addInitParams({ type }, "*");
-        this.defineObjectificationInitParams({ "connections.*": "+conn", "wireData.type": "addon" });
+        this.defineObjectificationInitParams({ "connections.*": "+conn", "wireData.type": "widget" });
         this.contextmenus.header.listener.on("click", (item) => {
             switch (item.value) {
                 case "msg":

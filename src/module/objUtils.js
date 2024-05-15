@@ -1,10 +1,10 @@
-export function copy(obj) {
+export function copy(obj, filter = null) {
     const copy = {};
     const queue = Object.keys(obj).map(key => [copy, obj[key], key]);
     while (queue.length > 0) {
         const [root, next, key] = queue.pop();
         root[key] = next;
-        if (typeof next == "object" && next != null && next.constructor.name != "object")
+        if (typeof next == "object" && next != null && next.constructor.name != "object" && (filter === null || filter(next)))
             queue.push(...Object.keys(next).map(key => [root, next[key], key]));
     }
     return copy;

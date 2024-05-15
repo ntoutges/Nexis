@@ -1,7 +1,7 @@
 // basis for everything in the module
 import { Draggable } from "./draggable.js";
-import * as objUtils from "./objUtils.js";
-export class FrameworkBase {
+import { Saveable } from "./saveable/saveable.js";
+export class FrameworkBase extends Saveable {
     el = document.createElement("div");
     resizeData = {
         option: null,
@@ -9,9 +9,8 @@ export class FrameworkBase {
         draggable: null
     };
     trackedDraggables = [];
-    initParams = {};
-    initParamObjectifications = new Map();
     constructor({ name, parent = null, children = [], style, resize = "none" }) {
+        super();
         this.el.classList.add("frameworks");
         this.resizeData.option = resize;
         const names = name.split(" ");
@@ -48,30 +47,6 @@ export class FrameworkBase {
     }
     hide() { this.el.classList.add("hiddens"); }
     show() { this.el.classList.remove("hiddens"); }
-    addInitParams(params, delParams = null) {
-        if (delParams !== null)
-            this.delInitParams(delParams);
-        for (const key in params) {
-            this.initParams[key] = params[key];
-        }
-    }
-    /**
-     * Define which init params will be treated as objects
-     * @param keys key gives path to initParam, value gives type (ex: widget)
-     */
-    defineObjectificationInitParams(keys) { Object.keys(keys).forEach(key => this.initParamObjectifications.set(key, keys[key])); }
-    /**
-     * Define which init params will be treated as objects
-     * @param keys array of keys, with subkeys separated by "."
-     */
-    undefineObjectificationInitParams(keys) { keys.forEach(key => this.initParamObjectifications.delete(key)); }
-    delInitParams(params) {
-        if (params === "*")
-            params = Object.keys(this.initParams); // remove all params
-        for (const key of params) {
-            delete this.initParams[key];
-        }
-    }
     appendTo(parent) {
         parent.append(this.el);
         if (this.resizeData.dragEl) {
@@ -160,37 +135,5 @@ export class FrameworkBase {
         this.resizeData.dragEl.append(resizeEl);
         return resizeEl;
     }
-    save() {
-        const initParams = objUtils.copy(this.initParams);
-        for (const [objectification, type] of this.initParamObjectifications) {
-            const segments = objUtils.smartSplit(objUtils.smartSplit(objectification, ".", { "\"": "\"" }), "*");
-            let roots = [initParams];
-            for (const i in segments) { // get all but last segment
-                const segment = segments[i];
-                const isLast = +i == segments.length - 1;
-                roots = roots.map(root => objUtils.getSubObject(root, isLast ? segment.slice(0, -1) : segment, null));
-                if (roots == null)
-                    continue;
-                if (!isLast)
-                    roots = roots.map(root => Object.keys(root).map(key => root[key])).flat(1); // add all items
-            }
-            const lastSegment = segments[segments.length - 1];
-            if (lastSegment.length > 0) {
-                const lastKey = lastSegment[lastSegment.length - 1];
-                roots.forEach(root => {
-                    if (!root.hasOwnProperty(lastKey) || root[lastKey] == null)
-                        return;
-                    if (typeof root[lastKey] == "function")
-                        root[lastKey] = { "$$C": { name: root[lastKey].name, type } }; // class
-                    else if (typeof root[lastKey] == "object")
-                        root[lastKey] = { "$$I": { name: root[lastKey].constructor.name, type } }; // instance
-                });
-            }
-        }
-        return {
-            params: initParams
-        };
-    }
-    ;
 }
 //# sourceMappingURL=framework.js.map

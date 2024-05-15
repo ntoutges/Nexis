@@ -2,6 +2,8 @@ import { AttachableListener } from "../attachableListener.js";
 import { Group } from "../group.js";
 import { Ids } from "../ids.js";
 import { Listener } from "../listener.js";
+import { Saveable } from "../saveable/saveable.js";
+import { loadClasses } from "../scene.js";
 import { Widget } from "../widgets/widget.js";
 import { AddonEdgeAlias } from "./alias.js";
 
@@ -338,11 +340,10 @@ export class AddonEdge {
   
 
   save(): Record<string, any> {
-    const save = {};
-    for (const [id, addon] of this.addons) {
-      save[id] = addon.save();
-    }
-    return save;
+    return Saveable.save(
+      Array.from(this.addons).reduce((acc, [key,addon]) => { acc[key] = addon; return acc; }, {}),
+      {"*": "addon"}
+    );
   }
 }
 
@@ -354,7 +355,7 @@ interface AddonInterface {
   size?: number // measured in px
 };
 
-export class Addon {
+export class Addon extends Saveable<loadClasses> {
   private _positioning: number; // number in range [0,1] indicating position within AddonEdge
   private _position: number = 0; // represents the actual position (in px)
   private _weight: number;
@@ -380,6 +381,14 @@ export class Addon {
     circleness = 1,
     size = 16
   }: AddonInterface) {
+    super();
+    this.addInitParamGetter({
+      positioning: () => this.positioning,
+      weight: () => this.weight,
+      circleness: () => this.circleness,
+      size: () => this.size
+    });
+
     this.positioning = positioning;
     this.weight = weight;
     this.circleness = circleness;
@@ -478,12 +487,14 @@ export class Addon {
 
   save() {
     return {
-      type: this.constructor.name,
+      ...super.save(),
       id: this.id,
       edge: this.addonEdge?.direction,
       widget: this.addonContainer?.widget.getId()
     };
   }
+
+  load(state: Record<string,any>) { return state; }
 
   saveRef() {
     return {

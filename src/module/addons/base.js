@@ -2,6 +2,7 @@ import { AttachableListener } from "../attachableListener.js";
 import { Group } from "../group.js";
 import { Ids } from "../ids.js";
 import { Listener } from "../listener.js";
+import { Saveable } from "../saveable/saveable.js";
 // this class can easily add 
 export class AddonContainer {
     el = document.createElement("div");
@@ -273,15 +274,11 @@ export class AddonEdge {
         return leftDist < rightDist ? -leftDist : rightDist;
     }
     save() {
-        const save = {};
-        for (const [id, addon] of this.addons) {
-            save[id] = addon.save();
-        }
-        return save;
+        return Saveable.save(Array.from(this.addons).reduce((acc, [key, addon]) => { acc[key] = addon; return acc; }, {}), { "*": "addon" });
     }
 }
 ;
-export class Addon {
+export class Addon extends Saveable {
     _positioning; // number in range [0,1] indicating position within AddonEdge
     _position = 0; // represents the actual position (in px)
     _weight;
@@ -298,6 +295,13 @@ export class Addon {
     id = null;
     constructor({ content, positioning = 0.5, // default is centered
     weight = 100, circleness = 1, size = 16 }) {
+        super();
+        this.addInitParamGetter({
+            positioning: () => this.positioning,
+            weight: () => this.weight,
+            circleness: () => this.circleness,
+            size: () => this.size
+        });
         this.positioning = positioning;
         this.weight = weight;
         this.circleness = circleness;
@@ -384,12 +388,13 @@ export class Addon {
     }
     save() {
         return {
-            type: this.constructor.name,
+            ...super.save(),
             id: this.id,
             edge: this.addonEdge?.direction,
             widget: this.addonContainer?.widget.getId()
         };
     }
+    load(state) { return state; }
     saveRef() {
         return {
             id: this.id,

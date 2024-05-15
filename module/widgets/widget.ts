@@ -243,6 +243,7 @@ export class Widget extends FrameworkBase {
 
   load(data: ReturnType<this["save"]>) {
     this.pos.setPos(data.pos);
+    this._id = data.id;
   }
 }
 

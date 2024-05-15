@@ -28,6 +28,7 @@ export class ConnectorAddon extends Addon {
             positioning,
             size: 14
         });
+        this.addInitParams({ type, wireData, config });
         const styleName = ConnectorAddon.getStyleName(type, direction);
         if (!styleUsers.has(styleName))
             styleUsers.set(styleName, []);

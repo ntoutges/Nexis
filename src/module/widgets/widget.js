@@ -192,6 +192,7 @@ export class Widget extends FrameworkBase {
     }
     load(data) {
         this.pos.setPos(data.pos);
+        this._id = data.id;
     }
 }
 const globalSingleUseWidgetMap = new Map();
