@@ -3,7 +3,7 @@ import { FrameworkBase } from "../framework.js";
 import { ContextMenuEvents, ContextMenuItemInterface, DraggableEvents } from "../interfaces";
 import { ElementListener, Listener } from "../listener.js";
 import { Grid, Pos, SnapPos } from "../pos.js";
-import { Scene } from "../scene.js";
+import { Scene, idMap_t } from "../scene.js";
 import { AddonContainer } from "../addons/base.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 import { BasicWidgetInterface, ContextMenuInterface, GlobalSingleUseWidgetInterface, SceneListenerTypes, sceneElListener, sceneListener } from "./interfaces.js";
@@ -241,9 +241,9 @@ export class Widget extends FrameworkBase {
     }
   }
 
-  load(data: ReturnType<this["save"]>) {
+  load(data: ReturnType<this["save"]> & idMap_t) {
     this.pos.setPos(data.pos);
-    this._id = data.id;
+    // this._id = data._idMap.translate(data.id); // id set by attach
   }
 }
 

@@ -5,6 +5,7 @@ export class Saveable {
     initParamGetters = new Map();
     initParamObjectifications = new Map();
     objectRepository = new ObjRepo();
+    dependencies = new Set();
     addInitParams(params, delParams = null) {
         if (delParams !== null)
             this.delInitParams(delParams);
@@ -42,12 +43,25 @@ export class Saveable {
      * @param keys array of keys, with subkeys separated by "."
      */
     undefineObjectificationInitParams(keys) { keys.forEach(key => this.initParamObjectifications.delete(key)); }
+    addDependency(id) { if (id !== null)
+        this.dependencies.add(id); }
+    removeDependency(id) { this.dependencies.delete(id); }
+    setDependencies(...ids) {
+        for (const id of this.dependencies) {
+            this.removeDependency(id);
+        } // remove all
+        for (const id of ids) {
+            this.addDependency(id);
+        } // add all
+    }
+    getDependencies() { return Array.from(this.dependencies); }
     save() {
         return {
             params: Saveable.save(Array.from(this.initParams).reduce((acc, [key, value]) => { acc[key] = value; return acc; }, Array.from(this.initParamGetters).reduce((acc, [key, getter]) => { acc[key] = getter(); return acc; }, {})), Array.from(this.initParamObjectifications).reduce((acc, [key, value]) => { acc[key] = value; return acc; }, {}))
         };
     }
     static save(obj, objectifications) {
+        obj = Saveable.deepCopyBaseObject(obj); // make copy of object so as not to modify original
         for (const objectification in objectifications) {
             const segments = objUtils.smartSplit(objUtils.smartSplit(objectification, ".", { "\"": "\"" }), "*");
             if (Array.isArray(segments[0]) && segments[0].length == 0)
@@ -84,11 +98,34 @@ export class Saveable {
         }
         return obj;
     }
+    // makes a deep copy of record objects, but ignores other objects (obj.constructor.name == "Object")
+    static deepCopyBaseObject(obj) {
+        const copy = {};
+        for (const key in obj) {
+            copy[key] = Saveable.isBaseObject(obj[key]) ? Saveable.deepCopyBaseObject(obj[key]) : obj[key];
+        }
+        return copy;
+    }
+    static isBaseObject(object) {
+        return object && typeof object == "object" && (object.constructor.name == "Object" || Array.isArray(object));
+    }
     static buildSavedObject(root, lastKey, type) {
         if (typeof root[lastKey] == "function")
             root[lastKey] = { "$$C": { name: root[lastKey].name, type } }; // class
-        else if (typeof root[lastKey] == "object")
-            root[lastKey] = { "$$I": { name: root[lastKey].constructor.name, type, data: root[lastKey]?.save() ?? null } }; // instance
+        else if (typeof root[lastKey] == "object") { // instance
+            const object = { name: root[lastKey].constructor.name, type, data: root[lastKey]?.save() ?? null, dependencies: root[lastKey]?.getDependencies() ?? null };
+            if (object.data === null)
+                delete object.data;
+            if (object.dependencies === null || !object.dependencies.length)
+                delete object.dependencies;
+            root[lastKey] = { "$$I": object };
+            ;
+        }
+    }
+    static getUnobjectifiedDependencies(object) {
+        if (object["$$I"] && typeof object["$$I"] === "object")
+            return Saveable.getUnobjectifiedDependencies(object["$$I"]); // get from instance data
+        return (object.dependencies && typeof object.dependencies === "object" && Array.isArray(object.dependencies)) ? object.dependencies : []; // given data directly
     }
     // load(state: Record<string,any>) {
     //   const queue: [object: Record<string,any>, lastKey: string][] = Object.keys(state).map(key => [state, key]);
@@ -104,14 +141,14 @@ export class Saveable {
     //   }
     //   return this._load(state);
     // }
-    objectify(state) {
+    objectify(state, preloadRoot = null, root = state) {
         const queue = Object.keys(state).filter(key => typeof state[key] == "object" && state[key] !== null).map(key => [state, key, Object.keys(state[key])]);
         while (queue.length > 0) {
             const [obj, lastKey, nextKeys] = queue[queue.length - 1];
             const lastObj = obj[lastKey];
             if (nextKeys.length == 0) { // queue empty: objectify
                 for (const key in lastObj) {
-                    const objectified = this._objectify(key, lastObj[key]);
+                    const objectified = this._objectify(key, lastObj[key], obj == root ? preloadRoot : null);
                     if (objectified !== null)
                         obj[lastKey] = objectified;
                 }
@@ -127,7 +164,7 @@ export class Saveable {
         }
         return state;
     }
-    _objectify(key, obj) {
+    _objectify(key, obj, preload = null) {
         if (key.length < 3 || key.substring(0, 2) != "$$")
             return null; // cannot be objectified
         const loadClass = this.objectRepository.getObject(obj.type, obj.name);
@@ -140,6 +177,8 @@ export class Saveable {
                 return loadClass.classname;
             case "I": { // (I)instance
                 const instance = new loadClass.classname(obj.data.params);
+                if (preload)
+                    preload(instance, obj.data);
                 instance?.load(obj.data);
                 return instance;
             }

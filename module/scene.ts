@@ -15,6 +15,7 @@ import { Saveable } from "./saveable/saveable.js";
 var sceneIdentifiers = 0;
 
 export type loadClasses = "widget" | "addon" | "wire";
+
 export class Scene extends FrameworkBase {
   readonly draggable: Draggable;
   readonly identifier = sceneIdentifiers++;
@@ -300,9 +301,49 @@ export class Scene extends FrameworkBase {
   }
 
   load(state: Record<string,any>) {
-    this.objectify(state);
-
-    const widgets = state.widgets;
-    for (const widgetId in widgets) { this.addWidget(widgets[widgetId]); }
+    if (state.widgets && typeof state.widgets === "object") this.loadWidgets(state.widgets)
+    // this.objectify(state);
   }
+
+  private loadWidgets(widgets: Record<number, any>) {
+    const loaded = new Set<number>();
+    const toLoad: [id: number, dependencies: Set<number>][] = [];
+    const idMap = new IDMap();
+
+    const preload = (widget: Widget, data: { id: number } & idMap_t) => {
+      const newId = this.addWidget(widget, data.id);
+      if (newId != data.id) idMap.set(data.id, newId);
+      data._idMap = idMap; // inject idMap
+    }
+
+    // fill 'toLoad'
+    for (const id in widgets) {
+      const dependencies = Saveable.getUnobjectifiedDependencies(widgets[id]);
+      toLoad.push([+id, dependencies]);
+    }
+    
+    step: for (let i = 0; i < toLoad.length; i++) {
+      const [id, dependencies] = toLoad[i];
+
+      for (const dependency of dependencies) {
+        if (!loaded.has(dependency)) continue step;
+      }
+
+      const { widget } = this.objectify({ widget: widgets[id] }, preload); // load widget
+      loaded.add(id);         // indicate that object has been loaded
+
+      // don't try to load object again
+      toLoad.splice(i,1);
+      i--;
+    }
+  }
+}
+
+export type idMap_t = { _idMap: IDMap }
+export class IDMap {
+  private _idMap = new Map<number, number>();
+
+  set(from: number, to: number) { this._idMap.set(from, to); }
+  delete(from: number) { this._idMap.delete(from); }
+  translate(from: number) { return this._idMap.get(from) ?? from; }
 }

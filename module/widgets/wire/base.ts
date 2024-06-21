@@ -3,7 +3,7 @@ import { ConnectorAddon } from "../../addons/connector.js";
 import { AttachableListener } from "../../attachableListener.js";
 import { WIRE_LAYER } from "../../layer-info.js";
 import { Listener } from "../../listener.js";
-import { Scene } from "../../scene.js";
+import { Scene, idMap_t } from "../../scene.js";
 import { Widget } from "../widget.js";
 
 export class WirePoint {
@@ -63,9 +63,9 @@ export class WirePoint {
     };
   }
 
-  load(data: ReturnType<this["save"]>, scene: Scene) {
+  load(data: ReturnType<this["save"]> & idMap_t, scene: Scene) {
     if (data.hasAddon) {
-      const widget = scene.getWidgetById(data.addon.widget);
+      const widget = scene.getWidgetById(data._idMap.translate(data.addon.widget));
       const addon = widget.addons.getEdge(data.addon.edge).get(data.addon.id) as ConnectorAddon<any>;
       this.attachToAddon(addon);
       // addon.setPoint(this);
@@ -176,6 +176,10 @@ export abstract class WireBase extends Widget {
   }
 
   save() {
+    this.setDependencies(
+      this.point1.addon?.addonContainer.widget.getId() ?? null,
+      this.point2.addon?.addonContainer.widget.getId() ?? null
+    )
     return {
       ...super.save(),
       wire: {
@@ -185,9 +189,9 @@ export abstract class WireBase extends Widget {
     }
   }
 
-  load(data: ReturnType<this["save"]>) {
-    this.point1.load(data.wire.point1, this.scene);
-    this.point2.load(data.wire.point2, this.scene);
+  load(data: ReturnType<this["save"]> & idMap_t) {
+    this.point1.load({ ...data.wire.point1, _idMap: data._idMap }, this.scene);
+    this.point2.load({ ...data.wire.point2, _idMap: data._idMap }, this.scene);
   }
 }
 

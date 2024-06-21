@@ -240,11 +240,43 @@ export class Scene extends FrameworkBase {
         };
     }
     load(state) {
-        this.objectify(state);
-        const widgets = state.widgets;
-        for (const widgetId in widgets) {
-            this.addWidget(widgets[widgetId]);
+        if (state.widgets && typeof state.widgets === "object")
+            this.loadWidgets(state.widgets);
+        // this.objectify(state);
+    }
+    loadWidgets(widgets) {
+        const loaded = new Set();
+        const toLoad = [];
+        const idMap = new IDMap();
+        const preload = (widget, data) => {
+            const newId = this.addWidget(widget, data.id);
+            if (newId != data.id)
+                idMap.set(data.id, newId);
+            data._idMap = idMap; // inject idMap
+        };
+        // fill 'toLoad'
+        for (const id in widgets) {
+            const dependencies = Saveable.getUnobjectifiedDependencies(widgets[id]);
+            toLoad.push([+id, dependencies]);
+        }
+        step: for (let i = 0; i < toLoad.length; i++) {
+            const [id, dependencies] = toLoad[i];
+            for (const dependency of dependencies) {
+                if (!loaded.has(dependency))
+                    continue step;
+            }
+            const { widget } = this.objectify({ widget: widgets[id] }, preload); // load widget
+            loaded.add(id); // indicate that object has been loaded
+            // don't try to load object again
+            toLoad.splice(i, 1);
+            i--;
         }
     }
+}
+export class IDMap {
+    _idMap = new Map();
+    set(from, to) { this._idMap.set(from, to); }
+    delete(from) { this._idMap.delete(from); }
+    translate(from) { return this._idMap.get(from) ?? from; }
 }
 //# sourceMappingURL=scene.js.map

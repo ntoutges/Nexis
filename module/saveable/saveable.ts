@@ -6,27 +6,28 @@ export abstract class Saveable<objectTypes extends string> {
   private readonly initParamGetters = new Map<string, () => any>();
   private readonly initParamObjectifications = new Map<string, objectTypes>();
   readonly objectRepository = new ObjRepo<objectTypes>();
+  private readonly dependencies = new Set<number>();
 
-  addInitParams(params: Record<string,any>): void
-  addInitParams(params: Record<string,any>, delParams: string[] | "*"): void
-  addInitParams(params: Record<string,any>, delParams: string[] | "*" = null) {
+  protected addInitParams(params: Record<string,any>): void
+  protected addInitParams(params: Record<string,any>, delParams: string[] | "*"): void
+  protected addInitParams(params: Record<string,any>, delParams: string[] | "*" = null) {
     if (delParams !== null) this.delInitParams(delParams);
     for (const key in params) { this.initParams.set(key, params[key]); }
   }
 
-  delInitParams(params: string[] | "*") {
+  protected delInitParams(params: string[] | "*") {
     if (params === "*") params = Array.from(this.initParams.keys()); // remove all params
     for (const key of params) { this.initParams.delete(key); }
   }
 
-  addInitParamGetter(params: Record<string,() => any>): void
-  addInitParamGetter(params: Record<string,() => any>, delParams: string[]): void
-  addInitParamGetter(params: Record<string,() => any>, delParams: string[] = null) {
+  protected addInitParamGetter(params: Record<string,() => any>): void
+  protected addInitParamGetter(params: Record<string,() => any>, delParams: string[]): void
+  protected addInitParamGetter(params: Record<string,() => any>, delParams: string[] = null) {
     if (delParams != null) this.delInitParamGetter(delParams);
     for (const key in params) this.initParamGetters.set(key, params[key]);
   }
 
-  delInitParamGetter(params: string[] | "*") {
+  protected delInitParamGetter(params: string[] | "*") {
     if (params === "*") params = Array.from(this.initParams.keys()); // remove all params
     for (const key of params) { this.initParams.delete(key); }
   }
@@ -35,13 +36,21 @@ export abstract class Saveable<objectTypes extends string> {
    * Define which init params will be treated as objects
    * @param keys key gives path to initParam, value gives type (ex: widget)
    */
-  defineObjectificationInitParams(keys: Record<string,objectTypes>) { Object.keys(keys).forEach(key => this.initParamObjectifications.set(key, keys[key])); }
+  protected defineObjectificationInitParams(keys: Record<string,objectTypes>) { Object.keys(keys).forEach(key => this.initParamObjectifications.set(key, keys[key])); }
 
   /**
    * Define which init params will be treated as objects
    * @param keys array of keys, with subkeys separated by "."
    */
-  undefineObjectificationInitParams(keys: string[]) { keys.forEach(key => this.initParamObjectifications.delete(key)); }
+  protected undefineObjectificationInitParams(keys: string[]) { keys.forEach(key => this.initParamObjectifications.delete(key)); }
+
+  protected addDependency(id: number) { if (id !== null) this.dependencies.add(id); }
+  protected removeDependency(id: number) { this.dependencies.delete(id); }
+  protected setDependencies(...ids: number[]) {
+    for (const id of this.dependencies) { this.removeDependency(id); } // remove all
+    for (const id of ids) { this.addDependency(id); }                  // add all
+  }
+  getDependencies() { return Array.from(this.dependencies); }
 
   save(): Record<string, any> {
     return {
@@ -56,6 +65,8 @@ export abstract class Saveable<objectTypes extends string> {
   }
 
   static save<objectTypes extends string>(obj: Record<string,any>, objectifications: Record<string,objectTypes>) {
+    obj = Saveable.deepCopyBaseObject(obj); // make copy of object so as not to modify original
+
     for (const objectification in objectifications) {
       const segments = objUtils.smartSplit(
         objUtils.smartSplit(objectification, ".", { "\"": "\"" }),
@@ -92,9 +103,33 @@ export abstract class Saveable<objectTypes extends string> {
     return obj;
   }
 
+  // makes a deep copy of record objects, but ignores other objects (obj.constructor.name == "Object")
+  private static deepCopyBaseObject(obj: Record<string, any>): Record<string, any> {
+    const copy = {};
+    for (const key in obj) {
+      copy[key] = Saveable.isBaseObject(obj[key]) ? Saveable.deepCopyBaseObject(obj[key]) : obj[key];
+    }
+
+    return copy;
+  }
+
+  private static isBaseObject(object: any): object is Record<string,any> {
+    return object && typeof object == "object" && (object.constructor.name == "Object" || Array.isArray(object));
+  }
+
   private static buildSavedObject(root: Record<string,any>, lastKey: string, type: string) {
     if (typeof root[lastKey] == "function") root[lastKey] = { "$$C": { name: root[lastKey].name, type } }; // class
-    else if (typeof root[lastKey] == "object") root[lastKey] = { "$$I": { name: root[lastKey].constructor.name, type, data: root[lastKey]?.save() ?? null } }; // instance
+    else if (typeof root[lastKey] == "object") { // instance
+      const object = { name: root[lastKey].constructor.name, type, data: root[lastKey]?.save() ?? null, dependencies: root[lastKey]?.getDependencies() ?? null };
+      if (object.data === null) delete object.data;
+      if (object.dependencies === null || !object.dependencies.length) delete object.dependencies;
+      root[lastKey] = { "$$I": object };;
+    }
+  }
+
+  protected static getUnobjectifiedDependencies(object: Record<string, any>) {
+    if (object["$$I"] && typeof object["$$I"] === "object") return Saveable.getUnobjectifiedDependencies(object["$$I"]); // get from instance data
+    return (object.dependencies && typeof object.dependencies === "object" && Array.isArray(object.dependencies)) ? object.dependencies : []; // given data directly
   }
 
   // load(state: Record<string,any>) {
@@ -116,7 +151,11 @@ export abstract class Saveable<objectTypes extends string> {
   //   return this._load(state);
   // }
 
-  objectify(state: Record<string,any>) {
+  objectify(
+    state: Record<string,any>,
+    preloadRoot: (obj: Saveable<objectTypes>, data: Record<string,any>) => void = null,
+    root: Record<string,any> = state
+  ) {
     const queue: [obj: Record<string,any>, lastKey: string, nextKeys: string[]][] = Object.keys(state).filter(key => typeof state[key] == "object" && state[key] !== null).map(key => [state, key, Object.keys(state[key])]);
     
     while (queue.length > 0) {
@@ -125,7 +164,7 @@ export abstract class Saveable<objectTypes extends string> {
       
       if (nextKeys.length == 0) { // queue empty: objectify
         for (const key in lastObj) {
-          const objectified = this._objectify(key, lastObj[key]);
+          const objectified = this._objectify(key, lastObj[key], obj == root ? preloadRoot : null);
           if (objectified !== null) obj[lastKey] = objectified;
         }
         queue.pop(); // get rid of (possibly) objectified element
@@ -145,7 +184,11 @@ export abstract class Saveable<objectTypes extends string> {
     return state;
   }
 
-  private _objectify(key: string, obj: Record<string,any>) {
+  private _objectify(
+    key: string,
+    obj: Record<string,any>,
+    preload: (obj: Saveable<objectTypes>, data: Record<string,any>) => void = null
+  ) {
     if (key.length < 3 || key.substring(0,2) != "$$") return null; // cannot be objectified
     
     const loadClass = this.objectRepository.getObject(obj.type as objectTypes, obj.name);
@@ -158,6 +201,7 @@ export abstract class Saveable<objectTypes extends string> {
         return loadClass.classname;
       case "I": { // (I)instance
         const instance = new loadClass.classname(obj.data.params) as Saveable<objectTypes>;
+        if (preload) preload(instance, obj.data);
         instance?.load(obj.data);
         return instance;
       }
