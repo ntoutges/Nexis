@@ -48,12 +48,12 @@ export class WirePoint {
             hasAddon: false
         };
     }
-    load(data, scene) {
+    load(data, wire) {
         if (data.hasAddon) {
-            const widget = scene.getWidgetById(data._idMap.translate(data.addon.widget));
+            const widget = wire.scene.getWidgetById(data._idMap.translate(data.addon.widget));
             const addon = widget.addons.getEdge(data.addon.edge).get(data.addon.id);
             this.attachToAddon(addon);
-            // addon.setPoint(this);
+            addon.setPoint(wire, this);
         }
         else {
             this.setPos(data.x, data.y);
@@ -134,8 +134,9 @@ export class WireBase extends Widget {
         };
     }
     load(data) {
-        this.point1.load({ ...data.wire.point1, _idMap: data._idMap }, this.scene);
-        this.point2.load({ ...data.wire.point2, _idMap: data._idMap }, this.scene);
+        this.point1.load({ ...data.wire.point1, _idMap: data._idMap }, this);
+        this.point2.load({ ...data.wire.point2, _idMap: data._idMap }, this);
     }
+    doSaveWidget() { return !!this.point1.addon && !!this.point2.addon; }
 }
 //# sourceMappingURL=base.js.map

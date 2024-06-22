@@ -285,13 +285,13 @@ export class Scene extends FrameworkBase {
 
   save(): Record<string,any> {
     const widgetSave = Saveable.save(
-      Array.from(this.widgets.keys()).filter(key => this.widgets.get(key).doSaveWidget).reduce((acc, key) => { acc[key] = this.widgets.get(key); return acc; }, {}),
+      Array.from(this.widgets.keys()).filter(key => this.widgets.get(key).doSaveWidget()).reduce((acc, key) => { acc[key] = this.widgets.get(key); return acc; }, {}),
       { "*": "widget" }
     );
 
     // const widgetSave = {};
     // this.widgets.forEach((widget,key) => {
-    //   if (widget.doSaveWidget) widgetSave[key] = widget.save();
+    //   if (widget.doSaveWidget()) widgetSave[key] = widget.save();
     // });
 
     return {

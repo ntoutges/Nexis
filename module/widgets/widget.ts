@@ -209,7 +209,7 @@ export class Widget extends FrameworkBase {
   }
 
   get isBuilt(): boolean { return true; } // used by types like GlobalSingleUseWidget for scene optimization
-  get doSaveWidget(): boolean { return true; }
+  doSaveWidget(): boolean { return true; }
 
   protected manualResizeTo(
     d: Draggable,
@@ -229,7 +229,12 @@ export class Widget extends FrameworkBase {
   getId() { return this._id; }
 
   save() {
-    return {
+    // don't let error in wSave() process inhibit saving
+    let wSave: Record<string, any> = {};
+    try { wSave = this.wSave() }
+    catch(err) { console.error(err); }
+
+    const mainSave = {
       ...super.save(),
       id: this._id,
       type: this.constructor.name,
@@ -237,14 +242,27 @@ export class Widget extends FrameworkBase {
         x: this.pos.getPosComponent("x"),
         y: this.pos.getPosComponent("y")
       },
-      addons: this.addons.save()
-    }
+      addons: this.addons.save(),
+      data: wSave
+    };
+
+    if (Object.keys(mainSave.data).length == 0) delete mainSave.data;
+    return mainSave;
   }
 
+  
   load(data: ReturnType<this["save"]> & idMap_t) {
     this.pos.setPos(data.pos);
     // this._id = data._idMap.translate(data.id); // id set by attach
+
+    // don't let erros in wLoad() process inhibit loading
+    try { this.wLoad(data.data ?? {}); }
+    catch(err) { console.error(err); }
   }
+  
+  // methods to be overwritten by inheritees for storing arbitrary data
+  wSave(): Record<string, any> { return {} }
+  wLoad(data: Record<string,any>): void {}
 }
 
 const globalSingleUseWidgetMap = new Map<string, GlobalSingleUseWidget>();
@@ -295,7 +313,7 @@ export abstract class GlobalSingleUseWidget extends Widget {
   }
 
   get isBuilt() { return this._isBuilt; }
-  get doSaveWidget(): boolean { return false; } // by default: don't save GlobalSingleUseWidgets
+  doSaveWidget(): boolean { return false; } // by default: don't save GlobalSingleUseWidgets
 
   static unbuildType(type: string) {
     if (globalSingleUseWidgetMap.has(type)) {

@@ -197,6 +197,7 @@ export class ConnConsole extends DraggableWidget {
     terminalInput = document.createElement("input");
     doAutoscroll = true;
     doPassthru = false;
+    maxLines = 100;
     constructor({ type, validator = null, wireData = null }) {
         const container = document.createElement("div");
         container.classList.add("framework-prefab-connsole-containers");
@@ -288,6 +289,11 @@ export class ConnConsole extends DraggableWidget {
             });
             return lineEl;
         }));
+        // remove extra lines
+        const toRemove = this.terminalBody.children.length - this.maxLines;
+        for (let i = 0; i < toRemove; i++) {
+            this.terminalBody.children[0].remove();
+        }
         if (this.doAutoscroll) {
             this.terminalContainer.scrollTop = this.terminalContainer.scrollHeight;
         }
@@ -295,6 +301,16 @@ export class ConnConsole extends DraggableWidget {
     clear() {
         this.terminalInput.value = "";
         this.terminalBody.innerHTML = "";
+    }
+    wSave() {
+        const text = this.terminalBody.innerText;
+        return {
+            text: text ? text.split("\n").map(line => line.replace(/^ *\> /, "")).join("\n") : null
+        };
+    }
+    wLoad(data) {
+        if (data.text || data.text == "")
+            this.writeLine(data.text);
     }
 }
 //# sourceMappingURL=connWidget.js.map

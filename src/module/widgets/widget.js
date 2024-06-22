@@ -165,7 +165,7 @@ export class Widget extends FrameworkBase {
         });
     }
     get isBuilt() { return true; } // used by types like GlobalSingleUseWidget for scene optimization
-    get doSaveWidget() { return true; }
+    doSaveWidget() { return true; }
     manualResizeTo(d, xComponent = 1, yComponent = 1) {
         if (xComponent >= 2)
             this.pos.offsetPos({ x: -d.delta.x });
@@ -179,7 +179,15 @@ export class Widget extends FrameworkBase {
     get isMovementExempt() { return !this.isBuilt || this.positioning === 0; }
     getId() { return this._id; }
     save() {
-        return {
+        // don't let error in wSave() process inhibit saving
+        let wSave = {};
+        try {
+            wSave = this.wSave();
+        }
+        catch (err) {
+            console.error(err);
+        }
+        const mainSave = {
             ...super.save(),
             id: this._id,
             type: this.constructor.name,
@@ -187,13 +195,27 @@ export class Widget extends FrameworkBase {
                 x: this.pos.getPosComponent("x"),
                 y: this.pos.getPosComponent("y")
             },
-            addons: this.addons.save()
+            addons: this.addons.save(),
+            data: wSave
         };
+        if (Object.keys(mainSave.data).length == 0)
+            delete mainSave.data;
+        return mainSave;
     }
     load(data) {
         this.pos.setPos(data.pos);
         // this._id = data._idMap.translate(data.id); // id set by attach
+        // don't let erros in wLoad() process inhibit loading
+        try {
+            this.wLoad(data.data ?? {});
+        }
+        catch (err) {
+            console.error(err);
+        }
     }
+    // methods to be overwritten by inheritees for storing arbitrary data
+    wSave() { return {}; }
+    wLoad(data) { }
 }
 const globalSingleUseWidgetMap = new Map();
 export class GlobalSingleUseWidget extends Widget {
@@ -234,7 +256,7 @@ export class GlobalSingleUseWidget extends Widget {
         }
     }
     get isBuilt() { return this._isBuilt; }
-    get doSaveWidget() { return false; } // by default: don't save GlobalSingleUseWidgets
+    doSaveWidget() { return false; } // by default: don't save GlobalSingleUseWidgets
     static unbuildType(type) {
         if (globalSingleUseWidgetMap.has(type)) {
             globalSingleUseWidgetMap.get(type).unbuild();

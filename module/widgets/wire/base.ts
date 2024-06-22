@@ -63,12 +63,12 @@ export class WirePoint {
     };
   }
 
-  load(data: ReturnType<this["save"]> & idMap_t, scene: Scene) {
+  load(data: ReturnType<this["save"]> & idMap_t, wire: WireBase) {
     if (data.hasAddon) {
-      const widget = scene.getWidgetById(data._idMap.translate(data.addon.widget));
+      const widget = wire.scene.getWidgetById(data._idMap.translate(data.addon.widget));
       const addon = widget.addons.getEdge(data.addon.edge).get(data.addon.id) as ConnectorAddon<any>;
       this.attachToAddon(addon);
-      // addon.setPoint(this);
+      addon.setPoint(wire, this);
     }
     else {
       this.setPos(
@@ -190,8 +190,10 @@ export abstract class WireBase extends Widget {
   }
 
   load(data: ReturnType<this["save"]> & idMap_t) {
-    this.point1.load({ ...data.wire.point1, _idMap: data._idMap }, this.scene);
-    this.point2.load({ ...data.wire.point2, _idMap: data._idMap }, this.scene);
+    this.point1.load({ ...data.wire.point1, _idMap: data._idMap }, this);
+    this.point2.load({ ...data.wire.point2, _idMap: data._idMap }, this);
   }
+  
+  doSaveWidget() { return !!this.point1.addon && !!this.point2.addon; }
 }
 

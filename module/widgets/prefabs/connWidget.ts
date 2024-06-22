@@ -1,5 +1,6 @@
 import { ChannelBase, ClientBase, ConnectionBase } from "../../../connection/lib/connBase.js";
 import { ConnectorAddon } from "../../addons/connector.js";
+import { idMap_t } from "../../scene.js";
 import { DraggableWidget } from "../draggable-widget.js";
 
 export class ConnWidget extends DraggableWidget {
@@ -230,6 +231,7 @@ export class ConnConsole extends DraggableWidget {
   private readonly terminalInput = document.createElement("input");
   private doAutoscroll: boolean = true;
   private doPassthru: boolean = false;
+  private readonly maxLines: number = 100;
   
   constructor({
     type,
@@ -286,6 +288,7 @@ export class ConnConsole extends DraggableWidget {
       },
       doDragAll: true
     });
+
     this.addInitParams({ type, wireData }, "*");
     this.defineObjectificationInitParams({"wireData.type": "wire"})
 
@@ -342,6 +345,10 @@ export class ConnConsole extends DraggableWidget {
       })
     );
 
+    // remove extra lines
+    const toRemove = this.terminalBody.children.length - this.maxLines;
+    for (let i = 0; i < toRemove; i++) { this.terminalBody.children[0].remove(); }
+
     if (this.doAutoscroll) {
       this.terminalContainer.scrollTop = this.terminalContainer.scrollHeight;
     }
@@ -349,5 +356,16 @@ export class ConnConsole extends DraggableWidget {
   private clear() {
     this.terminalInput.value = "";
     this.terminalBody.innerHTML = "";
+  }
+
+  wSave() {
+    const text = this.terminalBody.innerText;
+    return {
+      text: text ? text.split("\n").map(line => line.replace(/^ *\> /, "")).join("\n") : null
+    }
+  }
+
+  wLoad(data: Record<string,any>) {
+    if (data.text || data.text == "") this.writeLine(data.text);
   }
 }
