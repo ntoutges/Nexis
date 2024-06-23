@@ -1,6 +1,6 @@
 // basis for everything in the module
 import { Draggable } from "./draggable.js";
-import { Saveable } from "./saveable/saveable.js";
+import { Saveable } from "../saveable/saveable.js";
 export class FrameworkBase extends Saveable {
     el = document.createElement("div");
     resizeData = {

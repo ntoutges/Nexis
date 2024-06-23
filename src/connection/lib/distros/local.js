@@ -2,8 +2,9 @@ import { ChannelBase, ClientBase, ConnectionBase } from "../connBase.js";
 const connWorlds = new Map();
 export class LocalConnection extends ConnectionBase {
     worldId;
-    constructor(worldId = "default") {
+    constructor({ worldId = "default" }) {
         super();
+        this.addInitParams({ worldId });
         this.worldId = worldId;
         if (!connWorlds.has(this.worldId))
             connWorlds.set(this.worldId, new Map());

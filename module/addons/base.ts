@@ -2,7 +2,7 @@ import { AttachableListener } from "../attachableListener.js";
 import { Group } from "../group.js";
 import { Ids } from "../ids.js";
 import { Listener } from "../listener.js";
-import { Saveable } from "../saveable/saveable.js";
+import { Saveable } from "../../saveable/saveable.js";
 import { loadClasses } from "../scene.js";
 import { Widget } from "../widgets/widget.js";
 import { AddonEdgeAlias } from "./alias.js";

@@ -1,9 +1,10 @@
+import { Saveable } from "../saveable/saveable.js";
 import { Ids } from "./ids.js";
 import { Listener } from "./listener.js";
 import { SmartInterval } from "./smartInterval.js";
 import { SmartTimeout } from "./smartTimeout.js";
 import { TimeoutQueue } from "./timeoutQueue.js";
-export class ConnectionBase {
+export class ConnectionBase extends Saveable {
     clients = new Map();
     middleware = new Map();
     buildClient(id, heartbeatInterval = 1000) {
@@ -38,6 +39,8 @@ export class ConnectionBase {
         }
         return body;
     }
+    // loading non-parameters likely not required...
+    load(state) { }
 }
 export class ClientBase {
     id;

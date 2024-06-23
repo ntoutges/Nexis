@@ -1,4 +1,4 @@
-import * as objUtils from "../objUtils.js";
+import * as objUtils from "./objUtils.js";
 import { ObjRepo } from "./objRepo.js";
 export class Saveable {
     initParams = new Map();
@@ -60,9 +60,12 @@ export class Saveable {
             params: Saveable.save(Array.from(this.initParams).reduce((acc, [key, value]) => { acc[key] = value; return acc; }, Array.from(this.initParamGetters).reduce((acc, [key, getter]) => { acc[key] = getter(); return acc; }, {})), Array.from(this.initParamObjectifications).reduce((acc, [key, value]) => { acc[key] = value; return acc; }, {}))
         };
     }
+    static usedInstances = new Map();
+    static cleanSaveData() {
+        Saveable.usedInstances.clear();
+    }
     static save(obj, objectifications) {
         obj = Saveable.deepCopyBaseObject(obj); // make copy of object so as not to modify original
-        const usedInstances = new Map();
         for (const objectification in objectifications) {
             const segments = objUtils.smartSplit(objUtils.smartSplit(objectification, ".", { "\"": "\"" }), "*");
             if (Array.isArray(segments[0]) && segments[0].length == 0)
@@ -71,29 +74,27 @@ export class Saveable {
             for (const i in segments) { // get all but last segment
                 const segment = segments[i];
                 const isLast = +i == segments.length - 1;
-                roots = roots.map(root => objUtils.getSubObject(root, isLast ? segment.slice(0, -1) : segment, null)).filter(root => root !== null);
+                roots = roots.map(root => objUtils.getSubObject(root, isLast ? segment.slice(0, -1) : segment, null))?.filter(root => root !== null);
                 if (roots == null)
                     continue;
-                if (!isLast)
+                // not last segment, and next segment is not empty
+                if (!isLast && segments[+i + 1].length > 0)
                     roots = roots.map(root => Object.keys(root).map(key => root[key])).flat(1); // add all items
             }
             const type = objectifications[objectification];
             const lastSegment = segments[segments.length - 1];
-            if (lastSegment.length > 0) {
+            if (lastSegment.length > 0) { // only save some objects (as given by "lastKey")
                 const lastKey = lastSegment[lastSegment.length - 1];
                 roots.forEach(root => {
                     if (!root.hasOwnProperty(lastKey) || root[lastKey] == null)
                         return;
-                    if (typeof root[lastKey] == "function")
-                        root[lastKey] = { "$$C": { name: root[lastKey].name, type } }; // class
-                    else if (typeof root[lastKey] == "object")
-                        root[lastKey] = { "$$I": { name: root[lastKey].constructor.name, type } }; // instance
+                    this.buildSavedObject(root, lastKey, type, Saveable.usedInstances);
                 });
             }
-            else {
+            else { // save ALL objects
                 roots.forEach(root => {
                     for (const lastKey in root)
-                        this.buildSavedObject(root, lastKey, type, usedInstances);
+                        this.buildSavedObject(root, lastKey, type, Saveable.usedInstances);
                 });
             }
         }
@@ -120,19 +121,28 @@ export class Saveable {
                 usedInstances.set(type, new Map());
             if (!usedInstances.get(type).has(name))
                 usedInstances.get(type).set(name, new Map());
-            group = (usedInstances.get(type).get(name).get(root[lastKey]) ?? 0) + 1; // set group
-            usedInstances.get(type).get(name).set(root[lastKey], group); // update usedInstances
+            // get group id
+            if (usedInstances.get(type).get(name).has(root[lastKey]))
+                group = usedInstances.get(type).get(name).get(root[lastKey]); // get old (used) group id
+            else {
+                group = usedInstances.get(type).get(name).size + 1; // get new (unique) group id
+                usedInstances.get(type).get(name).set(root[lastKey], group); // update usedInstances
+            }
         }
         if (typeof root[lastKey] == "function")
             root[lastKey] = { "$$C": { name: root[lastKey].name, type } }; // class
         else if (typeof root[lastKey] == "object") { // instance
-            const object = {
-                name,
-                type,
-                group,
-                data: root[lastKey]?.save() ?? null,
-                dependencies: root[lastKey]?.getDependencies() ?? null
-            };
+            let data = null;
+            if (root[lastKey]?.save)
+                data = root[lastKey]?.save();
+            else
+                console.warn(`Object "${name}" does not export a 'save()' function (Consider extending 'Saveable'...)`);
+            let dependencies = null;
+            if (root[lastKey]?.getDependencies)
+                root[lastKey]?.getDependencies() ?? null;
+            else
+                console.warn(`Object "${name}" does not export a 'getDependencies()' function (Consider extending 'Saveable'...)`);
+            const object = { name, type, group, data, dependencies };
             if (object.data === null)
                 delete object.data;
             if (object.dependencies === null || !object.dependencies.length)
@@ -146,14 +156,14 @@ export class Saveable {
             return Saveable.getUnobjectifiedDependencies(object["$$I"]); // get from instance data
         return (object.dependencies && typeof object.dependencies === "object" && Array.isArray(object.dependencies)) ? object.dependencies : []; // given data directly
     }
-    objectify(state, preloadRoot = null, root = state) {
+    objectify(state, builtInstances = null, preloadRoot = null, root = state) {
         const queue = Object.keys(state).filter(key => typeof state[key] == "object" && state[key] !== null).map(key => [state, key, Object.keys(state[key])]);
         while (queue.length > 0) {
             const [obj, lastKey, nextKeys] = queue[queue.length - 1];
             const lastObj = obj[lastKey];
             if (nextKeys.length == 0) { // queue empty: objectify
                 for (const key in lastObj) {
-                    const objectified = this._objectify(key, lastObj[key], obj == root ? preloadRoot : null);
+                    const objectified = this._objectify(key, lastObj[key], builtInstances, obj == root ? preloadRoot : null);
                     if (objectified !== null)
                         obj[lastKey] = objectified;
                 }
@@ -169,19 +179,32 @@ export class Saveable {
         }
         return state;
     }
-    _objectify(key, obj, preload = null) {
+    _objectify(key, obj, builtInstances = null, preload = null) {
         if (key.length < 3 || key.substring(0, 2) != "$$")
             return null; // cannot be objectified
-        const loadClass = this.objectRepository.getObject(obj.type, obj.name);
+        const { type, name } = obj;
+        const loadClass = this.objectRepository.getObject(type, name);
         if (loadClass == null) {
-            console.error(`Unable to find load class ${obj.type}.${obj.name}`);
+            console.error(`Unable to find load class ${type}.${name}`);
             return null;
         }
         switch (key[2]) {
             case "C": // (C)onstructor
                 return loadClass.classname;
             case "I": { // (I)instance
-                const instance = new loadClass.classname(obj.data.params);
+                let group = 0;
+                if (builtInstances) {
+                    group = obj.group;
+                    if (!builtInstances.has(type))
+                        builtInstances.set(type, new Map());
+                    if (!builtInstances.get(type).has(name))
+                        builtInstances.get(type).set(name, new Map());
+                    if (builtInstances.get(type).get(name).has(group))
+                        return builtInstances.get(type).get(name).get(group); // group already built
+                }
+                const instance = new loadClass.classname({ ...loadClass.params, ...obj.data.params });
+                if (group !== 0)
+                    builtInstances.get(type).get(name).set(group, instance); // remember that group has been built (for future refreence)
                 if (preload)
                     preload(instance, obj.data);
                 instance?.load(obj.data);

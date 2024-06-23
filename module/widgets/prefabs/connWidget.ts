@@ -87,7 +87,8 @@ export class ConnWidget extends DraggableWidget {
         }
       }
     });
-    this.addInitParams({ type }, "*");
+    
+    this.addInitParams({ type, connections }, "*");
     this.defineObjectificationInitParams({"connections.*": "+conn","wireData.type": "widget"});
 
     this.contextmenus.header.listener.on("click", (item) => {
@@ -210,6 +211,7 @@ export class ConnWidget extends DraggableWidget {
       this.modes.append(option);
     }
 
+    if (!connection) debugger
     this.connections.set(name,connection);
   }
 
@@ -222,6 +224,22 @@ export class ConnWidget extends DraggableWidget {
     this.routerIdIn.disabled = !editable;
     this.connIdIn.disabled = !editable;
     this.channelIn.disabled = !editable;
+  }
+
+  wSave() {
+    return {
+      connType: this.modes.value,
+      routerId: this.routerIdIn.value,
+      connId: this.connIdIn.value,
+      channel: this.channelIn.value
+    };
+  }
+
+  wLoad(data: Record<string,any>) {
+    if (data.connType && typeof data.connType == "string") this.modes.value = data.connType;
+    if (data.routerId && typeof data.routerId == "string") this.routerIdIn.value = data.routerId;
+    if (data.connId && typeof data.connId == "string") this.connIdIn.value = data.connId;
+    if (data.channel && typeof data.channel == "string") this.channelIn.value = data.channel;
   }
 }
 

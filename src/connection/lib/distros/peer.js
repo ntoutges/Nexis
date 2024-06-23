@@ -2,10 +2,11 @@ import { ChannelBase, ClientBase, ConnectionBase } from "../connBase.js";
 export class PeerConnection extends ConnectionBase {
     Peer;
     prefix;
-    constructor(Peer, prefix) {
+    constructor({ Peer, prefix }) {
         super();
         this.Peer = Peer;
         this.prefix = prefix;
+        this.addInitParams({ prefix });
     }
     createNewClient(id, heartbeatInterval) { return new PeerClient(id, this, heartbeatInterval); }
     getFullId(id) { return this.prefix + id; }

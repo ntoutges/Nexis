@@ -196,10 +196,10 @@ export class Widget extends FrameworkBase {
                 y: this.pos.getPosComponent("y")
             },
             addons: this.addons.save(),
-            data: wSave
+            d: wSave
         };
-        if (Object.keys(mainSave.data).length == 0)
-            delete mainSave.data;
+        if (Object.keys(mainSave.d).length == 0)
+            delete mainSave.d;
         return mainSave;
     }
     load(data) {
@@ -207,7 +207,7 @@ export class Widget extends FrameworkBase {
         // this._id = data._idMap.translate(data.id); // id set by attach
         // don't let erros in wLoad() process inhibit loading
         try {
-            this.wLoad(data.data ?? {});
+            this.wLoad(data.d ?? {});
         }
         catch (err) {
             console.error(err);

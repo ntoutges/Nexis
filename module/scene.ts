@@ -10,7 +10,7 @@ import { Grid, Pos } from "./pos.js";
 import { WireBase } from "./widgets/wire/base.js";
 import { Ids } from "./ids.js";
 import { RevMap } from "./revMap.js";
-import { Saveable } from "./saveable/saveable.js";
+import { Saveable } from "../saveable/saveable.js";
 
 var sceneIdentifiers = 0;
 
@@ -288,11 +288,7 @@ export class Scene extends FrameworkBase {
       Array.from(this.widgets.keys()).filter(key => this.widgets.get(key).doSaveWidget()).reduce((acc, key) => { acc[key] = this.widgets.get(key); return acc; }, {}),
       { "*": "widget" }
     );
-
-    // const widgetSave = {};
-    // this.widgets.forEach((widget,key) => {
-    //   if (widget.doSaveWidget()) widgetSave[key] = widget.save();
-    // });
+    Saveable.cleanSaveData();
 
     return {
       widgets: widgetSave,
@@ -309,6 +305,7 @@ export class Scene extends FrameworkBase {
     const loaded = new Set<number>();
     const toLoad: [id: number, dependencies: Set<number>][] = [];
     const idMap = new IDMap();
+    const builtInstances = new Map<string, Map<string, Map<number, Object>>>();
 
     const preload = (widget: Widget, data: { id: number } & idMap_t) => {
       const newId = this.addWidget(widget, data.id);
@@ -329,7 +326,7 @@ export class Scene extends FrameworkBase {
         if (!loaded.has(dependency)) continue step;
       }
 
-      const { widget } = this.objectify({ widget: widgets[id] }, preload); // load widget
+      this.objectify({ widget: widgets[id] }, builtInstances, preload); // load widget
       loaded.add(id);         // indicate that object has been loaded
 
       // don't try to load object again

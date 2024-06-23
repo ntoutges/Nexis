@@ -2,10 +2,11 @@
 
 import { Draggable } from "./draggable.js";
 import { FrameworkBaseInterface, resizeType } from "./interfaces.js";
-import { Saveable } from "./saveable/saveable.js";
+import { Saveable } from "../saveable/saveable.js";
 import { Scene, loadClasses } from "./scene.js";
 
-export abstract class FrameworkBase extends Saveable<loadClasses | `+${string}`> {
+export type objectificationTypes = loadClasses | `+${string}`;
+export abstract class FrameworkBase extends Saveable<objectificationTypes> {
   protected el: HTMLDivElement = document.createElement("div");
   protected readonly resizeData: {
     option: resizeType,
