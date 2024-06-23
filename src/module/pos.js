@@ -4,6 +4,7 @@ export class Pos {
     bounds = new Map();
     listener = new Listener();
     animation = null;
+    doInhibit;
     constructor(data) {
         for (const component in data) {
             const dimData = data[component];
@@ -25,7 +26,8 @@ export class Pos {
             let newPos = Math.min(Math.max(pos[component], min), max);
             this.dimensions.set(component, newPos);
         }
-        this.listener.trigger("set", this);
+        if (!this.doInhibit)
+            this.listener.trigger("set", pos);
         if (stopAnimation && this.animation) { // sets current animation to null
             this.animation.stop();
             this.animation = null;
@@ -78,6 +80,9 @@ export class Pos {
     distanceToGrid(grid, components) {
         const gridPos = grid.getPointAt(this, components);
         return this.distanceToPos(gridPos, components);
+    }
+    setListenerInhibit(doInhibit) {
+        this.doInhibit = doInhibit;
     }
 }
 export class Grid {

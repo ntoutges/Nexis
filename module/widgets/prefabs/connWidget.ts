@@ -88,8 +88,8 @@ export class ConnWidget extends DraggableWidget {
       }
     });
     
-    this.addInitParams({ type, connections }, "*");
-    this.defineObjectificationInitParams({"connections.*": "+conn","wireData.type": "widget"});
+    this.addInitParams({ type, connections, validator }, "*");
+    this.defineObjectificationInitParams({"connections.*": "+conn","wireData.type": "widget", "validator": "+"});
 
     this.contextmenus.header.listener.on("click", (item) => {
       switch (item.value) {
@@ -262,7 +262,7 @@ export class ConnConsole extends DraggableWidget {
   }) {
     const container = document.createElement("div");
     container.classList.add("framework-prefab-connsole-containers");
-
+    
     super({
       content: container,
       name: "connsole",
@@ -307,8 +307,8 @@ export class ConnConsole extends DraggableWidget {
       doDragAll: true
     });
 
-    this.addInitParams({ type, wireData }, "*");
-    this.defineObjectificationInitParams({"wireData.type": "wire"})
+    this.addInitParams({ type, wireData, validator }, "*");
+    this.defineObjectificationInitParams({"wireData.type": "wire", "validator": "+"});
 
     this.terminalContainer = container;
     this.terminalBody.classList.add("framework-prefab-connsole-bodies");

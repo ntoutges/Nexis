@@ -65,7 +65,7 @@ export class FrameworkBase extends Saveable {
                     // components give: 0 for no movement; >=1 for scaling, >=2 for moving scaling
                     const xComponent = +resizeEl.classList.contains("framework-resize-drag-element-side-right") + 2 * +resizeEl.classList.contains("framework-resize-drag-element-side-left");
                     const yComponent = +resizeEl.classList.contains("framework-resize-drag-element-side-bottom") + 2 * +resizeEl.classList.contains("framework-resize-drag-element-side-top");
-                    this.manualResizeTo(draggable, xComponent, yComponent);
+                    this.ezElManualResize(draggable, xComponent, yComponent);
                 });
                 // this.resizeData.draggable.listener.on("drag", this.manualResizeTo.bind(this));
                 this.trackDraggables(this.resizeData.draggable);
@@ -77,7 +77,7 @@ export class FrameworkBase extends Saveable {
     get element() {
         return this.el;
     }
-    manualResizeTo(d, xComponent = 1, yComponent = 1) {
+    ezElManualResize(d, xComponent = 1, yComponent = 1) {
         let dWidth = d.delta.x;
         let dHeight = d.delta.y;
         if (xComponent == 0)
@@ -90,8 +90,11 @@ export class FrameworkBase extends Saveable {
             dHeight *= -1; // resize + move
         const newWidth = this.el.offsetWidth - dWidth;
         const newHeight = this.el.offsetHeight + dHeight;
-        this.el.style.width = `${newWidth}px`;
-        this.el.style.height = `${newHeight}px`;
+        this.elManualResize(d, newWidth, newHeight);
+    }
+    elManualResize(d, width, height) {
+        this.el.style.width = `${width}px`;
+        this.el.style.height = `${height}px`;
         d.listener.trigger("resize", d);
         // remove set width/height
         this.resetBounds();
@@ -123,12 +126,6 @@ export class FrameworkBase extends Saveable {
         }
         const resizeEl = document.createElement("div");
         resizeEl.classList.add("framework-resize-drag-element");
-        // const isHorizontal = sides.includes("left") || sides.includes("right");
-        // const isVertical = sides.includes("top") || sides.includes("bottom");
-        // let iconDir: "both" | "width" | "height" = "both";
-        // if (!isVertical) iconDir = "width"
-        // else if (!isHorizontal) iconDir = "height";
-        // svg.getSvg(`icons.resize-${iconDir}`).then(svg => { resizeEl.append(svg); });
         for (const side of sides) {
             resizeEl.classList.add(`framework-resize-drag-element-side-${side}`);
         }

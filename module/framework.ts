@@ -3,7 +3,7 @@
 import { Draggable } from "./draggable.js";
 import { FrameworkBaseInterface, resizeType } from "./interfaces.js";
 import { Saveable } from "../saveable/saveable.js";
-import { Scene, loadClasses } from "./scene.js";
+import { Scene, idMap_t, loadClasses } from "./scene.js";
 
 export type objectificationTypes = loadClasses | `+${string}`;
 export abstract class FrameworkBase extends Saveable<objectificationTypes> {
@@ -87,7 +87,7 @@ export abstract class FrameworkBase extends Saveable<objectificationTypes> {
           const xComponent = +resizeEl.classList.contains("framework-resize-drag-element-side-right") + 2 *+resizeEl.classList.contains("framework-resize-drag-element-side-left");
           const yComponent = +resizeEl.classList.contains("framework-resize-drag-element-side-bottom") + 2*+resizeEl.classList.contains("framework-resize-drag-element-side-top");
 
-          this.manualResizeTo(draggable, xComponent, yComponent);
+          this.ezElManualResize(draggable, xComponent, yComponent);
         });
         // this.resizeData.draggable.listener.on("drag", this.manualResizeTo.bind(this));
         this.trackDraggables(this.resizeData.draggable);
@@ -100,7 +100,7 @@ export abstract class FrameworkBase extends Saveable<objectificationTypes> {
     return this.el;
   }
 
-  protected manualResizeTo(
+  protected ezElManualResize(
     d: Draggable,
     xComponent: number = 1,
     yComponent: number = 1
@@ -116,8 +116,16 @@ export abstract class FrameworkBase extends Saveable<objectificationTypes> {
     const newWidth = this.el.offsetWidth - dWidth;
     const newHeight = this.el.offsetHeight + dHeight;
 
-    this.el.style.width = `${newWidth}px`;
-    this.el.style.height = `${newHeight}px`;
+    this.elManualResize(d, newWidth, newHeight );
+  }
+
+  protected elManualResize(
+    d: Draggable,
+    width: number,
+    height: number
+  ) {
+    this.el.style.width = `${width}px`;
+    this.el.style.height = `${height}px`;
 
     d.listener.trigger("resize", d);
 
@@ -154,14 +162,6 @@ export abstract class FrameworkBase extends Saveable<objectificationTypes> {
     
     const resizeEl = document.createElement("div");
     resizeEl.classList.add("framework-resize-drag-element");
-
-    // const isHorizontal = sides.includes("left") || sides.includes("right");
-    // const isVertical = sides.includes("top") || sides.includes("bottom");
-    // let iconDir: "both" | "width" | "height" = "both";
-    // if (!isVertical) iconDir = "width"
-    // else if (!isHorizontal) iconDir = "height";
-
-    // svg.getSvg(`icons.resize-${iconDir}`).then(svg => { resizeEl.append(svg); });
 
     for (const side of sides) { resizeEl.classList.add(`framework-resize-drag-element-side-${side}`); }
     this.resizeData.dragEl.append(resizeEl);

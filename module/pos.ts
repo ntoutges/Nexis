@@ -4,8 +4,9 @@ import { Listener } from "./listener.js";
 export class Pos<Dims extends string> {
   private readonly dimensions = new Map<Dims, number>();
   private readonly bounds = new Map<Dims, [min: number, max: number]>();
-  readonly listener = new Listener<"set", Pos<Dims>>();
+  readonly listener = new Listener<"set", Partial<Record<Dims, number>>>();
   private animation: FAnimation<Dims> = null;
+  private doInhibit: boolean;
 
   constructor(
     data: Partial<Record<Dims, { val?: number, min?: number, max?: number }>>
@@ -30,7 +31,7 @@ export class Pos<Dims extends string> {
       let newPos = Math.min(Math.max(pos[component], min), max);
       this.dimensions.set(component, newPos);
     }
-    this.listener.trigger("set", this);
+    if (!this.doInhibit) this.listener.trigger("set", pos);
 
     if (stopAnimation && this.animation) { // sets current animation to null
       this.animation.stop();
@@ -89,6 +90,10 @@ export class Pos<Dims extends string> {
   ) {
     const gridPos = grid.getPointAt(this, components);
     return this.distanceToPos(gridPos, components);
+  }
+
+  setListenerInhibit(doInhibit: boolean) {
+    this.doInhibit = doInhibit;
   }
 }
 

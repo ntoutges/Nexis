@@ -49,6 +49,10 @@ export class Widget extends FrameworkBase {
             this.elListener.trigger("move", this.el);
             this.scene?.updateIndividualWidget(this);
         });
+        this.bounds.setListenerInhibit(true); // by default: don't listen to bounds
+        this.bounds.listener.on("set", (pos) => {
+            this.elManualResize(this.resizeData.draggable, this.bounds.getPosComponent("x"), this.bounds.getPosComponent("y"));
+        });
         this.setPos(pos?.x ?? 0, pos?.y ?? 0);
         if (Array.isArray(contextmenu)) {
             if (contextmenu.length == 0)
@@ -166,14 +170,14 @@ export class Widget extends FrameworkBase {
     }
     get isBuilt() { return true; } // used by types like GlobalSingleUseWidget for scene optimization
     doSaveWidget() { return true; }
-    manualResizeTo(d, xComponent = 1, yComponent = 1) {
+    ezElManualResize(d, xComponent = 1, yComponent = 1) {
         if (xComponent >= 2)
             this.pos.offsetPos({ x: -d.delta.x });
         if (yComponent >= 2)
             this.pos.offsetPos({ y: d.delta.y });
         if (this.scene)
             d.scale = this.scene.draggable.pos.z; // update scale if this.scene exists
-        super.manualResizeTo(d, xComponent, yComponent);
+        super.ezElManualResize(d, xComponent, yComponent);
     }
     get doImmediateSceneAppend() { return true; }
     get isMovementExempt() { return !this.isBuilt || this.positioning === 0; }
@@ -192,12 +196,23 @@ export class Widget extends FrameworkBase {
             id: this._id,
             type: this.constructor.name,
             pos: {
-                x: this.pos.getPosComponent("x"),
-                y: this.pos.getPosComponent("y")
+                x: ["both", "horizontal"].includes(this.resizeData.option) ? this.pos.getPosComponent("x") : null,
+                y: ["both", "vertical"].includes(this.resizeData.option) ? this.pos.getPosComponent("y") : null
+            },
+            size: {
+                x: this.bounds.getPosComponent("x"),
+                y: this.bounds.getPosComponent("y")
             },
             addons: this.addons.save(),
             d: wSave
         };
+        // remov extraneous data
+        if (mainSave.size.x == null && mainSave.size.y == null)
+            delete mainSave.size;
+        else if (mainSave.size.x == null)
+            delete mainSave.size.x;
+        else if (mainSave.size.y == null)
+            delete mainSave.size.y;
         if (Object.keys(mainSave.d).length == 0)
             delete mainSave.d;
         return mainSave;
@@ -205,6 +220,13 @@ export class Widget extends FrameworkBase {
     load(data) {
         this.pos.setPos(data.pos);
         // this._id = data._idMap.translate(data.id); // id set by attach
+        // listen to bounds change for this moment
+        this.bounds.setListenerInhibit(false);
+        if (["both", "horizontal"].includes(this.resizeData.option) && data.size?.hasOwnProperty("x"))
+            this.bounds.setPos({ x: data.size.x });
+        if (["both", "vertical"].includes(this.resizeData.option) && data.size?.hasOwnProperty("y"))
+            this.bounds.setPos({ y: data.size.y });
+        this.bounds.setListenerInhibit(true);
         // don't let erros in wLoad() process inhibit loading
         try {
             this.wLoad(data.d ?? {});
