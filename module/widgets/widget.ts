@@ -248,12 +248,12 @@ export class Widget extends FrameworkBase {
       id: this._id,
       type: this.constructor.name,
       pos: {
-        x: ["both", "horizontal"].includes(this.resizeData.option) ? this.pos.getPosComponent("x") : null,
-        y: ["both", "vertical"].includes(this.resizeData.option) ? this.pos.getPosComponent("y") : null
+        x: this.pos.getPosComponent("x"),
+        y: this.pos.getPosComponent("y")
       },
       size: {
-        x: this.bounds.getPosComponent("x"),
-        y: this.bounds.getPosComponent("y")
+        x: ["both", "horizontal"].includes(this.resizeData.option) ? this.bounds.getPosComponent("x") : null,
+        y: ["both", "vertical"].includes(this.resizeData.option) ? this.bounds.getPosComponent("y") : null
       },
       addons: this.addons.save(),
       d: wSave
