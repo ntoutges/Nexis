@@ -267,7 +267,7 @@ export class ConnConsole extends DraggableWidget {
       content: container,
       name: "connsole",
       header: {
-        title: "Connsole"
+        title: "Connnnnnnnnnnsole"
       },
       addons: {
         "input": {

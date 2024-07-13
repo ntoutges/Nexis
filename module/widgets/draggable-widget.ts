@@ -278,7 +278,7 @@ export class DraggableWidget extends Widget {
       this.draggable.listener.on("dragInit", this.dragInit.bind(this));
       this.draggable.listener.on("drag", this.drag.bind(this));
       this.draggable.listener.on("dragEnd", this.dragEnd.bind(this));
-      this.draggable.listener.on("selected", () => { this._scene.layers.moveToTop(this); })
+      this.draggable.listener.on("selected", () => { this._scene.layers.moveToTop(this); });
 
       this.trackDraggables(this.draggable);
     }
