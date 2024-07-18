@@ -1,6 +1,5 @@
-import { ChannelBase, ClientBase, ConnectionBase } from "../../../connection/lib/connBase.js";
+import { ChannelBase, ClientBase, ConnectionBase } from "../../../connection/module/connBase.js";
 import { ConnectorAddon } from "../../addons/connector.js";
-import { idMap_t } from "../../scene.js";
 import { DraggableWidget } from "../draggable-widget.js";
 
 export class ConnWidget extends DraggableWidget {
@@ -267,7 +266,7 @@ export class ConnConsole extends DraggableWidget {
       content: container,
       name: "connsole",
       header: {
-        title: "Connnnnnnnnnnsole"
+        title: "Connsole"
       },
       addons: {
         "input": {
