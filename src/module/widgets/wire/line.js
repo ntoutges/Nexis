@@ -26,7 +26,12 @@ export class WireLine extends WireBase {
         // ensure x/y is always at top-left
         const minX = Math.min(pos1.x, pos2.x);
         const minY = Math.min(pos1.y, pos2.y);
+        const maxX = Math.max(pos1.x, pos2.x);
+        const maxY = Math.max(pos1.y, pos2.y);
         this.setPos(minX, minY);
+        this.el.style.width = `${maxX - minX}px`;
+        this.el.style.height = `${maxY - minY}px`;
+        this.updateBounds();
         this.wireEl.style.top = `${pos1.y - minY}px`;
         this.wireEl.style.left = `${pos1.x - minX}px`;
         this.wireEl.style.width = `${mag}px`;

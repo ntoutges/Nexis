@@ -87,7 +87,7 @@ export class ConnWidget extends DraggableWidget {
       }
     });
     
-    this.addInitParams({ type, connections, validator }, "*");
+    this.addInitParams({ type, connections, validator, wireData }, "*");
     this.defineObjectificationInitParams({"connections.*": "+conn","wireData.type": "widget", "validator": "+"});
 
     this.contextmenus.header.listener.on("click", (item) => {

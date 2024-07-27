@@ -144,14 +144,6 @@ export class Widget extends FrameworkBase {
     });
   }
 
-  // calculateBounds() {
-  //   const scale = this._scene?.draggable.pos.z ?? 1; // no scene means no size
-  //   return {
-  //     "x": this.el.offsetWidth * scale,
-  //     "y": this.el.offsetHeight * scale
-  //   }
-  // }
-
   attachTo(scene: Scene, id: number) {
     const isFirstScene = this._scene == null;
     if (!isFirstScene) this.detachFrom(this._scene);
@@ -230,6 +222,10 @@ export class Widget extends FrameworkBase {
 
     if (this.scene) d.scale = this.scene.draggable.pos.z; // update scale if this.scene exists
     super.ezElManualResize(d, xComponent, yComponent);
+  }
+
+  inhibitContextmenu() {
+    for (const id in this.contextmenus) { this.contextmenus[id].inhibit(); }
   }
 
   get doImmediateSceneAppend() { return true; }
@@ -355,6 +351,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
   readonly listener = new Listener<ContextMenuEvents, ContextMenuItem>();
 
   private doAutoClose: boolean;
+  private inhibited: boolean = false;
 
   constructor({
     pos, positioning, resize, style,
@@ -403,6 +400,8 @@ export class ContextMenu extends GlobalSingleUseWidget {
     for (const el of trigger) {
       el.addEventListener("contextmenu", (e) => {
         if (this.sections.length > 0) e.preventDefault(); // if empty, allow standard contextmenu through (but still close previous contextmenu)
+        if (this.inhibited) return; // Inhibited
+
         e.stopPropagation();
         if (!this._scene) return; // don't continue unless attached to something
         this.build();
@@ -448,6 +447,12 @@ export class ContextMenu extends GlobalSingleUseWidget {
     for (let i = this.sections.length; i >= 0; i--) {
       this.removeSection(i);
     }
+  }
+
+  // Inhibit contextmenu for current event cycle
+  inhibit() {
+    this.inhibited = true;                          // Inhibit
+    setTimeout(() => { this.inhibited = false; });  // Remove inhibition after event cycle finishes
   }
 
   getSection(name: string | number): ContextMenuSection {

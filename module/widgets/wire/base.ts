@@ -27,7 +27,7 @@ export class WirePoint {
   }
 
   get addon() { return this._addon; }
-  get normal() { return this._addon ? this._addon.normal : { x:0, y:0 }; }
+  get normal(): { x: -1 | 0 | 1, y: -1 | 0 | 1 } { return this._addon ? this._addon.normal : { x: 0, y: 0 }; }
   get radius() { return this._addon ? this._addon.size/2 : 0; }
   
   protected updatePosition() {
@@ -170,7 +170,7 @@ export abstract class WireBase extends Widget {
 
   // override updateBounds with different dimensions
   updateBounds() {
-    const bounds = { width: this.wireEl.offsetWidth, height: this.wireEl.offsetHeight };
+    const bounds = { width: this.el.offsetWidth, height: this.el.offsetHeight };
     const padding = this.point1.radius + this.point2.radius;
     super.updateBounds(bounds, { x: padding, y: padding });
   }

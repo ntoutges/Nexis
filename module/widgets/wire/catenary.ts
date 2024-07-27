@@ -1,13 +1,8 @@
-import { WireBase } from "./base.js";
+import { WireSVG } from "./svg.js";
 
-export class WireCatenary extends WireBase {
+export class WireCatenary extends WireSVG {
   private readonly drop: number;
-  private readonly segments: number;
   private readonly tensionCoef: number;
-
-  private readonly wireDisplay: SVGElement;
-  private readonly wireDisplayPath: SVGPathElement;
-  private readonly wireDisplayShadow: SVGPathElement;
   
   private readonly coefficients: { a: number, b: number, c: number } = { a: 0, b: 0, c: 0 };
 
@@ -15,8 +10,7 @@ export class WireCatenary extends WireBase {
     width,color,shadow,
 
     drop = 100,
-    tensionCoef = 0.001,
-    segments=15
+    tensionCoef = 0.001
   }: {
     width?: number,
     color?: string,
@@ -24,28 +18,19 @@ export class WireCatenary extends WireBase {
 
     drop?: number
     tensionCoef?: number
-    segments?: number
   }) {
     super({
       name: "catenary-wire",
-      width,color,shadow,
-      pointerless: true
+      width,color,shadow
     });
 
-    this.addInitParams({ drop, segments, tensionCoef });
+    this.addInitParams({ drop, tensionCoef });
 
     this.drop = drop;
-    this.segments = segments;
     this.tensionCoef = tensionCoef;
 
-    this.wireDisplay = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    this.wireDisplayShadow = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    this.wireDisplayPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    
-    this.wireDisplay.setAttribute("fill", "none");
-
-    this.wireDisplay.append(this.wireDisplayShadow, this.wireDisplayPath);
-    this.wireEl.append(this.wireDisplay);
+    this.createPathElement("shadow");
+    this.createPathElement("path");
   }
 
   protected updateElementTransformations() {
@@ -88,12 +73,9 @@ export class WireCatenary extends WireBase {
     y1: number,
     y3: number
   ) {
-    const minX = Math.min(x1,x3);
-    const maxX = Math.max(x1,x3);
+    let minY = Math.min(y1, y3);
+    let maxY = Math.max(y1, y3)
 
-    let minY = Math.min(y1,y3);
-    let maxY = Math.max(y1,y3);
-    
     const { a,b,c } = this.coefficients;
 
     if (Math.abs(a) > 1e-10) {
@@ -108,8 +90,11 @@ export class WireCatenary extends WireBase {
     const p_Cx = (x1 + x3) / 2
     const p_Cy = y1 + (2*a*x1 + b) * (x3-x1) / 2;
     
+    this.setSVGBounds([x1,x3], [minY, maxY]);
+
     const d = `M${x1} ${y1} Q${p_Cx} ${p_Cy} ${x3} ${y3}`; // use quadratic bezier curve to draw parabola, which used to estimate catenary
-    this.updateWireDisplay(d, minX, maxX, minY, maxY);
+    this.wirePaths.get("shadow").setAttribute("d", d);
+    this.wirePaths.get("path").setAttribute("d", d);
   }
 
   private drawVLineFallback(
@@ -118,38 +103,18 @@ export class WireCatenary extends WireBase {
     y2: number,
     y3: number
   ) {
-    const minY = Math.min(y1,y2,y3);
-    const maxY = Math.max(y1,y2,y3);
+    const { minY, maxY } = this.setSVGBounds([x], [y1,y2,y3]);
 
-    this.updateWireDisplay(`M${x} ${minY} L${x} ${maxY}`, x,x, minY, maxY);
-  }
-
-  private updateWireDisplay(
-    d: string,
-    minX: number,
-    maxX: number,
-    minY: number,
-    maxY: number
-  ) {
-    const padding = this._width;
-    const width = (maxX - minX) + 2*padding;
-    const height = (maxY - minY) + 2*padding;
-
-    this.setPos(minX - padding, minY - padding);
-    this.wireDisplay.setAttribute("width", `${width}`);
-    this.wireDisplay.setAttribute("height", `${height}`);
-    
-    this.wireDisplay.setAttribute("viewBox", `${minX-padding} ${minY-padding} ${width} ${height}`);
-    
-    this.wireDisplayShadow.setAttribute("d", d);
-    this.wireDisplayPath.setAttribute("d", d);
+    const d = `M${x} ${minY} L${x} ${maxY}`;
+    this.wirePaths.get("shadow").setAttribute("d", d);
+    this.wirePaths.get("path").setAttribute("d", d);
   }
 
   protected updateWireStyle() {
-    this.wireDisplayShadow.setAttribute("stroke", this._shadow);
-    this.wireDisplayPath.setAttribute("stroke", this._color);
+    this.wirePaths.get("shadow").setAttribute("stroke", this._shadow);
+    this.wirePaths.get("path").setAttribute("stroke", this._color);
     
-    this.wireDisplayShadow.style.strokeWidth = `${this._width + 1}px`;
-    this.wireDisplayPath.style.strokeWidth = `${this._width}px`;
+    this.wirePaths.get("shadow").style.strokeWidth = `${this._width + 1}px`;
+    this.wirePaths.get("path").style.strokeWidth = `${this._width}px`;
   }
 }

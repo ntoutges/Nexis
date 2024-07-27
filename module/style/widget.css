@@ -609,10 +609,19 @@
 }
 
 .framework-basic-wire-widget {
-  pointer-events: none;
   position: absolute;
-}
+  pointer-events: none;
 
-.framework-basic-wire-widget:not(.framework-wire-is-editing) > .framework-wire-body:not(.framework-wire-body-pointerless) {
-  pointer-events: all;
-}
+  svg {
+    position: absolute;
+  }
+
+  /* Let SVG be clicked properly */
+  &:not(.framework-wire-is-editing) svg path {
+    pointer-events: visiblePainted;
+  }
+
+  &:not(.framework-wire-is-editing) > .framework-wire-body:not(.framework-wire-body-pointerless) {
+    pointer-events: all;
+  }
+} 

@@ -3,6 +3,7 @@ export class PeerlessClient extends ClientBase {
     _onLocalConnectionCallback = null;
     _onRemoteConnectionCallback = null;
     setConnectionStatus(working) {
+        this.setReadyState(this.id, working);
         this.doFinalizeConnect(false, working);
     }
     connectTo(id, callback) {
@@ -20,9 +21,7 @@ export class PeerlessClient extends ClientBase {
         this.sendHandshake(id);
     }
     sendHandshake(id) {
-        let oldLocalReadyState = this.getReadyState(this.id);
         let oldRemoteReadyState = this.getReadyState(id);
-        this.setReadyState(this.id, true, false); // Allow for message to be sent
         this.setReadyState(id, true, false); // Allow for message to be sent
         this.dmChannel.echo("", id, 1000, "init").then(response => {
             this.doFinalizeConnect(true, true); // Successfully connected
@@ -30,14 +29,11 @@ export class PeerlessClient extends ClientBase {
             this.doFinalizeConnect(true, false); // Failed to connect
         });
         // Reset ready states
-        this.setReadyState(this.id, oldLocalReadyState, false);
         this.setReadyState(id, oldRemoteReadyState, false);
     }
     doFinalizeConnect(remote, success) {
-        if (remote == !!this.routerId) {
-            if (this.routerId)
-                this.setReadyState(this.routerId, success);
-            this.setReadyState(this.id, success);
+        if (remote && this.routerId) {
+            this.setReadyState(this.routerId, success);
         }
         let callback = remote ? this._onRemoteConnectionCallback : this._onLocalConnectionCallback;
         if (!callback)

@@ -424,7 +424,7 @@ export class Addon extends Saveable<loadClasses> {
     this.sceneElListener.updateValidity();
   }
 
-  get normal() { return this.addonEdge ? this.addonEdge.normal : { x: 0, y: 0 }; }
+  get normal(): { x: -1 | 0 | 1, y: -1 | 0 | 1 } { return this.addonEdge ? this.addonEdge.normal : { x: 0, y: 0 }; }
 
   get addonContainer() { return this.addonEdge?.addonContainer; }
 
