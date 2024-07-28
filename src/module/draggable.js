@@ -30,7 +30,6 @@ export class Draggable {
     listener = new Listener();
     constructor({ viewport, // continues movement
     element, // Initiates movement
-    periphery = [], // Has event listener, but only to stop propagation
     scrollX = true, scrollY = true, zoomable = true, blockDrag = true, blockScroll = true, input, options = {} }) {
         this.blockDrag = blockDrag;
         this.blockScroll = blockScroll;
@@ -56,15 +55,6 @@ export class Draggable {
             else {
                 element.addEventListener("pointerdown", this.initDrag.bind(this));
                 element.addEventListener("wheel", this.onScroll.bind(this));
-            }
-            for (const el of periphery) {
-                if (this.blockDrag)
-                    el.addEventListener("pointerdown", (e) => {
-                        e.stopPropagation();
-                        this.listener.trigger("selected", this);
-                    });
-                if (this.blockScroll)
-                    el.addEventListener("wheel", (e) => { e.stopPropagation(); });
             }
             // this.updateBounds();
             this.listener.setAutoResponse("init", this);
@@ -100,6 +90,7 @@ export class Draggable {
         this.mouseOffset.y = e.pageY;
         this.listener.trigger("dragInit", this);
         this.listener.trigger("selected", this);
+        e.target.setPointerCapture(e.pointerId);
     }
     doDrag(e) {
         if (!this.isDragging)
@@ -134,6 +125,7 @@ export class Draggable {
         this._lastEvent = e;
         this.isDragging = false;
         this.listener.trigger("dragEnd", this);
+        e.target.releasePointerCapture(e.pointerId);
     }
     onScroll(e) {
         if (!this.zoomable || e.deltaY == 0)

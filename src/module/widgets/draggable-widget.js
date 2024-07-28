@@ -189,7 +189,6 @@ export class DraggableWidget extends Widget {
                         this.header.querySelector(".framework-draggable-widget-title-ends"),
                         this.body
                     ],
-                    periphery: [],
                     zoomable: false,
                     blockScroll: false,
                     input: {
@@ -206,7 +205,6 @@ export class DraggableWidget extends Widget {
                         this.header.querySelector(".framework-draggable-widget-titles"),
                         this.header.querySelector(".framework-draggable-widget-title-ends")
                     ],
-                    periphery: [this.body],
                     zoomable: false,
                     blockScroll: false,
                     input: {
