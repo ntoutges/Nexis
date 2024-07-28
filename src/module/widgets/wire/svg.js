@@ -61,6 +61,7 @@ export class WireSVG extends WireBase {
             if (key == "shadow") {
                 path.setAttribute("stroke", this._shadow);
                 path.style.strokeWidth = `${this._width + 1}px`;
+                return;
             }
             path.setAttribute("stroke", this._color);
             path.style.strokeWidth = `${this._width}px`;

@@ -106,13 +106,19 @@ export class Scene extends FrameworkBase {
   addWidget(widget: Widget, id: number): number;
   addWidget(widget: Widget, idGen: (takenIds: number[]) => number): number;
   addWidget(widget: Widget, id: number | ((takenIds: number[]) => number) = null): number {
-    if (id === null) id = widget.getId() ?? 0;
-    else if (typeof id == "function") id = id(this.widgetIds.getIdsInUse()); // generate id
+    let isSingleUse = false;
+    
+    if (widget instanceof GlobalSingleUseWidget && GlobalSingleUseWidget.hasInstanceId(widget as GlobalSingleUseWidget)) { // Don't generate new id
+      id = GlobalSingleUseWidget.getInstanceId(widget as GlobalSingleUseWidget);
+      isSingleUse = true;
+    }
+    else if (id === null) id = widget.getId() ?? 0;                          // No id given
+    else if (typeof id == "function") id = id(this.widgetIds.getIdsInUse()); // Id given as function
 
-    if (!this.widgetIds.reserveId(id)) id = this.widgetIds.generateId(); // if id invalid, generate new
+    if (!isSingleUse && !this.widgetIds.reserveId(id)) id = this.widgetIds.generateId(); // if id invalid, generate new
 
     widget.attachTo(this, id);
-    this.widgets.set(id, widget);
+    if (!isSingleUse) this.widgets.set(id, widget);
     this.layers.add(widget);
 
     this.updateIndividualWidget(widget);
@@ -136,6 +142,16 @@ export class Scene extends FrameworkBase {
     if (widget instanceof WireBase && this.wires.has(widget)) this.wires.delete(widget); // stop tracking wire
 
     for (const snapObj of this.snapObjects.values()) { widget.pos.removeSnapObject(snapObj); } // remove snap objects
+  }
+
+  setSingleUseWidgetInstance(widget: GlobalSingleUseWidget);
+  setSingleUseWidgetInstance(id: number, widget: GlobalSingleUseWidget);
+  setSingleUseWidgetInstance(id: GlobalSingleUseWidget | number, widget?: GlobalSingleUseWidget) {
+    if (id instanceof GlobalSingleUseWidget) {
+      widget = id;
+      id = widget.getId();
+    }
+    this.widgets.set(id, widget);
   }
 
   getWidgetById(id: number): Widget {

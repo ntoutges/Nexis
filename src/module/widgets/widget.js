@@ -237,8 +237,9 @@ export class Widget extends FrameworkBase {
     wSave() { return {}; }
     wLoad(data) { }
 }
-const globalSingleUseWidgetMap = new Map();
 export class GlobalSingleUseWidget extends Widget {
+    static ids = new Map();
+    static builtWidgets = new Map();
     _isBuilt;
     constructor({ name, content, layer, pos, positioning, resize, style, options, doZoomScale, addons }) {
         super({
@@ -255,32 +256,48 @@ export class GlobalSingleUseWidget extends Widget {
         }
         this.el.style.display = "none";
     }
+    attachTo(scene, id) {
+        super.attachTo(scene, id);
+        GlobalSingleUseWidget.ids.set(this.name, id);
+    }
     build() {
-        if (globalSingleUseWidgetMap.has(this.name)) { // get rid of old
-            const oldWidget = globalSingleUseWidgetMap.get(this.name);
+        if (GlobalSingleUseWidget.builtWidgets.has(this.name)) { // get rid of old
+            const oldWidget = GlobalSingleUseWidget.builtWidgets.get(this.name);
             if (oldWidget != this)
                 oldWidget.unbuild();
         }
-        globalSingleUseWidgetMap.set(this.name, this);
+        GlobalSingleUseWidget.builtWidgets.set(this.name, this);
         this._isBuilt = true;
-        if (this.scene)
+        if (this.scene) {
             this.scene.element.append(this.el); // add element to scene if being used
+            this.scene.setSingleUseWidgetInstance(this);
+        }
         this.el.style.display = "";
     }
     unbuild() {
         this._isBuilt = false;
         this.el.style.display = "none";
         this.el.remove(); // remove element from scene when no longer used
-        if (globalSingleUseWidgetMap.has(this.name)) {
-            globalSingleUseWidgetMap.delete(this.name); // remove current entry
+        if (GlobalSingleUseWidget.builtWidgets.has(this.name)) {
+            GlobalSingleUseWidget.builtWidgets.delete(this.name); // remove current entry
         }
     }
     get isBuilt() { return this._isBuilt; }
     doSaveWidget() { return false; } // by default: don't save GlobalSingleUseWidgets
+    // attachTo(scene: Scene, id: number) {
+    //   super.attachTo(scene, id);
+    //   debugger
+    // }
     static unbuildType(type) {
-        if (globalSingleUseWidgetMap.has(type)) {
-            globalSingleUseWidgetMap.get(type).unbuild();
+        if (GlobalSingleUseWidget.builtWidgets.has(type)) {
+            GlobalSingleUseWidget.builtWidgets.get(type).unbuild();
         }
+    }
+    static hasInstanceId(widget) {
+        return GlobalSingleUseWidget.ids.has(widget.name);
+    }
+    static getInstanceId(widget) {
+        return GlobalSingleUseWidget.ids.get(widget.name) ?? null;
     }
     get doImmediateSceneAppend() { return false; }
 }
