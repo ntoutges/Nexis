@@ -28,9 +28,6 @@ export class WireCatenary extends WireSVG {
 
     this.drop = drop;
     this.tensionCoef = tensionCoef;
-
-    this.createPathElement("shadow");
-    this.createPathElement("path");
   }
 
   protected updateElementTransformations() {
@@ -108,13 +105,5 @@ export class WireCatenary extends WireSVG {
     const d = `M${x} ${minY} L${x} ${maxY}`;
     this.wirePaths.get("shadow").setAttribute("d", d);
     this.wirePaths.get("path").setAttribute("d", d);
-  }
-
-  protected updateWireStyle() {
-    this.wirePaths.get("shadow").setAttribute("stroke", this._shadow);
-    this.wirePaths.get("path").setAttribute("stroke", this._color);
-    
-    this.wirePaths.get("shadow").style.strokeWidth = `${this._width + 1}px`;
-    this.wirePaths.get("path").style.strokeWidth = `${this._width}px`;
   }
 }

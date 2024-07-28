@@ -11,8 +11,6 @@ export class WireCatenary extends WireSVG {
         this.addInitParams({ drop, tensionCoef });
         this.drop = drop;
         this.tensionCoef = tensionCoef;
-        this.createPathElement("shadow");
-        this.createPathElement("path");
     }
     updateElementTransformations() {
         // calculate a/b/c values for ax^2 + bx + c of parabolic eq (parabola good approximation of catenary)
@@ -65,12 +63,6 @@ export class WireCatenary extends WireSVG {
         const d = `M${x} ${minY} L${x} ${maxY}`;
         this.wirePaths.get("shadow").setAttribute("d", d);
         this.wirePaths.get("path").setAttribute("d", d);
-    }
-    updateWireStyle() {
-        this.wirePaths.get("shadow").setAttribute("stroke", this._shadow);
-        this.wirePaths.get("path").setAttribute("stroke", this._color);
-        this.wirePaths.get("shadow").style.strokeWidth = `${this._width + 1}px`;
-        this.wirePaths.get("path").style.strokeWidth = `${this._width}px`;
     }
 }
 //# sourceMappingURL=catenary.js.map

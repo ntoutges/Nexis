@@ -613,7 +613,7 @@
   pointer-events: none;
 
   svg {
-    position: absolute;
+    vertical-align: top;
   }
 
   /* Let SVG be clicked properly */

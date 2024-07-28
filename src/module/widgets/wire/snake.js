@@ -2,85 +2,106 @@ import { WireSVG } from "./svg.js";
 export class WireSnake extends WireSVG {
     turnDistance;
     turnRadius;
-    constructor({ color, shadow, width, turnDistance = 30, turnRadius = 20 }) {
+    constructor({ color, shadow, width, turnDistance = 10, turnRadius = 20 }) {
         super({
             name: "orth-wire",
             color, shadow, width
         });
         this.turnDistance = turnDistance;
         this.turnRadius = turnRadius;
-        this.createPathElement("shadow");
-        this.createPathElement("path");
     }
     updateElementTransformations() {
         let p1 = this.point1.getPos();
         let n1 = this.point1.normal;
         let p2 = this.point2.getPos();
         let n2 = this.point2.normal;
-        const target = this.calculateTarget(p1, p2, n1, n2);
-        let start1 = { x: p1.x + n1.x * this.turnDistance, y: p1.y + n1.y * this.turnDistance };
-        let start2 = { x: p2.x + n2.x * this.turnDistance, y: p2.y + n2.y * this.turnDistance };
-        let path1 = this.calculatePathToTarget(start1, n1, target);
-        let d = this.buildRoundedPath([
+        // Adjust points to not overlap addon
+        p1 = { x: p1.x + n1.x * this.point1.radius, y: p1.y + n1.y * this.point1.radius };
+        p2 = { x: p2.x + n2.x * this.point2.radius, y: p2.y + n2.y * this.point2.radius };
+        let start1 = { x: p1.x + n1.x * (this.turnDistance + this.point1.radius), y: p1.y + n1.y * (this.turnDistance + this.point1.radius) };
+        let start2 = { x: p2.x + n2.x * (this.turnDistance + this.point2.radius), y: p2.y + n2.y * (this.turnDistance + this.point2.radius) };
+        const target = this.calculateTarget(start1, start2, n1, n2);
+        let prePath = this.calculatePathToTarget(start1, n1, target);
+        let postPath = this.calculatePathToTarget(start2, n2, target);
+        let path = [
             p1,
-            ...path1.path,
-            ...this.calculatePathToTarget(target, path1.dir, start2).path,
+            ...prePath.path,
+            ...postPath.path.reverse(),
             p2
-        ]);
-        // let path = `M${p1.x},${p1.y} ${p1D} ${p2D} L${p2.x},${p2.y}`;
+        ];
+        let d2 = [`M${path[0].x},${path[0].y}`];
+        for (let i = 1; i < path.length; i++) {
+            d2.push(`L${path[i].x},${path[i].y}`);
+        }
+        let d = this.buildRoundedPath(path);
         this.wirePaths.get("path").setAttribute("d", d);
         this.wirePaths.get("shadow").setAttribute("d", d);
         this.setSVGBounds([p1, p2, start1, start2, target]);
     }
     calculateTarget(p1, p2, n1, n2) {
         if (n1.x == n2.x && n1.y == n2.y) { // Same normal > >
-            if (n1.x) { // Target point is halfway between x-axis, and minimum of y-axis
+            if (n1.x) { // Target point is halfway between y-axis, extreme of x-axis
                 return {
-                    x: (p1.x + p2.x) / 2,
-                    y: Math.max(p1.y, p2.y) + this.turnDistance
+                    x: n1.x * this.turnDistance + (Math.sign(n1.x) > 0 ? Math.max(p1.x, p2.x) : Math.min(p1.x, p2.x)),
+                    y: (p1.y + p2.y) / 2
                 };
             }
-            if (n1.y) { // Target point is halfway between y-axis, and minimum of x-axis
+            if (n1.y) { // Target point is halfway between x-axis, and extreme of x-axis
                 return {
-                    x: Math.max(p1.x, p2.x) + this.turnDistance,
-                    y: (p1.y + p2.y) / 2
+                    x: (p1.x + p2.x) / 2,
+                    y: n1.y * this.turnDistance + (Math.sign(n1.y) > 0 ? Math.max(p1.y, p2.y) : Math.min(p1.y, p2.y))
                 };
             }
         }
         else if ((n1.x == -n2.x && n1.y == n2.y)
             || (n1.x == n2.x && n1.y == -n2.y)) { // Opposite normal   < >
             let areHeadOn = false;
-            if (n1.x)
+            let areImpedingTurn = false;
+            if (n1.x) {
                 areHeadOn = Math.sign(p2.x - p1.x) == Math.sign(n1.x);
-            if (n1.y)
+                areImpedingTurn = Math.abs(p1.y - p2.y) < 4 * this.turnRadius;
+            }
+            else {
                 areHeadOn = Math.sign(p2.y - p1.y) == Math.sign(n1.y);
+                areImpedingTurn = Math.abs(p1.x - p2.x) < 4 * this.turnRadius;
+            }
             // Points are facing away from eachother
             if (!areHeadOn) {
                 if (n1.x) { // Target point is halfway between x-axis, and minimum of y-axis
                     return {
-                        x: (p1.x + p2.x) / 2,
-                        y: Math.max(p1.y, p2.y) + this.turnDistance
+                        x: Math.max(p1.x, p2.x),
+                        y: areImpedingTurn ? this.turnDistance + Math.max(p1.y, p2.y) : (p1.y + p2.y) / 2
                     };
                 }
-                if (n1.y) { // Target point is halfway between y-axis, and minimum of x-axis
-                    return {
-                        x: Math.max(p1.x, p2.x) + this.turnDistance,
-                        y: (p1.y + p2.y) / 2
-                    };
-                }
+                // n1.y // Target point is halfway between y-axis, and minimum of x-axis
+                return {
+                    x: areImpedingTurn ? this.turnDistance + Math.max(p1.x, p2.x) : (p1.x + p2.x) / 2,
+                    y: Math.max(p1.y, p2.y)
+                };
             }
         }
         else if (Math.abs(n1.x) != Math.abs(n2.x) && Math.abs(n1.y) != Math.abs(n2.y)) { // Orthogonal normal < ^ 
-            let areHeadOn = false;
-            if (n1.x) // < ^ or > ^
-                areHeadOn = Math.sign(p2.x - p1.x) == Math.sign(n1.x) && Math.sign(p1.y - p2.y) == Math.sign(n2.y);
-            if (n1.y) // ^ < or ^ >
-                areHeadOn = Math.sign(p2.y - p1.y) == Math.sign(n1.y) && Math.sign(p1.x - p2.x) == Math.sign(n2.x);
+            let isXHeadOn = false;
+            let isYHeadOn = false;
+            if (n1.x) { // < ^ or > ^
+                isXHeadOn = Math.sign(p2.x - p1.x) == Math.sign(n1.x);
+                isYHeadOn = Math.sign(p1.y - p2.y) == Math.sign(n2.y);
+            }
+            else { // ^ < or ^ >
+                isXHeadOn = Math.sign(p1.x - p2.x) == Math.sign(n2.x);
+                isYHeadOn = Math.sign(p2.y - p1.y) == Math.sign(n1.y);
+            }
             // Points are "facing" eachother
-            if (areHeadOn) { // Use 'x' component of y-normaled-point and 'y' component of x-normaled-point
+            if (isXHeadOn && isYHeadOn) { // Use 'x' component of y-normaled-point and 'y' component of x-normaled-point
                 return {
                     x: (n1.x) ? p2.x : p1.x,
                     y: (n1.y) ? p2.y : p1.y
+                };
+            }
+            if (!isXHeadOn && !isYHeadOn) { // Use adjusted 'y' of y-normaled-point and adjusted 'x' components of x-normalized-point
+                return {
+                    x: (n1.x) ? p1.x : p2.x,
+                    y: (n1.y) ? p1.y : p2.y
                 };
             }
         }
@@ -160,8 +181,8 @@ export class WireSnake extends WireSVG {
         return path;
     }
     buildRoundedPath(path) {
-        path = this.removeExtraneousPoints(path);
-        let d = [`M${path[0].x},${path[1].y}`];
+        this.removeExtraneousPoints(path);
+        let d = [`M${path[0].x},${path[0].y}`];
         const shift = { x: 0, y: 0 };
         for (let i = 2; i < path.length; i++) {
             let lastPoint = path[i - 2];
@@ -175,7 +196,7 @@ export class WireSnake extends WireSVG {
             let [m2X, m2Y] = [Math.sign(d2X), Math.sign(d2Y)];
             [d2X, d2Y] = [Math.abs(d2X), Math.abs(d2Y)];
             let ccw = m1X == -m2Y && m1Y == m2X;
-            let radius = Math.min(Math.max(d1X, d1Y) / 2, Math.max(d2X, d2Y) / 2, this.turnRadius);
+            let radius = Math.min(Math.max(d1X, d1Y) / (i == 2 ? 1 : 2), Math.max(d2X, d2Y) / (i == path.length - 1 ? 1 : 2), this.turnRadius);
             if (d1X) {
                 d.push(`l${m1X * (d1X - radius) - shift.x},0`, // Build line segment
                 `a${radius},${radius} 0 0 ${ccw ? 0 : 1} ${m1X * radius},${m2Y * radius}` // Build arc
@@ -195,4 +216,4 @@ export class WireSnake extends WireSVG {
         return d.join(" ");
     }
 }
-//# sourceMappingURL=orth.js.map
+//# sourceMappingURL=snake.js.map

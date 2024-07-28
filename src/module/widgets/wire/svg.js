@@ -11,6 +11,8 @@ export class WireSVG extends WireBase {
         // Create and initialize main svg
         this.wireDisplay = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         this.wireDisplay.setAttribute("fill", "none");
+        this.createPathElement("shadow");
+        this.createPathElement("path");
         this.wireEl.append(this.wireDisplay);
     }
     // Add in another path
@@ -52,6 +54,17 @@ export class WireSVG extends WireBase {
             minX, minY,
             maxX, maxY
         };
+    }
+    updateWireStyle() {
+        this.wirePaths.forEach((path, key) => {
+            // Shadow path gets special treatment
+            if (key == "shadow") {
+                path.setAttribute("stroke", this._shadow);
+                path.style.strokeWidth = `${this._width + 1}px`;
+            }
+            path.setAttribute("stroke", this._color);
+            path.style.strokeWidth = `${this._width}px`;
+        });
     }
 }
 //# sourceMappingURL=svg.js.map

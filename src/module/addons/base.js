@@ -96,10 +96,10 @@ export class AddonEdge {
         this.direction = direction;
         switch (this.direction) {
             case "top":
-                this.normal.y = 1;
+                this.normal.y = -1;
                 break;
             case "bottom":
-                this.normal.y = -1;
+                this.normal.y = 1;
                 break;
             case "left":
                 this.normal.x = -1;

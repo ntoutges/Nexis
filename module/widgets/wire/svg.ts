@@ -25,6 +25,9 @@ export abstract class WireSVG extends WireBase {
     this.wireDisplay = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     this.wireDisplay.setAttribute("fill", "none");
 
+    this.createPathElement("shadow");
+    this.createPathElement("path");
+
     this.wireEl.append(this.wireDisplay);
   }
 
@@ -57,8 +60,8 @@ export abstract class WireSVG extends WireBase {
 
     // Convert array of points to separate x/y arrays
     if (isPointArr) {
-      y = x.map(point => point.y);
-      x = x.map(point => point.x);
+      y = (x as { x: number, y: number }[]).map(point => point.y);
+      x = (x as { x: number, y: number }[]).map(point => point.x);
     }
 
     let minX = Math.min(...x as number[]);
@@ -89,5 +92,20 @@ export abstract class WireSVG extends WireBase {
       minX, minY,
       maxX, maxY
     };
+  }
+
+  protected updateWireStyle(): void {
+    this.wirePaths.forEach((path, key) => {
+      
+      // Shadow path gets special treatment
+      if (key == "shadow") {
+        path.setAttribute("stroke", this._shadow);
+        path.style.strokeWidth = `${this._width + 1}px`;
+      }
+
+      path.setAttribute("stroke", this._color);
+      path.style.strokeWidth = `${this._width}px`;
+    });
+    
   }
 }
