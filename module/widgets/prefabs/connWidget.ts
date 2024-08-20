@@ -1,4 +1,5 @@
-import { ChannelBase, ClientBase, ConnectionBase } from "../../../connection/module/connBase.js";
+import { Channel, ClientBase, ConnectionBase } from "../../../connection/module/connBase.js";
+import { JSONProtocol } from "../../../connection/module/protocols/json.js";
 import { ConnectorAddon } from "../../addons/connector.js";
 import { DraggableWidget } from "../draggable-widget.js";
 
@@ -13,8 +14,8 @@ export class ConnWidget extends DraggableWidget {
   private _connState: 0 | 1 | 2 | 3 = 0;
   private readonly connections = new Map<string, ConnectionBase<any>>();
   
-  private client: ClientBase<any, any> = null;
-  private channel: ChannelBase<any> = null;
+  private client: ClientBase<any> = null;
+  private channel: Channel = null;
 
   private onlyBody = false;
   private doDebugErros = false;
@@ -164,7 +165,7 @@ export class ConnWidget extends DraggableWidget {
         this.connectButton.innerText = "Cancel";
 
         const conn = this.connections.get(this.modes.value);
-        this.client = conn.buildClient(this.connIdIn.value.trim());
+        this.client = conn.buildClient(this.connIdIn.value.trim(), new JSONProtocol());
         this.channel = this.client.buildChannel(this.channelIn.value.trim());
 
         const routerId = this.routerIdIn.value.trim();

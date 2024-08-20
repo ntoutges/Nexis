@@ -1,4 +1,4 @@
-import { ChannelBase, ConnectionBase } from "../connBase.js";
+import { ConnectionBase } from "../connBase.js";
 import { PeerlessClient } from "../peerlessClient.js";
 export class SocketConnection extends ConnectionBase {
     socket;
@@ -6,13 +6,13 @@ export class SocketConnection extends ConnectionBase {
         super();
         this.socket = socket;
     }
-    createNewClient(id, heartbeatInterval) { return new SocketClient(id, this, heartbeatInterval); }
+    createNewClient(id, protocol, heartbeatInterval) { return new SocketClient(id, this, protocol, heartbeatInterval); }
 }
 export class SocketClient extends PeerlessClient {
     socket;
     onSocketConnect = null;
-    constructor(id, connection, heartbeatInterval) {
-        super(id, connection, heartbeatInterval);
+    constructor(id, connection, protocol, heartbeatInterval) {
+        super(id, connection, protocol, heartbeatInterval);
         this.socket = connection.socket;
         // Set ready state of self
         if (this.socket.connected)
@@ -26,13 +26,10 @@ export class SocketClient extends PeerlessClient {
     async disconnectFrom(id) {
         return true;
     }
-    createNewChannel(id) { return new SocketChannel(id, this); }
     // Nothing needs to be done to disconnect
     async destroyClient() { }
-}
-export class SocketChannel extends ChannelBase {
     doSend(msg, recipientId) {
-        this.client.socket.send(msg);
+        this.socket.send(msg);
     }
 }
 //# sourceMappingURL=socket.js.map

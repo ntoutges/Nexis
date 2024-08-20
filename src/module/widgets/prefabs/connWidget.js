@@ -1,3 +1,4 @@
+import { JSONProtocol } from "../../../connection/module/protocols/json.js";
 import { ConnectorAddon } from "../../addons/connector.js";
 import { DraggableWidget } from "../draggable-widget.js";
 export class ConnWidget extends DraggableWidget {
@@ -138,7 +139,7 @@ export class ConnWidget extends DraggableWidget {
             case 1: { // connecting
                 this.connectButton.innerText = "Cancel";
                 const conn = this.connections.get(this.modes.value);
-                this.client = conn.buildClient(this.connIdIn.value.trim());
+                this.client = conn.buildClient(this.connIdIn.value.trim(), new JSONProtocol());
                 this.channel = this.client.buildChannel(this.channelIn.value.trim());
                 const routerId = this.routerIdIn.value.trim();
                 if (routerId.length != 0)
