@@ -1,6 +1,5 @@
-import { ChannelBase, ClientBase, ConnectionBase } from "../../../connection/lib/connBase.js";
+import { ChannelBase, ClientBase, ConnectionBase } from "../../../connection/module/connBase.js";
 import { ConnectorAddon } from "../../addons/connector.js";
-import { idMap_t } from "../../scene.js";
 import { DraggableWidget } from "../draggable-widget.js";
 
 export class ConnWidget extends DraggableWidget {
@@ -88,7 +87,7 @@ export class ConnWidget extends DraggableWidget {
       }
     });
     
-    this.addInitParams({ type, connections, validator }, "*");
+    this.addInitParams({ type, connections, validator, wireData }, "*");
     this.defineObjectificationInitParams({"connections.*": "+conn","wireData.type": "widget", "validator": "+"});
 
     this.contextmenus.header.listener.on("click", (item) => {

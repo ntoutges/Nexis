@@ -119,7 +119,7 @@ export class WireBase extends Widget {
     }
     // override updateBounds with different dimensions
     updateBounds() {
-        const bounds = { width: this.wireEl.offsetWidth, height: this.wireEl.offsetHeight };
+        const bounds = { width: this.el.offsetWidth, height: this.el.offsetHeight };
         const padding = this.point1.radius + this.point2.radius;
         super.updateBounds(bounds, { x: padding, y: padding });
     }

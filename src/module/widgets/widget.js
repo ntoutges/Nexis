@@ -103,13 +103,6 @@ export class Widget extends FrameworkBase {
             y: bounds.height + (padding?.y ?? 0)
         });
     }
-    // calculateBounds() {
-    //   const scale = this._scene?.draggable.pos.z ?? 1; // no scene means no size
-    //   return {
-    //     "x": this.el.offsetWidth * scale,
-    //     "y": this.el.offsetHeight * scale
-    //   }
-    // }
     attachTo(scene, id) {
         const isFirstScene = this._scene == null;
         if (!isFirstScene)
@@ -179,6 +172,11 @@ export class Widget extends FrameworkBase {
             d.scale = this.scene.draggable.pos.z; // update scale if this.scene exists
         super.ezElManualResize(d, xComponent, yComponent);
     }
+    inhibitContextmenu() {
+        for (const id in this.contextmenus) {
+            this.contextmenus[id].inhibit();
+        }
+    }
     get doImmediateSceneAppend() { return true; }
     get isMovementExempt() { return !this.isBuilt || this.positioning === 0; }
     getId() { return this._id; }
@@ -239,8 +237,9 @@ export class Widget extends FrameworkBase {
     wSave() { return {}; }
     wLoad(data) { }
 }
-const globalSingleUseWidgetMap = new Map();
 export class GlobalSingleUseWidget extends Widget {
+    static ids = new Map();
+    static builtWidgets = new Map();
     _isBuilt;
     constructor({ name, content, layer, pos, positioning, resize, style, options, doZoomScale, addons }) {
         super({
@@ -257,32 +256,48 @@ export class GlobalSingleUseWidget extends Widget {
         }
         this.el.style.display = "none";
     }
+    attachTo(scene, id) {
+        super.attachTo(scene, id);
+        GlobalSingleUseWidget.ids.set(this.name, id);
+    }
     build() {
-        if (globalSingleUseWidgetMap.has(this.name)) { // get rid of old
-            const oldWidget = globalSingleUseWidgetMap.get(this.name);
+        if (GlobalSingleUseWidget.builtWidgets.has(this.name)) { // get rid of old
+            const oldWidget = GlobalSingleUseWidget.builtWidgets.get(this.name);
             if (oldWidget != this)
                 oldWidget.unbuild();
         }
-        globalSingleUseWidgetMap.set(this.name, this);
+        GlobalSingleUseWidget.builtWidgets.set(this.name, this);
         this._isBuilt = true;
-        if (this.scene)
+        if (this.scene) {
             this.scene.element.append(this.el); // add element to scene if being used
+            this.scene.setSingleUseWidgetInstance(this);
+        }
         this.el.style.display = "";
     }
     unbuild() {
         this._isBuilt = false;
         this.el.style.display = "none";
         this.el.remove(); // remove element from scene when no longer used
-        if (globalSingleUseWidgetMap.has(this.name)) {
-            globalSingleUseWidgetMap.delete(this.name); // remove current entry
+        if (GlobalSingleUseWidget.builtWidgets.has(this.name)) {
+            GlobalSingleUseWidget.builtWidgets.delete(this.name); // remove current entry
         }
     }
     get isBuilt() { return this._isBuilt; }
     doSaveWidget() { return false; } // by default: don't save GlobalSingleUseWidgets
+    // attachTo(scene: Scene, id: number) {
+    //   super.attachTo(scene, id);
+    //   debugger
+    // }
     static unbuildType(type) {
-        if (globalSingleUseWidgetMap.has(type)) {
-            globalSingleUseWidgetMap.get(type).unbuild();
+        if (GlobalSingleUseWidget.builtWidgets.has(type)) {
+            GlobalSingleUseWidget.builtWidgets.get(type).unbuild();
         }
+    }
+    static hasInstanceId(widget) {
+        return GlobalSingleUseWidget.ids.has(widget.name);
+    }
+    static getInstanceId(widget) {
+        return GlobalSingleUseWidget.ids.get(widget.name) ?? null;
     }
     get doImmediateSceneAppend() { return false; }
 }
@@ -292,6 +307,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
     container;
     listener = new Listener();
     doAutoClose;
+    inhibited = false;
     constructor({ pos, positioning, resize, style, layer = 999999, items, trigger }) {
         const container = document.createElement("div");
         super({
@@ -334,6 +350,8 @@ export class ContextMenu extends GlobalSingleUseWidget {
             el.addEventListener("contextmenu", (e) => {
                 if (this.sections.length > 0)
                     e.preventDefault(); // if empty, allow standard contextmenu through (but still close previous contextmenu)
+                if (this.inhibited)
+                    return; // Inhibited
                 e.stopPropagation();
                 if (!this._scene)
                     return; // don't continue unless attached to something
@@ -377,6 +395,11 @@ export class ContextMenu extends GlobalSingleUseWidget {
         for (let i = this.sections.length; i >= 0; i--) {
             this.removeSection(i);
         }
+    }
+    // Inhibit contextmenu for current event cycle
+    inhibit() {
+        this.inhibited = true; // Inhibit
+        setTimeout(() => { this.inhibited = false; }); // Remove inhibition after event cycle finishes
     }
     getSection(name) {
         if (typeof name == "number") { // given exact index

@@ -41,7 +41,6 @@ export interface SceneInterface extends CommonFrameworkInterface{
 export interface ScrollableInterface {
   viewport: HTMLElement
   element: HTMLElement | HTMLElement[]
-  periphery?: HTMLElement[]
   scrollX?: boolean
   scrollY?: boolean
   zoomable?: boolean

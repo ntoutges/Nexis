@@ -93,4 +93,4 @@ export async function loadSvgMap(src: string, category: string): Promise<void> {
   await getSvgCache(src); // load in svg, and save into cache
 }
 
-loadSvgMap("/module/icons/icons.min.svg", "icons"); // default icon map, always loaded
+loadSvgMap("module/icons/icons.min.svg", "icons"); // default icon map, always loaded

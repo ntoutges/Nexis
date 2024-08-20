@@ -1,28 +1,16 @@
-import { WireBase } from "./base.js";
-export class WireCatenary extends WireBase {
+import { WireSVG } from "./svg.js";
+export class WireCatenary extends WireSVG {
     drop;
-    segments;
     tensionCoef;
-    wireDisplay;
-    wireDisplayPath;
-    wireDisplayShadow;
     coefficients = { a: 0, b: 0, c: 0 };
-    constructor({ width, color, shadow, drop = 100, tensionCoef = 0.001, segments = 15 }) {
+    constructor({ width, color, shadow, drop = 100, tensionCoef = 0.001 }) {
         super({
             name: "catenary-wire",
-            width, color, shadow,
-            pointerless: true
+            width, color, shadow
         });
-        this.addInitParams({ drop, segments, tensionCoef });
+        this.addInitParams({ drop, tensionCoef });
         this.drop = drop;
-        this.segments = segments;
         this.tensionCoef = tensionCoef;
-        this.wireDisplay = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        this.wireDisplayShadow = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        this.wireDisplayPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        this.wireDisplay.setAttribute("fill", "none");
-        this.wireDisplay.append(this.wireDisplayShadow, this.wireDisplayPath);
-        this.wireEl.append(this.wireDisplay);
     }
     updateElementTransformations() {
         // calculate a/b/c values for ax^2 + bx + c of parabolic eq (parabola good approximation of catenary)
@@ -52,8 +40,6 @@ export class WireCatenary extends WireBase {
         this.drawParabola(x1, x3, y1, y3);
     }
     drawParabola(x1, x3, y1, y3) {
-        const minX = Math.min(x1, x3);
-        const maxX = Math.max(x1, x3);
         let minY = Math.min(y1, y3);
         let maxY = Math.max(y1, y3);
         const { a, b, c } = this.coefficients;
@@ -67,30 +53,16 @@ export class WireCatenary extends WireBase {
         // https://math.stackexchange.com/questions/335226/convert-segment-of-parabola-to-quadratic-bezier-curve
         const p_Cx = (x1 + x3) / 2;
         const p_Cy = y1 + (2 * a * x1 + b) * (x3 - x1) / 2;
+        this.setSVGBounds([x1, x3], [minY, maxY]);
         const d = `M${x1} ${y1} Q${p_Cx} ${p_Cy} ${x3} ${y3}`; // use quadratic bezier curve to draw parabola, which used to estimate catenary
-        this.updateWireDisplay(d, minX, maxX, minY, maxY);
+        this.wirePaths.get("shadow").setAttribute("d", d);
+        this.wirePaths.get("path").setAttribute("d", d);
     }
     drawVLineFallback(x, y1, y2, y3) {
-        const minY = Math.min(y1, y2, y3);
-        const maxY = Math.max(y1, y2, y3);
-        this.updateWireDisplay(`M${x} ${minY} L${x} ${maxY}`, x, x, minY, maxY);
-    }
-    updateWireDisplay(d, minX, maxX, minY, maxY) {
-        const padding = this._width;
-        const width = (maxX - minX) + 2 * padding;
-        const height = (maxY - minY) + 2 * padding;
-        this.setPos(minX - padding, minY - padding);
-        this.wireDisplay.setAttribute("width", `${width}`);
-        this.wireDisplay.setAttribute("height", `${height}`);
-        this.wireDisplay.setAttribute("viewBox", `${minX - padding} ${minY - padding} ${width} ${height}`);
-        this.wireDisplayShadow.setAttribute("d", d);
-        this.wireDisplayPath.setAttribute("d", d);
-    }
-    updateWireStyle() {
-        this.wireDisplayShadow.setAttribute("stroke", this._shadow);
-        this.wireDisplayPath.setAttribute("stroke", this._color);
-        this.wireDisplayShadow.style.strokeWidth = `${this._width + 1}px`;
-        this.wireDisplayPath.style.strokeWidth = `${this._width}px`;
+        const { minY, maxY } = this.setSVGBounds([x], [y1, y2, y3]);
+        const d = `M${x} ${minY} L${x} ${maxY}`;
+        this.wirePaths.get("shadow").setAttribute("d", d);
+        this.wirePaths.get("path").setAttribute("d", d);
     }
 }
 //# sourceMappingURL=catenary.js.map

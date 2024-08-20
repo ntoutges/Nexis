@@ -79,14 +79,20 @@ export class Scene extends FrameworkBase {
             encapsulator.addNestedScene(this);
     }
     addWidget(widget, id = null) {
-        if (id === null)
-            id = widget.getId() ?? 0;
+        let isSingleUse = false;
+        if (widget instanceof GlobalSingleUseWidget && GlobalSingleUseWidget.hasInstanceId(widget)) { // Don't generate new id
+            id = GlobalSingleUseWidget.getInstanceId(widget);
+            isSingleUse = true;
+        }
+        else if (id === null)
+            id = widget.getId() ?? 0; // No id given
         else if (typeof id == "function")
-            id = id(this.widgetIds.getIdsInUse()); // generate id
-        if (!this.widgetIds.reserveId(id))
+            id = id(this.widgetIds.getIdsInUse()); // Id given as function
+        if (!isSingleUse && !this.widgetIds.reserveId(id))
             id = this.widgetIds.generateId(); // if id invalid, generate new
         widget.attachTo(this, id);
-        this.widgets.set(id, widget);
+        if (!isSingleUse)
+            this.widgets.set(id, widget);
         this.layers.add(widget);
         this.updateIndividualWidget(widget);
         for (const snapObj of this.snapObjects.values()) {
@@ -110,6 +116,13 @@ export class Scene extends FrameworkBase {
         for (const snapObj of this.snapObjects.values()) {
             widget.pos.removeSnapObject(snapObj);
         } // remove snap objects
+    }
+    setSingleUseWidgetInstance(id, widget) {
+        if (id instanceof GlobalSingleUseWidget) {
+            widget = id;
+            id = widget.getId();
+        }
+        this.widgets.set(id, widget);
     }
     getWidgetById(id) {
         return this.widgets.get(id, null);

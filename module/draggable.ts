@@ -42,7 +42,6 @@ export class Draggable {
   constructor({
     viewport, // continues movement
     element, // Initiates movement
-    periphery = [], // Has event listener, but only to stop propagation
     scrollX = true,
     scrollY = true,
     zoomable = true,
@@ -79,14 +78,6 @@ export class Draggable {
         element.addEventListener("wheel", this.onScroll.bind(this));
       }
 
-      for (const el of periphery) {
-        if (this.blockDrag) el.addEventListener("pointerdown", (e) => {
-          e.stopPropagation();
-          this.listener.trigger("selected", this);
-        });
-        if (this.blockScroll) el.addEventListener("wheel", (e) => { e.stopPropagation(); });
-      }
-
       // this.updateBounds();
       this.listener.setAutoResponse("init", this);
     }, 40);
@@ -112,7 +103,7 @@ export class Draggable {
     // this.listener.setPollingOptions("resize", this.updateBounds.bind(this), 10); // initially go at HYPER SPEED to detect the smallest change
   }
 
-  protected initDrag(e: MouseEvent) {
+  protected initDrag(e: PointerEvent) {
     if (this.blockDrag) e.stopPropagation();
     if (!this.enabled) return; // disabled
     if (!this.acceptableMouseButtons.has(e.button)) return;
@@ -124,8 +115,10 @@ export class Draggable {
     this.mouseOffset.y = e.pageY;
     this.listener.trigger("dragInit", this);
     this.listener.trigger("selected", this);
+
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
   }
-  protected doDrag(e: MouseEvent) {
+  protected doDrag(e: PointerEvent) {
     if (!this.isDragging) return;
     if (this.blockDrag) e.stopPropagation();
     
@@ -148,12 +141,14 @@ export class Draggable {
       this.listener.trigger("drag", this);
     }
   }
-  protected endDrag(e: MouseEvent) {
+  protected endDrag(e: PointerEvent) {
     if (!this.isDragging) return;
     if (this.blockDrag) e.stopPropagation();
     this._lastEvent = e;
     this.isDragging = false;
     this.listener.trigger("dragEnd", this);
+
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   }
 
   protected onScroll(e: WheelEvent) {

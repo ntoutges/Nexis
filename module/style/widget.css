@@ -74,6 +74,11 @@
   cursor: grabbing;
 }
 
+/* Move widget to top when dragging */
+.framework-widget:has(> .framework-draggable-widget-containers > .framework-draggable-widget-headers.dragging) {
+  z-index: 99999 !important;
+}
+
 .framework-draggable-widget-headers {
   position: relative;
   margin-bottom: -4px;
@@ -81,6 +86,7 @@
   filter: drop-shadow(0px 0px 1px black);
 
   white-space: nowrap;
+  overflow: hidden;
 
   transition: transform 150ms, filter 150ms, opacity 150ms;
   transform-origin: 0 0;
@@ -110,7 +116,9 @@
 
   display: inline-block;
   padding: 5px 5px 6px 5px;
-  /* max-width: calc(100% - 10px); */
+
+  box-sizing: border-box;
+  max-width: 100%;
 
   font-size: 11px;
 
@@ -131,6 +139,9 @@
   padding: 0px;
   font-size: 1em;
   font-family: inherit;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .framework-draggable-widget-containers:has(> .framework-draggable-widget-bodies.draggable-widget-minimize) > .framework-draggable-widget-headers > .framework-draggable-widget-titles {
@@ -598,10 +609,19 @@
 }
 
 .framework-basic-wire-widget {
-  pointer-events: none;
   position: absolute;
-}
+  pointer-events: none;
 
-.framework-basic-wire-widget:not(.framework-wire-is-editing) > .framework-wire-body:not(.framework-wire-body-pointerless) {
-  pointer-events: all;
-}
+  svg {
+    vertical-align: top;
+  }
+
+  /* Let SVG be clicked properly */
+  &:not(.framework-wire-is-editing) svg path {
+    pointer-events: visiblePainted;
+  }
+
+  &:not(.framework-wire-is-editing) > .framework-wire-body:not(.framework-wire-body-pointerless) {
+    pointer-events: all;
+  }
+} 
