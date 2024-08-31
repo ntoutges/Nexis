@@ -10,7 +10,7 @@ export class WirePoint {
   protected x: number = 0;
   protected y: number = 0;
   protected _addon: Addon;
-  readonly addonListener = new AttachableListener<"positioning" | "weight" | "size" | "move" | "close", Addon>(() => this._addon?.listener);
+  readonly addonListener = new AttachableListener<"positioning" | "weight" | "size" | "move" | "open" | "close" | "dragend" | "draginit", Addon>(() => this._addon?.listener);
   readonly listener = new Listener<"move" | "send" | "receive" | "disconnect", any>();
 
   constructor() {
@@ -126,8 +126,8 @@ export abstract class WireBase extends Widget {
     this.addInitParams({ width, color, shadow, pointerless }, "*");
 
     this.wireEl = wireEl;
-    this.wireEl.classList.add("framework-wire-body");
-    this.wireEl.classList.toggle("framework-wire-body-pointerless", pointerless);
+    this.wireEl.classList.add("nexis-wire-body");
+    this.wireEl.classList.toggle("nexis-wire-body-pointerless", pointerless);
 
     this.point1.listener.on("move", this.updateElementTransformations.bind(this));
     this.point2.listener.on("move", this.updateElementTransformations.bind(this));
@@ -159,7 +159,7 @@ export abstract class WireBase extends Widget {
 
   setIsEditing(isEditing: boolean) {
     // changes styling slightly to make editing wire easier
-    this.el.classList.toggle("framework-wire-is-editing", isEditing);
+    this.el.classList.toggle("nexis-wire-is-editing", isEditing);
   }
 
   disconnect() {

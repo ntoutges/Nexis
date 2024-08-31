@@ -1,12 +1,12 @@
 import { Addon } from "../addons/base.js";
-import { CommonFrameworkInterface, draggableListener } from "../interfaces.js";
+import { CommonNexisInterface, draggableListener } from "../interfaces.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 
 export type SceneListenerTypes = "dragStart" | "dragEnd" | "drag" | "zoom" | "move" | "resize" | "init";
 export type sceneListener = draggableListener;
 export type sceneElListener = (event: Event) => void;
 
-export interface CommonWidgetInterface extends CommonFrameworkInterface {
+export interface CommonWidgetInterface extends CommonNexisInterface {
   layer?: number // higher is closer to the screen
   positioning?: number // ranges from 0-1: 0 indicates it ignores scene position, 1 indicates follows perfectly with scene movement
   doZoomScale?: boolean // if false, ignores scaling from the scene
@@ -17,7 +17,7 @@ export interface CommonWidgetInterface extends CommonFrameworkInterface {
     yAlign?: "top" | "middle" | "bottom"
   },
   contextmenu?: contextmenuType | contextmenuType[],
-  addons?: Record<string, { side: "top" | "bottom" | "left" | "right", addon: Addon }>
+  addons?: Record<string, { side: "top" | "bottom" | "left" | "right", layer?: number, addon: Addon }>
 }
 
 type contextmenuType = Record<string, { el: HTMLElement | HTMLElement, options: string }>;

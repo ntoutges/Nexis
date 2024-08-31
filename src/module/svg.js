@@ -76,5 +76,5 @@ export async function loadSvgMap(src, category) {
     maps.set(category, src); // map between category name and src
     await getSvgCache(src); // load in svg, and save into cache
 }
-loadSvgMap(window.location.pathname + "module/icons/icons.min.svg", "icons"); // default icon map, always loaded
+loadSvgMap("./module/icons/icons.min.svg", "icons"); // default icon map, always loaded
 //# sourceMappingURL=svg.js.map

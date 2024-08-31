@@ -20,7 +20,7 @@ export class ConnectorAddon<Direction extends string> extends Addon {
   private scenepointerupId: number = null;
 
   private wireInProgress: WireBase = null;
-  private readonly validator: (addon1: Direction, addon2: Direction) => boolean
+  private readonly validator: (addon1: ConnectorAddon<Direction>, addon2: ConnectorAddon<Direction>) => boolean
   private readonly buildConfig: config_t;
 
   private readonly points: { point: WirePoint, listener: number, wire: WireBase }[] = [];
@@ -37,15 +37,17 @@ export class ConnectorAddon<Direction extends string> extends Addon {
   constructor({
     type,
     positioning = 0.5,
+    weight = 1,
     direction,
     wireData = null,
     config = {},
     validator = null
   }: {
     positioning?: number
+    weight?: number
     type: string
     direction: Direction
-    validator?: (addon1: Direction, addon2: Direction) => boolean
+    validator?: (addon1: ConnectorAddon<Direction>, addon2: ConnectorAddon<Direction>) => boolean
     config?: Partial<config_t>,
     wireData?: {
       type: { new(...args: any[]): WireBase }
@@ -53,15 +55,19 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     }
   }) {
     const el = document.createElement("div");
-    el.classList.add("framework-addon-connectors", `framework-addon-connectors-${direction}`);
+    el.classList.add("nexis-addon-connectors", `nexis-addon-connectors-${direction}`);
 
     super({
       content: el,
       circleness: 1,
       positioning,
+      weight,
       size: 14
     });
-    this.addInitParams({ type, wireData, config });
+    this.addInitParams({ type, positioning, weight, direction, wireData, config, validator });
+    this.defineObjectificationInitParams({
+        "wireData.type": "widget"
+    });
 
     const styleName = ConnectorAddon.getStyleName(type, direction);
     if (!styleUsers.has(styleName)) styleUsers.set(styleName, []);
@@ -122,7 +128,7 @@ export class ConnectorAddon<Direction extends string> extends Addon {
 
       if (
         passesBuildConfig 
-        && ((this.validator == null) ? true : this.validator(this.direction, (other as ConnectorAddon<Direction>).direction))
+        && ((this.validator == null) ? true : this.validator(this, other))
       ) {
         this.disconnectSceneMouseListeners();
         this.wireInProgress.point2.attachToAddon(other as ConnectorAddon<Direction>);
@@ -299,12 +305,11 @@ export class ConnectorAddon<Direction extends string> extends Addon {
     this.wireData.params = params;
   }
 
-  // save() {
-  //   return {
-  //     ...super.save(),
-
-  //   };
-  // }
+//   save() {
+//     return {
+//       ...super.save(),
+//     };
+//   }
 
   // saveRef() {
   //   return {

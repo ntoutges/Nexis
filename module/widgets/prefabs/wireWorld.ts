@@ -9,8 +9,8 @@ export class WireWorldWidget extends DraggableWidget {
     color = "white"
   }: {
     type: string,
-    validator?: (addon1: "omni", addon2: "omni") => boolean
-    wireData?: ConnectorAddon<any>["wireData"],
+    validator?: (addon1: ConnectorAddon<"omni">, addon2: ConnectorAddon<"omni">) => boolean
+    wireData?: ConnectorAddon<"omni">["wireData"],
     color?: string
   }) {
     super({

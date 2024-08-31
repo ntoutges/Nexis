@@ -1,6 +1,6 @@
 // containers of everything--imagine this as the viewport
 
-import { FrameworkBase } from "./framework.js";
+import { NexisBase } from "./nexis.js";
 import { DraggableEvents, SceneInterface, draggableListener } from "./interfaces.js";
 import { Draggable } from "./draggable.js";
 import { ElementListener, Listener } from "./listener.js";
@@ -16,7 +16,7 @@ var sceneIdentifiers = 0;
 
 export type loadClasses = "widget" | "addon" | "wire";
 
-export class Scene extends FrameworkBase {
+export class Scene extends NexisBase {
   readonly draggable: Draggable;
   readonly identifier = sceneIdentifiers++;
 
@@ -28,9 +28,6 @@ export class Scene extends FrameworkBase {
 
   private readonly widgets = new RevMap<number, Widget>();
   private readonly nestedScenes: Scene[] = [];
-
-  private readonly snapObjects = new Map<number,Pos<"x"|"y"> | Grid<"x"|"y">>();
-  private nextSnapObjectId: number = 0;
 
   readonly layers = new Layers<Widget>();
   private readonly wires = new Set<WireBase>();
@@ -119,10 +116,9 @@ export class Scene extends FrameworkBase {
 
     widget.attachTo(this, id);
     if (!isSingleUse) this.widgets.set(id, widget);
-    this.layers.add(widget);
+    // this.layers.add(widget);
 
     this.updateIndividualWidget(widget);
-    for (const snapObj of this.snapObjects.values()) { widget.pos.addSnapObject(snapObj); } // add snap objects
 
     return id;
   }
@@ -140,8 +136,6 @@ export class Scene extends FrameworkBase {
     widget.detachFrom(this);
 
     if (widget instanceof WireBase && this.wires.has(widget)) this.wires.delete(widget); // stop tracking wire
-
-    for (const snapObj of this.snapObjects.values()) { widget.pos.removeSnapObject(snapObj); } // remove snap objects
   }
 
   setSingleUseWidgetInstance(widget: GlobalSingleUseWidget);
@@ -254,33 +248,6 @@ export class Scene extends FrameworkBase {
     );
   }
 
-  addGlobalSnapObject(obj: Grid<"x"|"y"> | Pos<"x"|"y">): number {
-    for (const widget of this.widgets.values()) {
-      widget.pos.addSnapObject(obj);
-    }
-
-    const id = this.nextSnapObjectId++;
-    this.snapObjects.set(id,obj);
-    return id;
-  }
-  removeGlobalSnapObject(obj: number | Grid<"x"|"y"> | Pos<"x"|"y">) {
-    if (typeof obj == "number") obj = this.snapObjects.get(obj);
-    for (const widget of this.widgets.values()) {
-      widget.pos.removeSnapObject(obj);
-    }
-
-    let id = -1;
-    for (const [i,snapObj] of this.snapObjects.entries()) {
-      if (snapObj == obj) {
-        id = i;
-        break;
-      }
-    }
-    if (id == -1) return false; // doesn't exist
-    this.snapObjects.delete(id);
-    return true; // exists
-  }
-
   registerWire(wire: WireBase) {
     this.wires.add(wire); // track wire
   }
@@ -314,7 +281,6 @@ export class Scene extends FrameworkBase {
 
   load(state: Record<string,any>) {
     if (state.widgets && typeof state.widgets === "object") this.loadWidgets(state.widgets)
-    // this.objectify(state);
   }
 
   private loadWidgets(widgets: Record<number, any>) {

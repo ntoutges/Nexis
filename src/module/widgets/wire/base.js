@@ -86,8 +86,8 @@ export class WireBase extends Widget {
         setTimeout(this.updateWireStyle.bind(this), 1); // allow constructor of subclass to finish before running update
         this.addInitParams({ width, color, shadow, pointerless }, "*");
         this.wireEl = wireEl;
-        this.wireEl.classList.add("framework-wire-body");
-        this.wireEl.classList.toggle("framework-wire-body-pointerless", pointerless);
+        this.wireEl.classList.add("nexis-wire-body");
+        this.wireEl.classList.toggle("nexis-wire-body-pointerless", pointerless);
         this.point1.listener.on("move", this.updateElementTransformations.bind(this));
         this.point2.listener.on("move", this.updateElementTransformations.bind(this));
         this.point1.listener.on("send", this.point2.listener.trigger.bind(this.point2.listener, "receive")); // forward from point1 to point2
@@ -110,7 +110,7 @@ export class WireBase extends Widget {
     }
     setIsEditing(isEditing) {
         // changes styling slightly to make editing wire easier
-        this.el.classList.toggle("framework-wire-is-editing", isEditing);
+        this.el.classList.toggle("nexis-wire-is-editing", isEditing);
     }
     disconnect() {
         this.point1.attachToAddon(null);

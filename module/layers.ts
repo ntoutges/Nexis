@@ -2,7 +2,7 @@
 // minimizes the used layers
 export class Layers<T> {
   private readonly layers: T[] = [];
-  private readonly subLayers = new Map<number,T[]>();
+  private readonly subLayers = new Map<number,T[]>(); // Groups like items together (item in sublayer -1 will never be atop anyting in sublayer 0)
   private readonly callbacks: Array<(type: T, zIndex: number) => void> = [];
 
   // by default, adds to top
@@ -68,12 +68,11 @@ export class Layers<T> {
     this.layers.splice(index,1);
     sublayer.splice(sublayerI,1);
 
-
     // push to front 
     this.layers.splice(lastIndex,0,type);
     sublayer.push(type);
     
-    this.doUpdate(layerI, sublayerI);
+    this.doUpdate(index, layerI, sublayerI);
   }
 
   moveToBottom(type: T) {
@@ -82,15 +81,18 @@ export class Layers<T> {
     const sublayer = this.subLayers.get(layerI);
     if (index == -1 || sublayerI == 0) return; // cannot move any further down
     
+    const items = this.subLayers.get(layerI);
+    const firstIndex = this.layers.indexOf(items[0]);
+    
     // remove
     this.layers.splice(index,1);
     sublayer.splice(sublayerI,1);
 
     // push to back 
-    this.layers.splice(0,0,type);
+    this.layers.splice(firstIndex,0,type);
     sublayer.splice(0,0,type);
     
-    this.doUpdate(layerI, 0, sublayerI);
+    this.doUpdate(firstIndex, layerI, 0, sublayerI);
   }
 
   moveUp(type: T) {
@@ -107,7 +109,7 @@ export class Layers<T> {
     this.layers.splice(index+1,0,type);
     sublayer.splice(sublayerI+1,0,type);
     
-    this.doUpdate(layerI, sublayerI,sublayerI+1);
+    this.doUpdate(index, layerI, sublayerI,sublayerI+1);
   }
 
   moveDown(type: T) {
@@ -124,20 +126,20 @@ export class Layers<T> {
     this.layers.splice(index-1,0,type);
     sublayer.splice(sublayerI-1,0,type);
     
-    this.doUpdate(layerI, sublayerI-1, sublayerI);
+    this.doUpdate(index - 1, layerI, sublayerI-1, sublayerI);
   }
 
   onMove(callback: (type: T, zIndex: number) => void) {
     this.callbacks.push(callback);
   }
 
-  private doUpdate(sublayerI: number, startI: number, endI:number=null) {
+  private doUpdate(baseZIndex: number, sublayerI: number, startI: number, endI:number=null) {
     if (endI == null) endI = (this.subLayers.get(sublayerI)?.length-1) ?? -1;
     const sublayer = this.subLayers.get(sublayerI);
     for (let i = startI; i <= endI; i++) {
       const type = sublayer[i];
       this.callbacks.forEach((callback) => {
-        callback(type, i);
+        callback(type, baseZIndex + i);
       });
     }
   }

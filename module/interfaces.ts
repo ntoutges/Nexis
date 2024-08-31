@@ -4,7 +4,7 @@ import { ContextMenuItem } from "./widgets/contextmenuItems.js";
 import { Widget } from "./widgets/widget.js";
 
 export type resizeType = "none" | "vertical" | "horizontal" | "both";
-export interface CommonFrameworkInterface {
+export interface CommonNexisInterface {
   style?: { // this mainly intended for debugging
     width?: string
     height?: string
@@ -15,13 +15,13 @@ export interface CommonFrameworkInterface {
   resize?: resizeType
 }
 
-export interface FrameworkBaseInterface extends CommonFrameworkInterface {
+export interface NexisBaseInterface extends CommonNexisInterface {
   name: string
   children?: HTMLElement[],
   parent?: HTMLElement
 }
 
-export interface SceneInterface extends CommonFrameworkInterface{
+export interface SceneInterface extends CommonNexisInterface{
   options?: {
     scrollX?: boolean
     scrollY?: boolean

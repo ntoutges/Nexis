@@ -49,24 +49,24 @@ export class DraggableWidget extends Widget {
             contextmenu: contextmenu,
             addons
         });
-        this.addInitParams({ header, doCursorDragIcon, doDragAll, options });
+        this.addInitParams({ header, doCursorDragIcon, doDragAll, options, style: { ...style, height: bodyHeight, background: bodyBackground } });
         this.container = container;
-        this.container.classList.add("framework-draggable-widget-containers");
+        this.container.classList.add("nexis-draggable-widget-containers");
         container.addEventListener("click", GlobalSingleUseWidget.unbuildType.bind(null, "contextmenu"));
         this.doDragAll = doDragAll;
         this.header = headerEl;
-        this.header.classList.add("framework-draggable-widget-headers");
+        this.header.classList.add("nexis-draggable-widget-headers");
         this.container.append(this.header);
         const title = document.createElement("div");
-        title.classList.add("framework-draggable-widget-titles");
+        title.classList.add("nexis-draggable-widget-titles");
         title.setAttribute("draggable", "false");
         const titleText = document.createElement("h3");
-        titleText.classList.add("framework-draggable-widget-title-texts");
+        titleText.classList.add("nexis-draggable-widget-title-texts");
         titleText.innerText = header?.title ?? "Unnamed";
         title.append(titleText);
         this.header.append(title);
         const titleEnd = document.createElement('div');
-        titleEnd.classList.add("framework-draggable-widget-title-ends");
+        titleEnd.classList.add("nexis-draggable-widget-title-ends");
         this.header.append(titleEnd);
         this.doCursorDrag = doCursorDragIcon;
         if (!doCursorDragIcon) {
@@ -76,13 +76,13 @@ export class DraggableWidget extends Widget {
         titleEnd.style.background = header.background ?? "#999999";
         this.header.style.color = header.color ?? "black";
         const buttons = document.createElement("div");
-        buttons.classList.add("framework-draggable-widget-button-holder");
+        buttons.classList.add("nexis-draggable-widget-button-holder");
         for (const type in buttonDefaults) {
             const options = ("buttons" in header ? header.buttons[type] : {});
             const defOptions = buttonDefaults[type];
             if (options?.show ?? defOptions.show) {
                 const button = document.createElement("div");
-                button.classList.add(`framework-draggable-widget-${type}s`, "framework-draggable-widget-buttons");
+                button.classList.add(`nexis-draggable-widget-${type}s`, "nexis-draggable-widget-buttons");
                 button.setAttribute("title", type);
                 this.buttonColors.set(type, {
                     dormant: {
@@ -111,10 +111,10 @@ export class DraggableWidget extends Widget {
                 if (altIcon !== null)
                     iconSvgs.push(altIcon);
                 getSvg(iconSvgs).then(svgs => {
-                    svgs[0].classList.add("framework-header-buttons-main");
+                    svgs[0].classList.add("nexis-header-buttons-main");
                     button.append(svgs[0]); // standard icon
                     if (svgs.length >= 2) { // alternate icon
-                        svgs[1].classList.add("framework-header-buttons-alt");
+                        svgs[1].classList.add("nexis-header-buttons-alt");
                         button.append(svgs[1]);
                     }
                     for (const svg of svgs) {
@@ -159,7 +159,7 @@ export class DraggableWidget extends Widget {
             }
         });
         this.body = body;
-        this.body.classList.add("framework-draggable-widget-bodies");
+        this.body.classList.add("nexis-draggable-widget-bodies");
         this.body.append(content);
         this.body.style.background = options?.bodyBackground ?? "";
         if (this.resizeData.dragEl)
@@ -167,7 +167,7 @@ export class DraggableWidget extends Widget {
         body.style.height = bodyHeight ?? "";
         body.style.background = bodyBackground ?? "";
         if (options?.hideOnInactivity ?? false)
-            this.container.classList.add("framework-widgets-hide-on-inactive");
+            this.container.classList.add("nexis-widgets-hide-on-inactive");
         this.container.append(this.body);
         if (!(header.show ?? true)) {
             this.container.classList.add("draggable-widget-headerless");
@@ -178,6 +178,9 @@ export class DraggableWidget extends Widget {
         super.setZoom(z); // just in case this is eventually implemented in parent class
         this.draggable?.setZoom(z);
     }
+    // Override default implementation
+    get isDragging() { return this.container.classList.contains("dragging"); }
+    get isDraggable() { return true; }
     attachTo(scene, id) {
         super.attachTo(scene, id);
         if (!this.draggable) {
@@ -185,8 +188,8 @@ export class DraggableWidget extends Widget {
                 this.draggable = new Draggable({
                     viewport: scene.element,
                     element: [
-                        this.header.querySelector(".framework-draggable-widget-titles"),
-                        this.header.querySelector(".framework-draggable-widget-title-ends"),
+                        this.header.querySelector(".nexis-draggable-widget-titles"),
+                        this.header.querySelector(".nexis-draggable-widget-title-ends"),
                         this.body
                     ],
                     zoomable: false,
@@ -202,8 +205,8 @@ export class DraggableWidget extends Widget {
                 this.draggable = new Draggable({
                     viewport: scene.element,
                     element: [
-                        this.header.querySelector(".framework-draggable-widget-titles"),
-                        this.header.querySelector(".framework-draggable-widget-title-ends")
+                        this.header.querySelector(".nexis-draggable-widget-titles"),
+                        this.header.querySelector(".nexis-draggable-widget-title-ends")
                     ],
                     zoomable: false,
                     blockScroll: false,
@@ -226,12 +229,14 @@ export class DraggableWidget extends Widget {
     }
     dragInit() {
         if (this.doCursorDrag)
-            this.header.classList.add("dragging");
+            this.container.classList.add("dragging");
+        this.elListener.trigger("draginit", this.el);
         GlobalSingleUseWidget.unbuildType("contextmenu");
     }
     dragEnd() {
         if (this.doCursorDrag)
-            this.header.classList.remove("dragging");
+            this.container.classList.remove("dragging");
+        this.elListener.trigger("dragend", this.el);
     }
     drag(d) {
         this.pos.offsetPos({
@@ -246,7 +251,7 @@ export class DraggableWidget extends Widget {
      */
     minimize() {
         this.body.classList.toggle("draggable-widget-minimize");
-        this.headerButtons.collapse?.classList.toggle("framework-draggable-widget-button-alts");
+        this.headerButtons.collapse?.classList.toggle("nexis-draggable-widget-button-alts");
         if (this.body.classList.contains("draggable-widget-minimize")) {
             if (this.container.classList.contains("draggable-widget-fullscreen"))
                 this.maximize(); // unmaximize if maximized
@@ -269,10 +274,11 @@ export class DraggableWidget extends Widget {
             return false;
         }
     }
+    get isMinimized() { return this.el.classList.contains("is-minimized"); }
     close() {
         if (this.isClosing)
             return; // don't interrupt process
-        this.headerButtons.close?.classList.add("framework-draggable-widget-button-alts");
+        this.headerButtons.close?.classList.add("nexis-draggable-widget-button-alts");
         if (this.body.classList.contains("draggable-widget-minimize")) {
             this.header.classList.add("draggable-widget-close");
             setTimeout(() => {
@@ -301,7 +307,7 @@ export class DraggableWidget extends Widget {
             this.element.clientHeight; // trigger CSS reflow
         }
         this.container.classList.toggle("draggable-widget-fullscreen");
-        this.headerButtons.maximize?.classList.toggle("framework-draggable-widget-button-alts");
+        this.headerButtons.maximize?.classList.toggle("nexis-draggable-widget-button-alts");
         if (this.container.classList.contains("draggable-widget-fullscreen")) {
             if (this.body.classList.contains("draggable-widget-minimize"))
                 this.minimize(); // unminimize if minimized
@@ -330,11 +336,11 @@ export class DraggableWidget extends Widget {
             clearTimeout(this.buttonHideTimeout);
             this.buttonHideTimeout = null;
         }
-        const title = this.header.querySelector(".framework-draggable-widget-titles");
+        const title = this.header.querySelector(".nexis-draggable-widget-titles");
         if (title.classList.contains("show-buttons"))
             return; // already shown
         title.classList.add("show-buttons");
-        const toPad = title.querySelector(".framework-draggable-widget-button-holder").offsetWidth;
+        const toPad = title.querySelector(".nexis-draggable-widget-button-holder").offsetWidth;
         const oldPad = +title.style.paddingRight.replace("px", "") || 0;
         title.style.paddingRight = `${toPad + oldPad + 10}px`;
     }
@@ -347,7 +353,7 @@ export class DraggableWidget extends Widget {
             this.buttonHideTimeout = null;
             if (this.body.classList.contains("draggable-widget-minimize"))
                 return; // minimized, so keep
-            const title = this.header.querySelector(".framework-draggable-widget-titles");
+            const title = this.header.querySelector(".nexis-draggable-widget-titles");
             title.classList.remove("show-buttons");
             title.style.paddingRight = ""; // remove bespoke styling
         }, 500);
@@ -357,7 +363,7 @@ export class DraggableWidget extends Widget {
         button.style.fill = this.buttonColors.get(type)[set].fill;
     }
     setTitle(title) {
-        const titleEl = this.header.querySelector(".framework-draggable-widget-titles > .framework-draggable-widget-title-texts");
+        const titleEl = this.header.querySelector(".nexis-draggable-widget-titles > .nexis-draggable-widget-title-texts");
         if (titleEl)
             titleEl.textContent = title;
     }

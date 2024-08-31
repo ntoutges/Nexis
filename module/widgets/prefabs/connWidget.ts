@@ -27,12 +27,12 @@ export class ConnWidget extends DraggableWidget {
     wireData = null
   }: {
     type: string,
-    validator?: (addon1: "input" | "output", addon2: "input" | "output") => boolean
+    validator?: (addon1: ConnectorAddon<"input" | "output">, addon2: ConnectorAddon<"input" | "output">) => boolean
     connections?: Record<string,ConnectionBase<any>>
     wireData?: ConnectorAddon<any>["wireData"]
   }) {
     const container = document.createElement("div");
-    container.classList.add("framework-prefab-connection-containers");
+    container.classList.add("nexis-prefab-connection-containers");
 
     super({
       content: container,
@@ -122,7 +122,7 @@ export class ConnWidget extends DraggableWidget {
     this.connectButton = document.createElement("button");
     this.connectButton.innerText = "Connect";
 
-    this.status.classList.add("framework-prefab-connection-statuses")
+    this.status.classList.add("nexis-prefab-connection-statuses")
 
     container.append(this.routerIdIn, this.connIdIn, this.channelIn, this.connectButton, this.status);
 
@@ -257,11 +257,11 @@ export class ConnConsole extends DraggableWidget {
     wireData = null
   }: {
     type: string,
-    validator?: (addon1: "input" | "output", addon2: "input" | "output") => boolean
+    validator?: (addon1: ConnectorAddon<"input" | "output">, addon2: ConnectorAddon<"input" | "output">) => boolean
     wireData?: ConnectorAddon<any>["wireData"]
   }) {
     const container = document.createElement("div");
-    container.classList.add("framework-prefab-connsole-containers");
+    container.classList.add("nexis-prefab-connsole-containers");
     
     super({
       content: container,
@@ -311,8 +311,8 @@ export class ConnConsole extends DraggableWidget {
     this.defineObjectificationInitParams({"wireData.type": "wire", "validator": "+"});
 
     this.terminalContainer = container;
-    this.terminalBody.classList.add("framework-prefab-connsole-bodies");
-    this.terminalInput.classList.add("framework-prefab-connsole-inputs");
+    this.terminalBody.classList.add("nexis-prefab-connsole-bodies");
+    this.terminalInput.classList.add("nexis-prefab-connsole-inputs");
 
     container.append(this.terminalBody, this.terminalInput);
 

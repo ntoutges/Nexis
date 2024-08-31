@@ -1,12 +1,12 @@
 // basis for everything in the module
 
 import { Draggable } from "./draggable.js";
-import { FrameworkBaseInterface, resizeType } from "./interfaces.js";
+import { NexisBaseInterface, resizeType } from "./interfaces.js";
 import { Saveable } from "../saveable/saveable.js";
 import { Scene, idMap_t, loadClasses } from "./scene.js";
 
 export type objectificationTypes = loadClasses | `+${string}`;
-export abstract class FrameworkBase extends Saveable<objectificationTypes> {
+export abstract class NexisBase extends Saveable<objectificationTypes> {
   protected el: HTMLDivElement = document.createElement("div");
   protected readonly resizeData: {
     option: resizeType,
@@ -25,14 +25,14 @@ export abstract class FrameworkBase extends Saveable<objectificationTypes> {
     children = [],
     style,
     resize = "none"
-  }: FrameworkBaseInterface) {
+  }: NexisBaseInterface) {
     super();
 
-    this.el.classList.add("frameworks");
+    this.el.classList.add("nexises");
     this.resizeData.option = resize;
     const names = name.split(" ");
     for (const partialName of names) {
-      this.el.classList.add(`framework-${partialName}`);
+      this.el.classList.add(`nexis-${partialName}`);
     }
 
     for (const child of children) { this.el.append(child); }
@@ -84,8 +84,8 @@ export abstract class FrameworkBase extends Saveable<objectificationTypes> {
           const resizeEl = draggable.lastEvent.target as HTMLDivElement;
           
           // components give: 0 for no movement; >=1 for scaling, >=2 for moving scaling
-          const xComponent = +resizeEl.classList.contains("framework-resize-drag-element-side-right") + 2 *+resizeEl.classList.contains("framework-resize-drag-element-side-left");
-          const yComponent = +resizeEl.classList.contains("framework-resize-drag-element-side-bottom") + 2*+resizeEl.classList.contains("framework-resize-drag-element-side-top");
+          const xComponent = +resizeEl.classList.contains("nexis-resize-drag-element-side-right") + 2 *+resizeEl.classList.contains("nexis-resize-drag-element-side-left");
+          const yComponent = +resizeEl.classList.contains("nexis-resize-drag-element-side-bottom") + 2*+resizeEl.classList.contains("nexis-resize-drag-element-side-top");
 
           this.ezElManualResize(draggable, xComponent, yComponent);
         });
@@ -156,14 +156,14 @@ export abstract class FrameworkBase extends Saveable<objectificationTypes> {
   private createResizeElement(...sides: Array<"left" | "right" | "top" | "bottom">) {
     if (!this.resizeData.dragEl) {
       this.resizeData.dragEl = document.createElement("div");
-      this.resizeData.dragEl.classList.add("framework-resize-drag-container");
+      this.resizeData.dragEl.classList.add("nexis-resize-drag-container");
       this.el.append(this.resizeData.dragEl);
     }
     
     const resizeEl = document.createElement("div");
-    resizeEl.classList.add("framework-resize-drag-element");
+    resizeEl.classList.add("nexis-resize-drag-element");
 
-    for (const side of sides) { resizeEl.classList.add(`framework-resize-drag-element-side-${side}`); }
+    for (const side of sides) { resizeEl.classList.add(`nexis-resize-drag-element-side-${side}`); }
     this.resizeData.dragEl.append(resizeEl);
     return resizeEl;
   }

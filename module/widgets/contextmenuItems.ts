@@ -36,10 +36,10 @@ export class ContextMenuItem {
 
   build() {
     this.el = document.createElement("div");
-    this.el.classList.add("framework-contextmenu-items");
+    this.el.classList.add("nexis-contextmenu-items");
 
     const icon = document.createElement("div");
-    icon.classList.add("framework-contextmenu-icons");
+    icon.classList.add("nexis-contextmenu-icons");
     if (this._icon) {
       getSvg(this._icon).then(svg => {
         icon.append(svg);
@@ -49,11 +49,11 @@ export class ContextMenuItem {
 
     const name = document.createElement("div");
     name.innerText = this._name;
-    name.classList.add("framework-contextmenu-names");
+    name.classList.add("nexis-contextmenu-names");
     this.el.append(name);
 
     const shortcut = document.createElement("div");
-    shortcut.classList.add("framework-contextmenu-shortcuts");
+    shortcut.classList.add("nexis-contextmenu-shortcuts");
     if (this._shortcut) shortcut.innerText = this._shortcut;
     this.el.append(shortcut);
 
@@ -122,8 +122,8 @@ export class ContextMenuItem {
 
   private updateEnabledState() {
     if (!this.el) return; // no element to update
-    if (this.isEnabled) this.el.classList.remove("framework-contextmenu-item-disabled")
-    else this.el.classList.add("framework-contextmenu-item-disabled");
+    if (this.isEnabled) this.el.classList.remove("nexis-contextmenu-item-disabled")
+    else this.el.classList.add("nexis-contextmenu-item-disabled");
   }
 
   private onclick() {
@@ -189,10 +189,10 @@ export class ContextMenuSection {
 
   build() {
     this.element = document.createElement("div");
-    this.element.classList.add("framework-contextmenu-sections");
+    this.element.classList.add("nexis-contextmenu-sections");
 
     const separator = document.createElement("div");
-    separator.classList.add("framework-contextmenu-section-separators");
+    separator.classList.add("nexis-contextmenu-section-separators");
     this.element.append(separator);
     if (this.name != null) { // section is named
       const lineL = document.createElement("div");
@@ -201,9 +201,9 @@ export class ContextMenuSection {
 
       name.innerText=  this.name;
 
-      lineL.classList.add("framework-contextmenu-section-separator-lines");
-      lineR.classList.add("framework-contextmenu-section-separator-lines");
-      name.classList.add("framework-contextmenu-section-separator-names")
+      lineL.classList.add("nexis-contextmenu-section-separator-lines");
+      lineR.classList.add("nexis-contextmenu-section-separator-lines");
+      name.classList.add("nexis-contextmenu-section-separator-names")
 
       separator.append(lineL, name, lineR);
     }

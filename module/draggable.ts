@@ -165,12 +165,12 @@ export class Draggable {
     
     const dir = (e.deltaY > 0) ? 1 : -1;
 
-    this.pos.x += localX / this.pos.z;
-    this.pos.y += localY / this.pos.z;
+    if (this.scrollX) this.pos.x += localX / this.pos.z;
+    if (this.scrollY) this.pos.y += localY / this.pos.z;
     this.pos.z -= this.pos.z / (dir * 20);
     this.pos.z = Math.min(Math.max(this.pos.z, this.minZoom), this.maxZoom); // constrain
-    this.pos.x -= localX / this.pos.z;
-    this.pos.y -= localY / this.pos.z;
+    if (this.scrollX) this.pos.x -= localX / this.pos.z;
+    if (this.scrollY) this.pos.y -= localY / this.pos.z;
 
     this.listener.trigger("scroll", this);
   }

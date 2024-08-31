@@ -1,10 +1,10 @@
 import { Draggable } from "../draggable.js";
-import { FrameworkBase, objectificationTypes } from "../framework.js";
+import { NexisBase, objectificationTypes } from "../nexis.js";
 import { ContextMenuEvents, ContextMenuItemInterface, DraggableEvents } from "../interfaces";
 import { ElementListener, Listener } from "../listener.js";
 import { Grid, Pos, SnapPos } from "../pos.js";
 import { Scene, idMap_t } from "../scene.js";
-import { AddonContainer } from "../addons/base.js";
+import { Addon, AddonContainer } from "../addons/base.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 import { BasicWidgetInterface, ContextMenuInterface, GlobalSingleUseWidgetInterface, SceneListenerTypes, sceneElListener, sceneListener } from "./interfaces.js";
 import { AttachableListener } from "../attachableListener.js";
@@ -18,12 +18,12 @@ const alignmentMap = {
 };
 
 // what is put into scenes
-export class Widget extends FrameworkBase {
+export class Widget extends NexisBase {
   private readonly transformations = new Map<string, string>();
   readonly contextmenus: Record<string, ContextMenu> = {};
   readonly addons = new AddonContainer(this);
 
-  readonly elListener = new ElementListener<"move" | "detach">(300);
+  readonly elListener = new ElementListener<"move" | "attach" | "detach" | "dragend" | "draginit">(300);
 
   protected _scene: Scene = null;
   private _id: number;
@@ -36,7 +36,7 @@ export class Widget extends FrameworkBase {
   readonly sceneElementListener = new AttachableListener<string, Event>(() => this._scene?.elListener);
   readonly sceneInterListener = new AttachableListener<string, any>(() => this._scene?.interListener);
 
-  readonly pos = new SnapPos<"x" | "y">({}, 20);
+  readonly pos = new Pos<"x" | "y">({});
   readonly bounds = new Pos<"x" | "y">({});
   readonly align = { x: 0, y: 0 };
 
@@ -72,8 +72,8 @@ export class Widget extends FrameworkBase {
     this.align.y = alignmentMap[pos?.yAlign ?? "top"];
 
     this.pos.listener.on("set", () => {
-      this.elListener.trigger("move", this.el)
       this.scene?.updateIndividualWidget(this);
+      this.elListener.trigger("move", this.el);
     });
 
     this.bounds.setListenerInhibit(true); // by default: don't listen to bounds
@@ -109,8 +109,8 @@ export class Widget extends FrameworkBase {
     }
 
     for (const id in addons) {
-      const { side, addon } = addons[id];
-      this.addons.add(id, side, addon);
+      const { side, layer, addon } = addons[id];
+      this.addons.add(id, side, layer ?? 0, addon);
     }
 
     this.elListener.on("resize", () => {
@@ -123,6 +123,8 @@ export class Widget extends FrameworkBase {
   }
 
   get scene() { return this._scene; }
+  get isDragging() { return false; }
+  get isDraggable() { return false; }
 
   setPos(x: number, y: number) {
     this.pos.setPos({ x, y });
@@ -131,7 +133,7 @@ export class Widget extends FrameworkBase {
   offsetPos(x: number, y: number) {
     this.pos.offsetPos({ x, y });
   }
-
+  
   setZoom(z: number) {
     if (!this.doZoomScale) this.setTransformation("scale", "1"); // force scale to not change
   }
@@ -149,7 +151,7 @@ export class Widget extends FrameworkBase {
     if (!isFirstScene) this.detachFrom(this._scene);
     this._scene = scene;
     this._id = id;
-    this.element.setAttribute("id", `framework-widget-i${id}`)
+    this.element.setAttribute("id", `nexis-widget-i${id}`)
 
     this.sceneDraggableListener.updateValidity();
     this.sceneElementListener.updateValidity();
@@ -164,6 +166,8 @@ export class Widget extends FrameworkBase {
     for (const name in this.contextmenus) {
       scene.addWidget(this.contextmenus[name]);
     }
+
+    this.elListener.trigger("attach", this.el);
   }
 
   detachFrom(scene: Scene) {
@@ -274,6 +278,14 @@ export class Widget extends FrameworkBase {
     if (["both", "horizontal"].includes(this.resizeData.option) && data.size?.hasOwnProperty("x")) this.bounds.setPos({ x: data.size.x });
     if (["both", "vertical"].includes(this.resizeData.option) && data.size?.hasOwnProperty("y")) this.bounds.setPos({ y: data.size.y });
     this.bounds.setListenerInhibit(true);
+
+    for (let side in data.addons) {
+        const addons = data.addons[side as "top" | "bottom" | "left" | "right"];
+        for (let id in addons) {
+            const addonData = addons[id];
+            this.addons.add(id, side as "top" | "bottom" | "left" | "right", addonData.layer, addonData.addon)
+        }
+    }
 
     // don't let erros in wLoad() process inhibit loading
     try { this.wLoad(data.d ?? {}); }
@@ -393,7 +405,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
       doZoomScale: false
     });
 
-    container.classList.add("framework-contextmenu-containers");
+    container.classList.add("nexis-contextmenu-containers");
     container.addEventListener("pointerdown", (e) => { e.stopPropagation(); }); // block dragging
     container.addEventListener("contextmenu", (e) => { e.preventDefault(); }) // prevent real context-menu on fake context-menu
 

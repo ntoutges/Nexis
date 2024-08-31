@@ -1,6 +1,6 @@
-import { FrameworkBase } from "../framework.js";
+import { NexisBase } from "../nexis.js";
 import { ElementListener, Listener } from "../listener.js";
-import { Pos, SnapPos } from "../pos.js";
+import { Pos } from "../pos.js";
 import { AddonContainer } from "../addons/base.js";
 import { ContextMenuItem, ContextMenuSection } from "./contextmenuItems.js";
 import { AttachableListener } from "../attachableListener.js";
@@ -12,7 +12,7 @@ const alignmentMap = {
     "bottom": 1
 };
 // what is put into scenes
-export class Widget extends FrameworkBase {
+export class Widget extends NexisBase {
     transformations = new Map();
     contextmenus = {};
     addons = new AddonContainer(this);
@@ -25,7 +25,7 @@ export class Widget extends FrameworkBase {
     sceneDraggableListener = new AttachableListener(() => this._scene?.draggable.listener);
     sceneElementListener = new AttachableListener(() => this._scene?.elListener);
     sceneInterListener = new AttachableListener(() => this._scene?.interListener);
-    pos = new SnapPos({}, 20);
+    pos = new Pos({});
     bounds = new Pos({});
     align = { x: 0, y: 0 };
     name;
@@ -46,8 +46,8 @@ export class Widget extends FrameworkBase {
         this.align.x = alignmentMap[pos?.xAlign ?? "left"];
         this.align.y = alignmentMap[pos?.yAlign ?? "top"];
         this.pos.listener.on("set", () => {
-            this.elListener.trigger("move", this.el);
             this.scene?.updateIndividualWidget(this);
+            this.elListener.trigger("move", this.el);
         });
         this.bounds.setListenerInhibit(true); // by default: don't listen to bounds
         this.bounds.listener.on("set", (pos) => {
@@ -74,8 +74,8 @@ export class Widget extends FrameworkBase {
             });
         }
         for (const id in addons) {
-            const { side, addon } = addons[id];
-            this.addons.add(id, side, addon);
+            const { side, layer, addon } = addons[id];
+            this.addons.add(id, side, layer ?? 0, addon);
         }
         this.elListener.on("resize", () => {
             this.addons.updateAddonPositions();
@@ -85,6 +85,8 @@ export class Widget extends FrameworkBase {
         this.addons.appendTo(this.el);
     }
     get scene() { return this._scene; }
+    get isDragging() { return false; }
+    get isDraggable() { return false; }
     setPos(x, y) {
         this.pos.setPos({ x, y });
     }
@@ -109,7 +111,7 @@ export class Widget extends FrameworkBase {
             this.detachFrom(this._scene);
         this._scene = scene;
         this._id = id;
-        this.element.setAttribute("id", `framework-widget-i${id}`);
+        this.element.setAttribute("id", `nexis-widget-i${id}`);
         this.sceneDraggableListener.updateValidity();
         this.sceneElementListener.updateValidity();
         this.sceneInterListener.updateValidity();
@@ -124,6 +126,7 @@ export class Widget extends FrameworkBase {
         for (const name in this.contextmenus) {
             scene.addWidget(this.contextmenus[name]);
         }
+        this.elListener.trigger("attach", this.el);
     }
     detachFrom(scene) {
         if (this._scene != scene)
@@ -225,6 +228,13 @@ export class Widget extends FrameworkBase {
         if (["both", "vertical"].includes(this.resizeData.option) && data.size?.hasOwnProperty("y"))
             this.bounds.setPos({ y: data.size.y });
         this.bounds.setListenerInhibit(true);
+        for (let side in data.addons) {
+            const addons = data.addons[side];
+            for (let id in addons) {
+                const addonData = addons[id];
+                this.addons.add(id, side, addonData.layer, addonData.addon);
+            }
+        }
         // don't let erros in wLoad() process inhibit loading
         try {
             this.wLoad(data.d ?? {});
@@ -319,7 +329,7 @@ export class ContextMenu extends GlobalSingleUseWidget {
             },
             doZoomScale: false
         });
-        container.classList.add("framework-contextmenu-containers");
+        container.classList.add("nexis-contextmenu-containers");
         container.addEventListener("pointerdown", (e) => { e.stopPropagation(); }); // block dragging
         container.addEventListener("contextmenu", (e) => { e.preventDefault(); }); // prevent real context-menu on fake context-menu
         if (items.length > 0) {

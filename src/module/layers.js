@@ -1,7 +1,7 @@
 // minimizes the used layers
 export class Layers {
     layers = [];
-    subLayers = new Map();
+    subLayers = new Map(); // Groups like items together (item in sublayer -1 will never be atop anyting in sublayer 0)
     callbacks = [];
     // by default, adds to top
     add(type, layerI = 0) {
@@ -59,20 +59,22 @@ export class Layers {
         // push to front 
         this.layers.splice(lastIndex, 0, type);
         sublayer.push(type);
-        this.doUpdate(layerI, sublayerI);
+        this.doUpdate(index, layerI, sublayerI);
     }
     moveToBottom(type) {
         const [layerI, sublayerI, index] = this.getLayerData(type);
         const sublayer = this.subLayers.get(layerI);
         if (index == -1 || sublayerI == 0)
             return; // cannot move any further down
+        const items = this.subLayers.get(layerI);
+        const firstIndex = this.layers.indexOf(items[0]);
         // remove
         this.layers.splice(index, 1);
         sublayer.splice(sublayerI, 1);
         // push to back 
-        this.layers.splice(0, 0, type);
+        this.layers.splice(firstIndex, 0, type);
         sublayer.splice(0, 0, type);
-        this.doUpdate(layerI, 0, sublayerI);
+        this.doUpdate(firstIndex, layerI, 0, sublayerI);
     }
     moveUp(type) {
         const [layerI, sublayerI, index] = this.getLayerData(type);
@@ -85,7 +87,7 @@ export class Layers {
         // push to front 
         this.layers.splice(index + 1, 0, type);
         sublayer.splice(sublayerI + 1, 0, type);
-        this.doUpdate(layerI, sublayerI, sublayerI + 1);
+        this.doUpdate(index, layerI, sublayerI, sublayerI + 1);
     }
     moveDown(type) {
         const [layerI, sublayerI, index] = this.getLayerData(type);
@@ -98,19 +100,19 @@ export class Layers {
         // push to back 
         this.layers.splice(index - 1, 0, type);
         sublayer.splice(sublayerI - 1, 0, type);
-        this.doUpdate(layerI, sublayerI - 1, sublayerI);
+        this.doUpdate(index - 1, layerI, sublayerI - 1, sublayerI);
     }
     onMove(callback) {
         this.callbacks.push(callback);
     }
-    doUpdate(sublayerI, startI, endI = null) {
+    doUpdate(baseZIndex, sublayerI, startI, endI = null) {
         if (endI == null)
             endI = (this.subLayers.get(sublayerI)?.length - 1) ?? -1;
         const sublayer = this.subLayers.get(sublayerI);
         for (let i = startI; i <= endI; i++) {
             const type = sublayer[i];
             this.callbacks.forEach((callback) => {
-                callback(type, i);
+                callback(type, baseZIndex + i);
             });
         }
     }
@@ -127,8 +129,8 @@ export class Layers {
             const index = subLayer.indexOf(type);
             if (index != -1) {
                 return [
-                    i,
-                    index,
+                    i, // each layer contains sublayers // this is that sublayer
+                    index, // each sublayer contains multiple types // this is the position of the [type] in local sublayer space
                     this.layers.indexOf(type) // this is the position of the [type] in global space
                 ];
             }

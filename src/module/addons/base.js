@@ -11,9 +11,10 @@ export class AddonContainer {
     topEdge = new AddonEdge(this, "top");
     bottomEdge = new AddonEdge(this, "bottom");
     addonIdEdgeMap = new Map();
+    revAddonIdEdgeMap = new Map();
     widget;
     constructor(widget) {
-        this.el.classList.add("framework-addon-containers");
+        this.el.classList.add("nexis-addon-containers");
         this.widget = widget;
     }
     appendTo(parent) {
@@ -27,24 +28,31 @@ export class AddonContainer {
         this.topEdge.setSize(width);
         this.bottomEdge.setSize(width);
     }
-    add(id, side, addon) {
+    add(id, side, layer, addon) {
+        if (this.addonIdEdgeMap.has(id))
+            return; // Addon already added
         const edge = this.getEdge(side);
         if (!edge)
             return;
-        const numericalId = edge.add(addon);
+        const numericalId = edge.add(layer, addon);
         this.addonIdEdgeMap.set(id, {
             edge,
             id: numericalId
         });
+        if (!this.revAddonIdEdgeMap.has(side))
+            this.revAddonIdEdgeMap.set(side, new Map());
+        this.revAddonIdEdgeMap.get(side).set(numericalId, id);
         return id;
     }
     pop(id) {
         if (!this.addonIdEdgeMap.has(id))
             return; // addon with this id doesn't exist
         const data = this.addonIdEdgeMap.get(id);
-        // this.addonIdEdgeMap.get(numericId).pop(numericId);
         data.edge.pop(data.id);
         this.addonIdEdgeMap.delete(id);
+        this.revAddonIdEdgeMap.get(data.edge.direction)?.delete(data.id);
+        if (this.revAddonIdEdgeMap.get(data.edge.direction)?.size == 0)
+            this.revAddonIdEdgeMap.delete(data.edge.direction);
     }
     get(id) {
         if (!this.addonIdEdgeMap.has(id))
@@ -71,11 +79,19 @@ export class AddonContainer {
     }
     save() {
         return {
-            left: this.leftEdge.save(),
-            right: this.rightEdge.save(),
-            top: this.topEdge.save(),
-            bottom: this.bottomEdge.save()
+            left: this.convertIdsToString(this.leftEdge.save(), "left"),
+            right: this.convertIdsToString(this.rightEdge.save(), "right"),
+            top: this.convertIdsToString(this.topEdge.save(), "top"),
+            bottom: this.convertIdsToString(this.bottomEdge.save(), "bottom")
         };
+    }
+    convertIdsToString(edgeSave, side) {
+        let converted = {};
+        const map = this.revAddonIdEdgeMap.get(side);
+        for (let id in edgeSave) {
+            converted[map.get(+id)] = edgeSave[id];
+        }
+        return converted;
     }
 }
 // TODO: make items overflow into custom "overflow addon"
@@ -83,6 +99,7 @@ export class AddonEdge {
     el = document.createElement("div");
     ids = new Ids();
     addons = new Map();
+    layers = new Map();
     addonListeners = new Map();
     size = 0;
     _isPositioning = false;
@@ -90,7 +107,7 @@ export class AddonEdge {
     normal = { x: 0, y: 0 };
     addonContainer;
     constructor(addonContainer, direction) {
-        this.el.classList.add("framework-addon-edges", `framework-addon-edges-${direction}`);
+        this.el.classList.add("nexis-addon-edges", `nexis-addon-edges-${direction}`);
         this.addonContainer = addonContainer;
         addonContainer.el.append(this.el);
         this.direction = direction;
@@ -109,10 +126,14 @@ export class AddonEdge {
                 break;
         }
     }
-    add(addon) {
+    add(layer, addon) {
         const id = this.ids.generateId();
-        this.addons.set(id, addon);
+        this.addons.set(id, { addon, layer });
         addon.attachTo(this, id);
+        // Track which layer each addon is on
+        if (!this.layers.has(layer))
+            this.layers.set(layer, new Set());
+        this.layers.get(layer).add(id);
         const listenerIds = [];
         listenerIds.push(addon.listener.on("positioning", this.updatePosition.bind(this)));
         listenerIds.push(addon.listener.on("size", this.updatePosition.bind(this)));
@@ -124,17 +145,21 @@ export class AddonEdge {
     pop(id) {
         if (!(id in this.addons))
             return false;
-        const addon = this.addons.get(id);
+        const { addon, layer } = this.addons.get(id);
         const listenerIds = this.addonListeners.get(id);
         for (const id of listenerIds) {
             addon.listener.off(id);
         } // stop listening to addon
         this.addons.delete(id);
+        // Update layer data
+        this.layers.get(layer)?.delete(id);
+        if (this.layers.size == 0)
+            this.layers.delete(layer);
         this.updatePosition();
         return true;
     }
     get(id) {
-        return this.addons.has(id) ? this.addons.get(id) : null;
+        return this.addons.has(id) ? this.addons.get(id).addon : null;
     }
     setSize(size) {
         this.size = size;
@@ -142,15 +167,20 @@ export class AddonEdge {
         this.updatePosition();
     }
     updatePosition() {
-        this._isPositioning = true; // inhibit movement listeners
-        const groups = this.assembleGroups();
-        this.positionGroups(groups);
-        this._isPositioning = false;
+        for (const layer of this.layers.keys()) {
+            this._isPositioning = true; // inhibit movement listeners
+            const groups = this.assembleGroups(layer);
+            this.positionGroups(groups);
+            this._isPositioning = false;
+        }
     }
     // creates groups such that no two elements within a group are overlapping
-    assembleGroups() {
+    assembleGroups(layer) {
+        if (!this.layers.has(layer))
+            return; // Empty layer
+        const addons = Array.from(this.layers.get(layer)).map(id => this.addons.get(id).addon);
         const addonGroups = new Group();
-        for (const addon of Array.from(this.addons.values()).sort((a, b) => b.weight - a.weight)) {
+        for (const addon of addons.sort((a, b) => b.weight - a.weight)) {
             addonGroups.add(addon);
             const pos = Math.min(Math.max(addon.positioning * this.size, addon.size / 2), this.size - addon.size / 2);
             addon.position = pos;
@@ -226,7 +256,7 @@ export class AddonEdge {
             max = Math.max(max, pos + halfSize);
         }
         addonGroups.setGroupData(groupElement, {
-            pos: (max + min) / 2,
+            pos: (max + min) / 2, // position is at center of bounds
             size: max - min
         });
     }
@@ -274,7 +304,7 @@ export class AddonEdge {
         return leftDist < rightDist ? -leftDist : rightDist;
     }
     save() {
-        return Saveable.save(Array.from(this.addons).reduce((acc, [key, addon]) => { acc[key] = addon; return acc; }, {}), { "*": "addon" });
+        return Saveable.save(Array.from(this.addons).reduce((acc, [key, addonData]) => { acc[key] = addonData; return acc; }, {}), { "*.addon": "addon" });
     }
 }
 ;
@@ -288,14 +318,20 @@ export class Addon extends Saveable {
     contentEl;
     listener = new Listener();
     addonEdge;
+    priority;
     moveId;
+    openId;
     closeId;
+    dragEndId;
+    dragInitId;
     interWidgetListener = new AttachableListener(() => this.addonContainer?.widget.sceneInterListener);
     sceneElListener = new AttachableListener(() => this.addonContainer?.widget?.sceneElementListener);
     id = null;
+    moveTimeout = null;
     constructor({ content, positioning = 0.5, // default is centered
-    weight = 100, circleness = 1, size = 16 }) {
+    weight = 100, circleness = 1, size = 16, priority = 0 }) {
         super();
+        this.addInitParams({ priority });
         this.addInitParamGetter({
             positioning: () => this.positioning,
             weight: () => this.weight,
@@ -306,7 +342,8 @@ export class Addon extends Saveable {
         this.weight = weight;
         this.circleness = circleness;
         this.size = size;
-        this.el.classList.add("framework-addons");
+        this.priority = priority;
+        this.el.classList.add("nexis-addons");
         this.el.append(content);
         this.contentEl = content;
     }
@@ -321,15 +358,28 @@ export class Addon extends Saveable {
         if (this.addonEdge) { // remove old listeners
             const widget = this.addonEdge.addonContainer.widget;
             widget.elListener.off(this.moveId);
+            widget.elListener.off(this.openId);
             widget.elListener.off(this.closeId);
+            widget.elListener.off(this.dragEndId);
+            widget.elListener.off(this.dragInitId);
         }
         this.addonEdge = addonEdge;
         if (this.addonEdge) { // add new listeners
             const widget = this.addonEdge.addonContainer.widget;
-            this.moveId = widget.elListener.on("move", this.listener.trigger.bind(this.listener, "move", this)); // add new listener
-            this.closeId = widget.elListener.on("detach", this.listener.trigger.bind(this.listener, "close"));
+            this.moveId = widget.elListener.on("move", this.listener.trigger.bind(this.listener, "move", this), this.priority); // add new listener
+            this.openId = widget.elListener.on("attach", this.listener.trigger.bind(this.listener, "open"), this.priority);
+            this.closeId = widget.elListener.on("detach", this.listener.trigger.bind(this.listener, "close"), this.priority);
+            this.dragEndId = widget.elListener.on("dragend", this.listener.trigger.bind(this.listener, "dragend"), this.priority);
+            this.dragInitId = widget.elListener.on("draginit", this.listener.trigger.bind(this.listener, "draginit"), this.priority);
             if (this.addonEdge.normal.x != 0)
                 this.el.classList.add("addons-side-rotated");
+            // Widget already attached
+            if (this.addonContainer.widget.scene)
+                this.listener.trigger("open", this);
+        }
+        else {
+            // Removed from widget; Treat as if attached widget was closed.
+            this.listener.trigger("close", this);
         }
         this.interWidgetListener.updateValidity();
         this.sceneElListener.updateValidity();
@@ -347,6 +397,7 @@ export class Addon extends Saveable {
         this.listener.trigger("size", this);
         this.el.style.width = `${this._size}px`;
         this.el.style.height = `${this._size}px`;
+        this.el.classList.toggle("nexis-addon-hidden", newSize == 0);
     }
     set circleness(newCircleness) {
         this._circleness = Math.max(0, Math.min(1, newCircleness));
@@ -362,6 +413,15 @@ export class Addon extends Saveable {
         this.listener.trigger("weight", this);
     }
     set position(newPos) {
+        if (this.moveTimeout)
+            clearTimeout(this.moveTimeout);
+        this.moveTimeout = setTimeout(() => {
+            this.moveTimeout = null;
+            this.el.classList.remove("nexis-addon-reorganizing"); // Remove smooth movement
+        }, 100);
+        this.el.classList.add("nexis-addon-reorganizing"); // Allow smooth movement
+        // Trigger CSS reflow
+        this.el.offsetLeft;
         this._position = newPos;
         this.el.style.left = `${newPos}px`;
         this.listener.trigger("move", this);
@@ -373,7 +433,10 @@ export class Addon extends Saveable {
     intersectsAddon(other) {
         return this.intersectsRegion(other.position, other.size);
     }
-    getPositionInScene() {
+    /**
+     * @param center If true: will return the center of the addon. Otherwise, will return the top-left corner
+     */
+    getPositionInScene(center = true) {
         const draggable = this.addonContainer?.widget?.scene?.draggable;
         if (!draggable)
             return null;
@@ -382,9 +445,34 @@ export class Addon extends Saveable {
             const bounds = this.addonContainer.widget.element.getBoundingClientRect();
             return draggable.toSceneSpace(bounds.left, bounds.top + bounds.height / 2);
         }
-        return draggable.toSceneSpace(bounds.left + bounds.width / 2, // add size/2 to get centered x
-        bounds.top + bounds.height / 2 // add size/2 to get centered y
+        return draggable.toSceneSpace(bounds.left + (center ? bounds.width / 2 : 0), // add size/2 to get centered x
+        bounds.top + (center ? bounds.height / 2 : 0) // add size/2 to get centered y
         );
+    }
+    offsetWidgetPos(deltaX, deltaY, ..._args) {
+        if (!this.addonContainer?.widget)
+            return;
+        this.addonContainer.widget.pos.offsetPos({ x: deltaX, y: deltaY });
+    }
+    // Move addon by moving widget
+    setAddonPos(desiredX, desiredY, ...args) {
+        if (!this.addonContainer?.widget)
+            return;
+        const [x, y] = this.getPositionInScene();
+        this.offsetWidgetPos(desiredX - x, desiredY - y, ...args);
+    }
+    dragWidget(x, y) {
+        if (!this.addonContainer?.widget)
+            return; // No widget available to drag
+        this.addonContainer.widget.pos.offsetPos({ x, y });
+    }
+    repositionWidget(x, y) {
+        if (!this.addonContainer?.widget)
+            return; // No widget available to drag
+        this.addonContainer.widget.pos.setPos({ x, y });
+    }
+    isWidgetDragging() {
+        return (this.addonContainer?.widget) ? this.addonContainer.widget.isDragging : false;
     }
     save() {
         return {
@@ -395,6 +483,7 @@ export class Addon extends Saveable {
         };
     }
     load(state) { return state; }
+    // Save Reference (identifier for this addon)
     saveRef() {
         return {
             id: this.id,

@@ -16,7 +16,7 @@ export class ConnWidget extends DraggableWidget {
     doDebugErros = false;
     constructor({ type, connections = {}, validator = null, wireData = null }) {
         const container = document.createElement("div");
-        container.classList.add("framework-prefab-connection-containers");
+        container.classList.add("nexis-prefab-connection-containers");
         super({
             content: container,
             name: "connector",
@@ -100,7 +100,7 @@ export class ConnWidget extends DraggableWidget {
         this.channelIn.value = "default";
         this.connectButton = document.createElement("button");
         this.connectButton.innerText = "Connect";
-        this.status.classList.add("framework-prefab-connection-statuses");
+        this.status.classList.add("nexis-prefab-connection-statuses");
         container.append(this.routerIdIn, this.connIdIn, this.channelIn, this.connectButton, this.status);
         this.connectButton.addEventListener("click", () => {
             switch (this._connState) {
@@ -221,7 +221,7 @@ export class ConnConsole extends DraggableWidget {
     maxLines = 100;
     constructor({ type, validator = null, wireData = null }) {
         const container = document.createElement("div");
-        container.classList.add("framework-prefab-connsole-containers");
+        container.classList.add("nexis-prefab-connsole-containers");
         super({
             content: container,
             name: "connsole",
@@ -268,8 +268,8 @@ export class ConnConsole extends DraggableWidget {
         this.addInitParams({ type, wireData, validator }, "*");
         this.defineObjectificationInitParams({ "wireData.type": "wire", "validator": "+" });
         this.terminalContainer = container;
-        this.terminalBody.classList.add("framework-prefab-connsole-bodies");
-        this.terminalInput.classList.add("framework-prefab-connsole-inputs");
+        this.terminalBody.classList.add("nexis-prefab-connsole-bodies");
+        this.terminalInput.classList.add("nexis-prefab-connsole-inputs");
         container.append(this.terminalBody, this.terminalInput);
         this.terminalInput.addEventListener("keydown", (e) => {
             if (e.key == "Enter") {

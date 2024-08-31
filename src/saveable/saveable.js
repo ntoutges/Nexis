@@ -68,8 +68,7 @@ export class Saveable {
         obj = Saveable.deepCopyBaseObject(obj); // make copy of object so as not to modify original
         for (const objectification in objectifications) {
             const segments = objUtils.smartSplit(objUtils.smartSplit(objectification, ".", { "\"": "\"" }), "*");
-            if (Array.isArray(segments[0]) && segments[0].length == 0)
-                segments.shift(); // empty selector, remove it
+            //   if (Array.isArray(segments[0]) && segments[0].length == 0) segments.shift(); // empty selector, remove it
             let roots = [obj];
             for (const i in segments) { // get all but last segment
                 const segment = segments[i];

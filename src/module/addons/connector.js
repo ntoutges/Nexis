@@ -19,16 +19,20 @@ export class ConnectorAddon extends Addon {
     /**
      * @param validator This is a function that, when called, should return true if the connection is valid, and false otherwise. If unset, this will act as a function that always returns true
      */
-    constructor({ type, positioning = 0.5, direction, wireData = null, config = {}, validator = null }) {
+    constructor({ type, positioning = 0.5, weight = 1, direction, wireData = null, config = {}, validator = null }) {
         const el = document.createElement("div");
-        el.classList.add("framework-addon-connectors", `framework-addon-connectors-${direction}`);
+        el.classList.add("nexis-addon-connectors", `nexis-addon-connectors-${direction}`);
         super({
             content: el,
             circleness: 1,
             positioning,
+            weight,
             size: 14
         });
-        this.addInitParams({ type, wireData, config });
+        this.addInitParams({ type, positioning, weight, direction, wireData, config, validator });
+        this.defineObjectificationInitParams({
+            "wireData.type": "widget"
+        });
         const styleName = ConnectorAddon.getStyleName(type, direction);
         if (!styleUsers.has(styleName))
             styleUsers.set(styleName, []);
@@ -79,7 +83,7 @@ export class ConnectorAddon extends Addon {
                 }
             }
             if (passesBuildConfig
-                && ((this.validator == null) ? true : this.validator(this.direction, other.direction))) {
+                && ((this.validator == null) ? true : this.validator(this, other))) {
                 this.disconnectSceneMouseListeners();
                 this.wireInProgress.point2.attachToAddon(other);
                 this.setPoint(this.wireInProgress, 1);
