@@ -48,222 +48,222 @@ const scene = new Scene({
         }
     },
     widgets: [
-    // new GridWidget({
-    //   style: {
-    //     background: "cornsilk"
-    //   },
-    //   options: {
-    //     coords: true
-    //   },
-    //   // doCursorDragIcon: true
-    // }),
-    // new DraggableWidget({
-    //   name: "test-widget",
-    //   content: document.createElement("div"),
-    //   header: {
-    //     // show: false
-    //     title: "Test of this..."
-    //   },
-    //   doDragAll: true,
-    //   doCursorDragIcon: true,
-    //   addons: {
-    //     "tester": {
-    //       side: "left",
-    //       addon: new ConnectorSnapAddon<"ball" | "socket">({
-    //         type: "position",
-    //         direction: "ball",
-    //         active: {
-    //           // normal: false
-    //         },
-    //         validator(addon1, addon2) {
-    //           return addon1.direction != addon2.direction;
-    //         }
-    //       })
-    //     }
-    //   },
-    //   style: {
-    //     width: "200px",
-    //     height: "200px",
-    //     background: "#c9ffd9"
-    //   },
-    //   pos: {
-    //     x: 100,
-    //     y: 100
-    //   },
-    //   resize: "both"
-    // }),
-    // new DraggableWidget({
-    //   name: "test-widget",
-    //   content: document.createElement("div"),
-    //   header: {
-    //     // show: false
-    //     title: "Test of this..."
-    //   },
-    //   doDragAll: true,
-    //   doCursorDragIcon: true,
-    //   addons: {
-    //     "tester": {
-    //       side: "left",
-    //       addon: new ConnectorSnapAddon<"ball" | "socket">({
-    //         type: "position",
-    //         direction: "ball",
-    //         active: {
-    //           // normal: false
-    //         },
-    //         config: {
-    //           onlyOne: true
-    //         },
-    //         validator(addon1, addon2) {
-    //           return addon1.direction != addon2.direction;
-    //         }
-    //       })
-    //     },
-    //     "tester2": {
-    //       side: "right",
-    //       addon: new ConnectorSnapAddon<"ball" | "socket">({
-    //         type: "position",
-    //         direction: "socket",
-    //         active: {
-    //           // normal: false
-    //         },
-    //         config: {
-    //           host: true,
-    //           onlyOne: true
-    //         },
-    //         validator(addon1, addon2) {
-    //           return addon1.direction != addon2.direction;
-    //         }
-    //       })
-    //     },
-    //     // "grid": {
-    //     //   side: "left",
-    //     //   addon: new GridSnapAddon({
-    //     //     positioning: 0.5,
-    //     //     grid: {
-    //     //       size: 50
-    //     //     }
-    //     //   })
-    //     // },
-    //   },
-    //   style: {
-    //     width: "200px",
-    //     height: "200px",
-    //     background: "c9ffd9"
-    //   },
-    //   pos: {
-    //     x: 100,
-    //     y: 100
-    //   },
-    //   resize: "both"
-    // }),
-    // new DraggableWidget({
-    //   name: "test-widget",
-    //   content: document.createElement("div"),
-    //   header: {
-    //     // show: false
-    //     title: "Me host!"
-    //   },
-    //   doDragAll: true,
-    //   doCursorDragIcon: true,
-    //   addons: {
-    //     "tester": {
-    //       side: "right",
-    //       addon: new ConnectorSnapAddon<"ball" | "socket">({
-    //         type: "position",
-    //         direction: "socket",
-    //         active: {
-    //           minimize: false
-    //         },
-    //         config: {
-    //           host: true,
-    //           onlyOne: true
-    //         },
-    //         validator(addon1, addon2) {
-    //           return addon1.direction != addon2.direction;
-    //         }
-    //       })
-    //     },
-    //     "grid": {
-    //       side: "left",
-    //       addon: new GridSnapAddon({
-    //         positioning: 0.5,
-    //         grid: {
-    //           size: 50
-    //         }
-    //       })
-    //     },
-    //     "l1": {
-    //       side: "left",
-    //       addon: new LimitAddon({
-    //         limit: {
-    //           y: [-250, 250],
-    //         },
-    //         positioning: 0.5,
-    //       })
-    //     },
-    //     "l2": {
-    //       side: "top",
-    //       addon: new LimitAddon({
-    //         limit: {
-    //           x: [-250, 250]
-    //         },
-    //         positioning: 0.5,
-    //       })
-    //     }
-    //   },
-    //   style: {
-    //     width: "200px",
-    //     height: "200px",
-    //     background: "#c9ffd9"
-    //   },
-    //   resize: "both"
-    // }),
-    // new DraggableWidget({
-    //     content: document.createElement("div"),
-    //     name: "tester",
-    //     header: {
-    //         title: "Addon Tester"
-    //     },
-    //     resize: "both",
-    //     // pos: {
-    //     //     x: -200,
-    //     //     y: -200
-    //     // },
-    //     style: {
-    //         width: "200px",
-    //         height: "200px",
-    //         background: "skyblue"
-    //     },
-    //     doDragAll: true,
-    //     addons: {
-    //         "A": {
-    //             side: "left",
-    //             layer: 0,
-    //             addon: new ConnectorAddon<string>({
-    //                 direction: "output",
-    //                 type: "data",
-    //                 positioning: 0.51,
-    //                 wireData: {
-    //                     type: WireSnake,
-    //                     params: {}
-    //                 }
-    //             })
-    //         },
-    //         "B": {
-    //             side: "left",
-    //             layer: 1,
-    //             addon: new ConnectorAddon<string>({
-    //                 direction: "input",
-    //                 type: "data",
-    //                 positioning: 0.49,
-    //                 wireData: {
-    //                     type: WireSnake,
-    //                     params: {}
-    //                 }
-    //             })
-    //         }
-    //     }
-    // })
+        new GridWidget({
+            style: {
+                background: "cornsilk"
+            },
+            options: {
+                coords: true
+            },
+            // doCursorDragIcon: true
+        }),
+        new DraggableWidget({
+            name: "test-widget",
+            content: document.createElement("div"),
+            header: {
+                // show: false
+                title: "Test of this..."
+            },
+            doDragAll: true,
+            doCursorDragIcon: true,
+            addons: {
+                "tester": {
+                    side: "left",
+                    addon: new ConnectorSnapAddon({
+                        type: "position",
+                        direction: "ball",
+                        active: {
+                        // normal: false
+                        },
+                        validator(addon1, addon2) {
+                            return addon1.direction != addon2.direction;
+                        }
+                    })
+                }
+            },
+            style: {
+                width: "200px",
+                height: "200px",
+                background: "#c9ffd9"
+            },
+            pos: {
+                x: 100,
+                y: 100
+            },
+            resize: "both"
+        }),
+        new DraggableWidget({
+            name: "test-widget",
+            content: document.createElement("div"),
+            header: {
+                // show: false
+                title: "Test of this..."
+            },
+            doDragAll: true,
+            doCursorDragIcon: true,
+            addons: {
+                "tester": {
+                    side: "left",
+                    addon: new ConnectorSnapAddon({
+                        type: "position",
+                        direction: "ball",
+                        active: {
+                        // normal: false
+                        },
+                        config: {
+                            onlyOne: true
+                        },
+                        validator(addon1, addon2) {
+                            return addon1.direction != addon2.direction;
+                        }
+                    })
+                },
+                "tester2": {
+                    side: "right",
+                    addon: new ConnectorSnapAddon({
+                        type: "position",
+                        direction: "socket",
+                        active: {
+                        // normal: false
+                        },
+                        config: {
+                            host: true,
+                            onlyOne: true
+                        },
+                        validator(addon1, addon2) {
+                            return addon1.direction != addon2.direction;
+                        }
+                    })
+                },
+                // "grid": {
+                //   side: "left",
+                //   addon: new GridSnapAddon({
+                //     positioning: 0.5,
+                //     grid: {
+                //       size: 50
+                //     }
+                //   })
+                // },
+            },
+            style: {
+                width: "200px",
+                height: "200px",
+                background: "c9ffd9"
+            },
+            pos: {
+                x: 100,
+                y: 100
+            },
+            resize: "both"
+        }),
+        new DraggableWidget({
+            name: "test-widget",
+            content: document.createElement("div"),
+            header: {
+                // show: false
+                title: "Me host!"
+            },
+            doDragAll: true,
+            doCursorDragIcon: true,
+            addons: {
+                "tester": {
+                    side: "right",
+                    addon: new ConnectorSnapAddon({
+                        type: "position",
+                        direction: "socket",
+                        active: {
+                            minimize: false
+                        },
+                        config: {
+                            host: true,
+                            onlyOne: true
+                        },
+                        validator(addon1, addon2) {
+                            return addon1.direction != addon2.direction;
+                        }
+                    })
+                },
+                "grid": {
+                    side: "left",
+                    addon: new GridSnapAddon({
+                        positioning: 0.5,
+                        grid: {
+                            size: 1
+                        }
+                    })
+                },
+                "l1": {
+                    side: "left",
+                    addon: new LimitAddon({
+                        limit: {
+                        // y: [-250, 250],
+                        },
+                        positioning: 0.5,
+                    })
+                },
+                "l2": {
+                    side: "top",
+                    addon: new LimitAddon({
+                        limit: {
+                        // x: [-250, 250]
+                        },
+                        positioning: 0.5,
+                    })
+                }
+            },
+            style: {
+                width: "200px",
+                height: "200px",
+                background: "#c9ffd9"
+            },
+            resize: "both"
+        }),
+        // new DraggableWidget({
+        //     content: document.createElement("div"),
+        //     name: "tester",
+        //     header: {
+        //         title: "Addon Tester"
+        //     },
+        //     resize: "both",
+        //     // pos: {
+        //     //     x: -200,
+        //     //     y: -200
+        //     // },
+        //     style: {
+        //         width: "200px",
+        //         height: "200px",
+        //         background: "skyblue"
+        //     },
+        //     doDragAll: true,
+        //     addons: {
+        //         "A": {
+        //             side: "left",
+        //             layer: 0,
+        //             addon: new ConnectorAddon<string>({
+        //                 direction: "output",
+        //                 type: "data",
+        //                 positioning: 0.51,
+        //                 wireData: {
+        //                     type: WireSnake,
+        //                     params: {}
+        //                 }
+        //             })
+        //         },
+        //         "B": {
+        //             side: "left",
+        //             layer: 1,
+        //             addon: new ConnectorAddon<string>({
+        //                 direction: "input",
+        //                 type: "data",
+        //                 positioning: 0.49,
+        //                 wireData: {
+        //                     type: WireSnake,
+        //                     params: {}
+        //                 }
+        //             })
+        //         }
+        //     }
+        // })
     ]
 });
 function connValidator(dir1, dir2) {
@@ -292,7 +292,7 @@ catch (err) {
     localStorage.removeItem("save");
 }
 fetch("./load.json").then(state => state.json()).then(state => {
-    scene.load(state);
+    // scene.load(state);
 });
 // setInterval(() => {
 // localStorage.setItem("save", JSON.stringify(scene.save()));

@@ -158,7 +158,6 @@ export class GridSnapAddon extends SnapAddon {
 export class ConnectorSnapAddon<Direction extends string> extends SnapAddon {
     static snapAddons = new Map<Scene, Map<ConnectorSnapAddon<any>, Pos<"x" | "y">>>
 
-
     static styles = new Map<string, Record<string, string>>();
     static styleUsers = new Map<string, ConnectorSnapAddon<any>[]>();
     
@@ -251,6 +250,7 @@ export class ConnectorSnapAddon<Direction extends string> extends SnapAddon {
     get clientCt() { return this.clients.size; }
 
     protected updateWidgetPos(accX: number, accY: number) {
+        this.updatePositionInScene();
         
         // Possible violation of only-one; Don't even check
         if (this.onlyOne && this.clients.size > 0) {
@@ -291,14 +291,21 @@ export class ConnectorSnapAddon<Direction extends string> extends SnapAddon {
         return closestPoint;
     }
 
-    private getClosePoints(sqAccRadius: number) {
+    private updatePositionInScene() {
         const [x,y] = this.getPositionInScene();
-        
+
         const snapPoints = ConnectorSnapAddon.snapAddons.get(this.attachedScene);
         if (!snapPoints || !snapPoints.has(this)) return null; // No snap points available // Self not in snap points
-        
+
         // Update position in list
         snapPoints.get(this)?.setPos({ x,y });
+    }
+
+    private getClosePoints(sqAccRadius: number) {
+        const snapPoints = ConnectorSnapAddon.snapAddons.get(this.attachedScene);
+        if (!snapPoints || !snapPoints.has(this)) return null; // No snap points available // Self not in snap points
+
+        const {x,y} = snapPoints.get(this).getPosData(["x", "y"]);
 
         // Square this so no sqrt operation required
         const maxDist = this.snapRadius ** 2 - sqAccRadius;
@@ -314,10 +321,8 @@ export class ConnectorSnapAddon<Direction extends string> extends SnapAddon {
             if (
                 dist <= maxDist
                 && this.type == snapAddon.type
-                && (!snapAddon.onlyOne || snapAddon.clientCt == 0)
-                && (
-                    !this.validator || this.validator(this, snapAddon)
-                )
+                && (!snapAddon.onlyOne || snapAddon.clientCt == 0 || this.clients.has(snapAddon))
+                && (!this.validator || this.validator(this, snapAddon))
             ) { // Current addon is too far away to be considered
                 closeAddons.push([snapAddon, dist]);
             }
@@ -352,8 +357,18 @@ export class ConnectorSnapAddon<Direction extends string> extends SnapAddon {
     }
 
     private updateClientsPost() {
-        const closePoints = this.getClosePoints(0).map(data => data[0]);
-        
+        let closePoints = this.getClosePoints(0).map(data => data[0]);
+
+        if (this.onlyOne && closePoints.length > 1) { // Too many clients
+            
+            // Use preexisting client
+            if (this.clients.size > 0 && closePoints.includes(Array.from(this.clients)[0]))
+                closePoints = [Array.from(this.clients)[0]]
+
+            // Narrow to just one option
+            else closePoints = [this.getClosestPoint(0)];
+        }
+
         for (const point of closePoints) {
             if (this.clients.has(point)) continue;
 

@@ -135,6 +135,7 @@ export class ConnectorSnapAddon extends SnapAddon {
     }
     get clientCt() { return this.clients.size; }
     updateWidgetPos(accX, accY) {
+        this.updatePositionInScene();
         // Possible violation of only-one; Don't even check
         if (this.onlyOne && this.clients.size > 0) {
             this.updateClientPos();
@@ -166,13 +167,19 @@ export class ConnectorSnapAddon extends SnapAddon {
         }
         return closestPoint;
     }
-    getClosePoints(sqAccRadius) {
+    updatePositionInScene() {
         const [x, y] = this.getPositionInScene();
         const snapPoints = ConnectorSnapAddon.snapAddons.get(this.attachedScene);
         if (!snapPoints || !snapPoints.has(this))
             return null; // No snap points available // Self not in snap points
         // Update position in list
         snapPoints.get(this)?.setPos({ x, y });
+    }
+    getClosePoints(sqAccRadius) {
+        const snapPoints = ConnectorSnapAddon.snapAddons.get(this.attachedScene);
+        if (!snapPoints || !snapPoints.has(this))
+            return null; // No snap points available // Self not in snap points
+        const { x, y } = snapPoints.get(this).getPosData(["x", "y"]);
         // Square this so no sqrt operation required
         const maxDist = this.snapRadius ** 2 - sqAccRadius;
         let closeAddons = [];
@@ -183,7 +190,7 @@ export class ConnectorSnapAddon extends SnapAddon {
             const dist = (x - pos.getPosComponent("x")) ** 2 + (y - pos.getPosComponent("y")) ** 2;
             if (dist <= maxDist
                 && this.type == snapAddon.type
-                && (!snapAddon.onlyOne || snapAddon.clientCt == 0)
+                && (!snapAddon.onlyOne || snapAddon.clientCt == 0 || this.clients.has(snapAddon))
                 && (!this.validator || this.validator(this, snapAddon))) { // Current addon is too far away to be considered
                 closeAddons.push([snapAddon, dist]);
             }
@@ -213,7 +220,15 @@ export class ConnectorSnapAddon extends SnapAddon {
         }
     }
     updateClientsPost() {
-        const closePoints = this.getClosePoints(0).map(data => data[0]);
+        let closePoints = this.getClosePoints(0).map(data => data[0]);
+        if (this.onlyOne && closePoints.length > 1) { // Too many clients
+            // Use preexisting client
+            if (this.clients.size > 0 && closePoints.includes(Array.from(this.clients)[0]))
+                closePoints = [Array.from(this.clients)[0]];
+            // Narrow to just one option
+            else
+                closePoints = [this.getClosestPoint(0)];
+        }
         for (const point of closePoints) {
             if (this.clients.has(point))
                 continue;

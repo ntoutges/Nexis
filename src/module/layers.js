@@ -129,8 +129,8 @@ export class Layers {
             const index = subLayer.indexOf(type);
             if (index != -1) {
                 return [
-                    i, // each layer contains sublayers // this is that sublayer
-                    index, // each sublayer contains multiple types // this is the position of the [type] in local sublayer space
+                    i,
+                    index,
                     this.layers.indexOf(type) // this is the position of the [type] in global space
                 ];
             }
